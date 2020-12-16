@@ -2,8 +2,26 @@
   "name": "viper",
   "version": "0.1.0",
   "private": true,
+  "scripts": {
+    "start": "node scripts/start",
+    "build": "concurrently 'craco build' 'webpack -c config/electron.webpack.js' && electron-builder --dir -c build.yaml",
+    "test": "craco test",
+    "postinstall": "electron-builder install-app-deps && yarn-deduplicate yarn.lock"
+  },
   "dependencies": {
     "@reduxjs/toolkit": "^1.2.5",
+    "chalk": "^4.1.0",
+    "electron-log": "^4.3.0",
+    "electron-store": "^6.0.1",
+    "electron-updater": "^4.3.5",
+    "react": "^17.0.1",
+    "react-dom": "^17.0.1",
+    "react-redux": "^7.2.0",
+    "react-router-dom": "^5.2.0",
+    "throttle-debounce": "^3.0.1"
+  },
+  "devDependencies": {
+    "@craco/craco": "^6.0.0",
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.3.2",
     "@testing-library/user-event": "^7.1.2",
@@ -12,20 +30,63 @@
     "@types/react": "^16.9.0",
     "@types/react-dom": "^16.9.0",
     "@types/react-redux": "^7.1.7",
-    "react": "^17.0.1",
-    "react-dom": "^17.0.1",
-    "react-redux": "^7.2.0",
+    "babel-plugin-react-css-modules": "^5.2.6",
+    "chokidar": "^3.4.3",
+    "concurrently": "^5.3.0",
+    "dotenv": "^8.2.0",
+    "electron": "^11.1.0",
+    "electron-builder": "^22.9.1",
+    "electron-devtools-installer": "^3.1.1",
+    "electron-notarize": "^1.0.0",
+    "eslint-config-prettier": "^7.0.0",
+    "eslint-plugin-prettier": "^3.2.0",
+    "husky": "^4.3.5",
+    "lint-staged": "^10.5.3",
+    "portfinder": "^1.0.28",
+    "prettier": "^2.2.1",
     "react-scripts": "4.0.1",
-    "typescript": "~3.8.2"
+    "respawn": "^2.6.0",
+    "sass": "^1.30.0",
+    "stylelint": "^13.8.0",
+    "stylelint-config-css-modules": "^2.2.0",
+    "stylelint-config-recommended": "^3.0.0",
+    "stylelint-webpack-plugin": "^2.1.1",
+    "tree-kill": "^1.2.2",
+    "ts-loader": "^8.0.11",
+    "typescript": "^4.1.0",
+    "wait-on": "^5.2.0",
+    "webpack-cli": "~4.1.0",
+    "yarn-deduplicate": "^3.1.0"
   },
-  "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
+  "stylelint": {
+    "extends": [
+      "stylelint-config-recommended",
+      "stylelint-config-css-modules"
+    ]
   },
   "eslintConfig": {
-    "extends": "react-app"
+    "extends": [
+      "plugin:prettier/recommended",
+      "prettier/react",
+      "react-app/jest",
+      "react-app"
+    ]
+  },
+  "prettier": {
+    "semi": false,
+    "singleQuote": true,
+    "jsxBracketSameLine": true,
+    "printWidth": 100
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "src/**/*.{js,jsx,ts,tsx,json,css,scss,md}": [
+      "prettier --write"
+    ]
   },
   "browserslist": {
     "production": [
@@ -38,5 +99,6 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  }
+  },
+  "homepage": "."
 }
