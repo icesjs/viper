@@ -6,11 +6,6 @@ const cwd = process.cwd()
 
 module.exports = exports = {
   //
-  resolveProjectPath(...args) {
-    return path.resolve(cwd, ...args)
-  },
-
-  //
   resolvePackage(pack) {
     try {
       const packPath = require.resolve(pack)
@@ -19,6 +14,14 @@ module.exports = exports = {
       exports.log.error(`You must install ${pack} manually`)
       throw e
     }
+  },
+
+  relativePath(from, to) {
+    let relativePath = path.relative(from, to).replace(/\\/g, '/')
+    if (!/^..?\//.test(relativePath)) {
+      relativePath = `./${relativePath}`
+    }
+    return relativePath
   },
 
   //
@@ -34,6 +37,9 @@ module.exports = exports = {
       const color = ['green', 'yellow', 'red', 'cyan'][index]
       const fn = logger[name]
       logger[name] = function (...args) {
+        if (args[0] instanceof Error) {
+          args[0] = args[0].message
+        }
         if (args.length === 1 && /string|number|boolean/.test(typeof args[0])) {
           fn.call(logger, chalk[color](trimWebpackCLITitle(args[0])))
         } else {
@@ -79,6 +85,7 @@ function overrideEntry(context, originalConfig, customizeConfig) {
   }
 }
 
+//
 function overrideOutputPath(context, customizeConfig) {
   if (customizeConfig.output) {
     const outputPath = customizeConfig.output.path

@@ -2,25 +2,34 @@
   "name": "viper",
   "version": "0.1.0",
   "private": true,
+  "description": "An video player for free.",
+  "author": {
+    "name": "icesjs",
+    "email": "icesjs@outlook.com",
+    "url": "https://github.com/icesjs"
+  },
+  "main": "index.js",
   "scripts": {
     "start": "node scripts/start",
-    "build": "NODE_ENV=production concurrently 'craco build' 'webpack -c config/electron.webpack.js'",
+    "build": "node scripts/build",
     "test": "craco test",
+    "pack": "electron-builder --dir -c build.yml",
+    "dist": "electron-builder -c build.yml",
     "postinstall": "electron-builder install-app-deps && yarn-deduplicate yarn.lock"
   },
   "dependencies": {
-    "@reduxjs/toolkit": "^1.2.5",
     "chalk": "^4.1.0",
     "electron-log": "^4.3.0",
     "electron-store": "^6.0.1",
     "electron-updater": "^4.3.5",
+    "throttle-debounce": "^3.0.1"
+  },
+  "devDependencies": {
+    "@reduxjs/toolkit": "^1.2.5",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
     "react-redux": "^7.2.0",
     "react-router-dom": "^5.2.0",
-    "throttle-debounce": "^3.0.1"
-  },
-  "devDependencies": {
     "@craco/craco": "^6.0.0",
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.3.2",
@@ -66,14 +75,6 @@
       "stylelint-config-css-modules"
     ]
   },
-  "eslintConfig": {
-    "extends": [
-      "plugin:prettier/recommended",
-      "prettier/react",
-      "react-app/jest",
-      "react-app"
-    ]
-  },
   "prettier": {
     "semi": false,
     "singleQuote": true,
@@ -86,7 +87,7 @@
     }
   },
   "lint-staged": {
-    "src/**/*.{js,jsx,ts,tsx,json,css,scss,md}": [
+    "src/**/*.{js,jsx,ts,tsx,json,css,scss,md,yml}": [
       "prettier --write"
     ]
   },
@@ -101,6 +102,9 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "repository": {
+    "url": "https://github.com/icesjs/viper"
   },
   "homepage": "."
 }

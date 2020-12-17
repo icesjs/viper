@@ -1,6 +1,8 @@
 import path from 'path'
+import url from 'url'
 import { app, BrowserWindow, shell } from 'electron'
 import AppUpdater from './updater'
+import { developmentLogger as log } from './logger'
 
 let mainWindow: BrowserWindow | null = null
 
@@ -60,7 +62,10 @@ async function createWindow() {
     mainWindow?.setBackgroundColor('transparent')
   })
 
-  await mainWindow.loadURL(process.env.ELECTRON_RENDERER_INDEX_HTML_URL || '')
+  const htmlURL = process.env.ELECTRON_RENDERER_INDEX_HTML_URL
+  if (htmlURL) {
+    await mainWindow.loadURL(htmlURL)
+  }
 
   mainWindow.webContents.on('new-window', (event, url) => {
     event.preventDefault()

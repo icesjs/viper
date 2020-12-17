@@ -22,6 +22,7 @@ const {
   GENERATE_SOURCEMAP,
   AUTO_OPEN_DEV_TOOLS,
   APP_INDEX_HTML_URL,
+  APP_INDEX_HTML_PATH,
   APP_DEV_LOG_LEVEL,
   APP_PRO_LOG_LEVEL,
   RENDERER_BUILD_TARGET,
@@ -30,6 +31,7 @@ const {
 const isDev = NODE_ENV === 'development'
 const isProd = NODE_ENV === 'production'
 const mode = isDev ? 'development' : 'production'
+const shouldUseSourceMap = GENERATE_SOURCEMAP !== 'false'
 const context = process.cwd()
 
 //
@@ -48,7 +50,8 @@ module.exports = {
       [MAIN_CONTEXT_ALIAS]: MAIN_CONTEXT,
     },
   },
-  devtool: isDev && 'inline-source-map',
+  devtool: (isDev || shouldUseSourceMap) && 'source-map',
+  bail: isProd,
   module: {
     rules: [
       {
@@ -65,7 +68,7 @@ module.exports = {
     minimize: isProd,
     minimizer: [
       new TerserPlugin({
-        sourceMap: GENERATE_SOURCEMAP !== 'false',
+        sourceMap: shouldUseSourceMap,
         terserOptions: {
           ecma: 2018,
         },
@@ -82,23 +85,28 @@ module.exports = {
     //
     new webpack.EnvironmentPlugin({
       NODE_ENV: mode,
-      ELECTRON_RENDERER_INDEX_HTML_URL: APP_INDEX_HTML_URL,
       ELECTRON_APP_DEV_LOG_LEVEL: APP_DEV_LOG_LEVEL,
       ELECTRON_APP_PRO_LOG_LEVEL: APP_PRO_LOG_LEVEL,
       ELECTRON_AUTO_OPEN_DEV_TOOLS: AUTO_OPEN_DEV_TOOLS !== 'false',
       ELECTRON_RENDERER_NODE_INTEGRATION: RENDERER_BUILD_TARGET === 'electron-renderer',
+      ...(APP_INDEX_HTML_URL ? { ELECTRON_RENDERER_INDEX_HTML_URL: APP_INDEX_HTML_URL } : {}),
+      ...(APP_INDEX_HTML_PATH ? { ELECTRON_RENDERER_INDEX_HTML_PATH: APP_INDEX_HTML_PATH } : {}),
     }),
   ].filter(Boolean),
   //
-  stats: isDev
-    ? 'minimal'
-    : {
-        all: false,
-        assets: true,
-        context: MAIN_CONTEXT,
-        env: true,
-        errors: true,
-        errorDetails: true,
-        warnings: true,
-      },
+  stats: {
+    all: false,
+    warnings: true,
+    errors: true,
+    errorDetails: true,
+    context: MAIN_CONTEXT,
+    ...(isDev
+      ? {
+          entrypoints: true,
+        }
+      : {
+          assets: true,
+          env: true,
+        }),
+  },
 }

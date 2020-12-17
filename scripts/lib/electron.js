@@ -3,13 +3,10 @@ const respawn = require('respawn')
 const chokidar = require('chokidar')
 const kill = require('tree-kill')
 const { debounce } = require('throttle-debounce')
+const { MAIN_BUILD_PATH, MAIN_BUILD_FILE_NAME } = require('../../config/consts')
 const { log } = require('./utils')
 
-const { MAIN_BUILD_PATH, MAIN_BUILD_FILE_NAME } = require('../../config/consts')
-const mainFilePath = path.join(MAIN_BUILD_PATH, MAIN_BUILD_FILE_NAME)
-const autoRelaunch = !/^false$/.test(process.env.AUTO_RELAUNCH_APP)
-
-const command = ['electron', `${mainFilePath}`]
+const command = ['electron', '.']
 monitorCrash(command, {
   cwd: process.cwd(),
   name: command[0],
@@ -29,7 +26,10 @@ function monitorCrash(cmd, opts) {
       mo.stop()
     }
   })
-  if (autoRelaunch) {
+
+  const { AUTO_RELAUNCH_APP, NODE_ENV } = process.env
+  if (AUTO_RELAUNCH_APP !== 'false' && NODE_ENV === 'development') {
+    const mainFilePath = path.join(MAIN_BUILD_PATH, MAIN_BUILD_FILE_NAME)
     let watcher = watchChange(mainFilePath, mo)
     mo.on('spawn', () => {
       log.info('Relaunched the Electron.app')
@@ -38,7 +38,9 @@ function monitorCrash(cmd, opts) {
       }
     })
   }
+  //
   mo.start()
+
   log.info('Created the monitor for running of the Electron.app')
   return mo
 }

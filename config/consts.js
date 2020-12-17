@@ -1,4 +1,6 @@
-const { resolveProjectPath: resolve } = require('../scripts/lib/utils')
+const path = require('path')
+const cwd = process.cwd()
+const resolve = (...args) => path.resolve(cwd, ...args)
 
 module.exports = {
   // renderer
@@ -10,8 +12,8 @@ module.exports = {
   MAIN_CONTEXT_ALIAS: '#',
   MAIN_CONTEXT: resolve('src/main/'),
   MAIN_ENTRY: resolve('src/main/index.ts'),
-  MAIN_BUILD_FILE_NAME: 'electron.js',
   MAIN_BUILD_PATH: resolve('build/main/'),
+  MAIN_BUILD_FILE_NAME: 'app.js',
   // misc
   CSS_MODULE_LOCAL_IDENT_NAME: '[local]___[hash:base64:5]',
 }

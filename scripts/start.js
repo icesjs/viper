@@ -1,40 +1,35 @@
 //
+const { format: urlFormat } = require('url')
 const portfinder = require('portfinder')
 const concurrently = require('concurrently')
 const dotenv = require('./lib/dotenv')
-const { format: urlFormat } = require('url')
 
-// go
-run().catch(console.error)
+//
+require('./lib/setup')
 
-async function run() {
-  try {
-    await start()
-  } catch (e) {
-    for (const { exitCode } of e) {
-      if (!Number.isNaN(exitCode)) {
-        process.exit(exitCode)
-      }
+start().catch((e) => {
+  for (const { exitCode } of e) {
+    if (!Number.isNaN(exitCode)) {
+      process.exit(exitCode)
     }
   }
-}
+})
 
 async function start() {
   //
   const NODE_ENV = 'development'
   const envs = dotenv.parseEnv(NODE_ENV)
 
-  const { HTTPS, PORT, HOST, ...restEnvs } = envs
+  const { HTTPS, HOST, PORT, ...restEnvs } = envs
   const env = { ...process.env, ...restEnvs, NODE_ENV }
   const port = await portfinder.getPortPromise({
     port: +PORT,
     stopPort: +PORT + 1000,
   })
   const indexURL = urlFormat({
-    port,
-    hostname: HOST,
     protocol: `http${HTTPS ? 's' : ''}`,
-    slashes: true,
+    hostname: HOST,
+    port,
   })
   // exec command
   await concurrently(
@@ -51,7 +46,7 @@ async function start() {
       {
         name: ' compile-renderer ',
         command: 'craco start',
-        env: { ...env, PORT: `${port}`, BROWSER: 'none' },
+        env: { ...env, HTTPS, HOST, PORT: `${port}`, BROWSER: 'none' },
       },
       {
         name: '   electron-app   ',
@@ -61,6 +56,7 @@ async function start() {
     ],
     {
       killOthers: ['failure', 'failure', 'success'],
+      successCondition: 'all',
     }
   )
 }
