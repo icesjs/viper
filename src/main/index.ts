@@ -33,6 +33,8 @@ async function createWindow() {
     return path.join(RESOURCES_PATH, ...paths)
   }
 
+  const nodeIntegration = !!process.env.ELECTRON_RENDERER_NODE_INTEGRATION
+
   mainWindow = new BrowserWindow({
     show: false,
     // focusable: false,
@@ -41,8 +43,8 @@ async function createWindow() {
     // backgroundColor: '#202020',
     // icon: getAssetPath('icon.png'),
     webPreferences: {
-      nodeIntegration: false,
-      contextIsolation: true,
+      nodeIntegration,
+      contextIsolation: !nodeIntegration,
     },
   })
 

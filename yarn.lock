@@ -1925,12 +1925,7 @@
   resolved "https://registry.npm.taobao.org/@types/node/download/@types/node-14.14.12.tgz?cache=0&sync_timestamp=1607590766685&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2F%40types%2Fnode%2Fdownload%2F%40types%2Fnode-14.14.12.tgz#0b1d86f8c40141091285dea02e4940df73bba43f"
   integrity sha1-Cx2G+MQBQQkShd6gLklA33O7pD8=
 
-"@types/node@^12.0.0":
-  version "12.19.8"
-  resolved "https://registry.npm.taobao.org/@types/node/download/@types/node-12.19.8.tgz?cache=0&sync_timestamp=1607590766685&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2F%40types%2Fnode%2Fdownload%2F%40types%2Fnode-12.19.8.tgz#efd6d1a90525519fc608c9db16c8a78f7693a978"
-  integrity sha1-79bRqQUlUZ/GCMnbFsinj3aTqXg=
-
-"@types/node@^12.0.12":
+"@types/node@^12.0.0", "@types/node@^12.0.12":
   version "12.19.9"
   resolved "https://registry.npm.taobao.org/@types/node/download/@types/node-12.19.9.tgz?cache=0&sync_timestamp=1607858277219&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2F%40types%2Fnode%2Fdownload%2F%40types%2Fnode-12.19.9.tgz#990ad687ad8b26ef6dcc34a4f69c33d40c95b679"
   integrity sha1-mQrWh62LJu9tzDSk9pwz1AyVtnk=
@@ -2071,7 +2066,7 @@
     "@types/source-list-map" "*"
     source-map "^0.7.3"
 
-"@types/webpack@^4.41.8":
+"@types/webpack@^4.4.31", "@types/webpack@^4.41.8":
   version "4.41.25"
   resolved "https://registry.npm.taobao.org/@types/webpack/download/@types/webpack-4.41.25.tgz#4d3b5aecc4e44117b376280fbfd2dc36697968c4"
   integrity sha1-TTta7MTkQRezdigPv9LcNml5aMQ=
@@ -2095,14 +2090,7 @@
   dependencies:
     "@types/yargs-parser" "*"
 
-"@types/yargs@^15.0.0":
-  version "15.0.11"
-  resolved "https://registry.npm.taobao.org/@types/yargs/download/@types/yargs-15.0.11.tgz#361d7579ecdac1527687bcebf9946621c12ab78c"
-  integrity sha1-Nh11eezawVJ2h7zr+ZRmIcEqt4w=
-  dependencies:
-    "@types/yargs-parser" "*"
-
-"@types/yargs@^15.0.5":
+"@types/yargs@^15.0.0", "@types/yargs@^15.0.5":
   version "15.0.12"
   resolved "https://registry.npm.taobao.org/@types/yargs/download/@types/yargs-15.0.12.tgz?cache=0&sync_timestamp=1608052201406&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2F%40types%2Fyargs%2Fdownload%2F%40types%2Fyargs-15.0.12.tgz#6234ce3e3e3fa32c5db301a170f96a599c960d74"
   integrity sha1-YjTOPj4/oyxdswGhcPlqWZyWDXQ=
@@ -3701,6 +3689,14 @@ clean-stack@^2.0.0:
   resolved "https://registry.npm.taobao.org/clean-stack/download/clean-stack-2.2.0.tgz?cache=0&sync_timestamp=1605702352378&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fclean-stack%2Fdownload%2Fclean-stack-2.2.0.tgz#ee8472dbb129e727b31e8a10a427dee9dfe4008b"
   integrity sha1-7oRy27Ep5yezHooQpCfe6d/kAIs=
 
+clean-webpack-plugin@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.npm.taobao.org/clean-webpack-plugin/download/clean-webpack-plugin-3.0.0.tgz#a99d8ec34c1c628a4541567aa7b457446460c62b"
+  integrity sha1-qZ2Ow0wcYopFQVZ6p7RXRGRgxis=
+  dependencies:
+    "@types/webpack" "^4.4.31"
+    del "^4.1.1"
+
 cli-boxes@^2.2.0:
   version "2.2.1"
   resolved "https://registry.npm.taobao.org/cli-boxes/download/cli-boxes-2.2.1.tgz#ddd5035d25094fce220e9cab40a45840a440318f"
@@ -3870,15 +3866,10 @@ commander@^4.1.1:
   resolved "https://registry.npm.taobao.org/commander/download/commander-4.1.1.tgz?cache=0&sync_timestamp=1605992729751&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fcommander%2Fdownload%2Fcommander-4.1.1.tgz#9fd602bd936294e9e9ef46a3f4d6964044b18068"
   integrity sha1-n9YCvZNilOnp70aj9NaWQESxgGg=
 
-commander@^6.0.0, commander@^6.1.0:
+commander@^6.0.0, commander@^6.1.0, commander@^6.2.0:
   version "6.2.1"
   resolved "https://registry.npm.taobao.org/commander/download/commander-6.2.1.tgz?cache=0&sync_timestamp=1607931342826&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fcommander%2Fdownload%2Fcommander-6.2.1.tgz#0792eb682dfbc325999bb2b84fddddba110ac73c"
   integrity sha1-B5LraC37wyWZm7K4T93duhEKxzw=
-
-commander@^6.2.0:
-  version "6.2.0"
-  resolved "https://registry.npm.taobao.org/commander/download/commander-6.2.0.tgz?cache=0&sync_timestamp=1605992729751&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fcommander%2Fdownload%2Fcommander-6.2.0.tgz#b990bfb8ac030aedc6d11bc04d1488ffef56db75"
-  integrity sha1-uZC/uKwDCu3G0RvATRSI/+9W23U=
 
 common-tags@^1.8.0:
   version "1.8.0"
@@ -8610,12 +8601,7 @@ mime@1.6.0:
   resolved "https://registry.npm.taobao.org/mime/download/mime-1.6.0.tgz?cache=0&sync_timestamp=1592843216793&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fmime%2Fdownload%2Fmime-1.6.0.tgz#32cd9e5c64553bd58d19a568af452acff04981b1"
   integrity sha1-Ms2eXGRVO9WNGaVor0Uqz/BJgbE=
 
-mime@^2.4.4:
-  version "2.4.6"
-  resolved "https://registry.npm.taobao.org/mime/download/mime-2.4.6.tgz?cache=0&sync_timestamp=1592843216793&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fmime%2Fdownload%2Fmime-2.4.6.tgz#e5b407c90db442f2beb5b162373d07b69affa4d1"
-  integrity sha1-5bQHyQ20QvK+tbFiNz0Htpr/pNE=
-
-mime@^2.4.6:
+mime@^2.4.4, mime@^2.4.6:
   version "2.4.7"
   resolved "https://registry.npm.taobao.org/mime/download/mime-2.4.7.tgz?cache=0&sync_timestamp=1608083970482&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fmime%2Fdownload%2Fmime-2.4.7.tgz#962aed9be0ed19c91fd7dc2ece5d7f4e89a90d74"
   integrity sha1-lirtm+DtGckf19wuzl1/TompDXQ=
@@ -13477,6 +13463,14 @@ webpack-merge@^4.2.2:
   dependencies:
     lodash "^4.17.15"
 
+webpack-merge@^5.7.2:
+  version "5.7.2"
+  resolved "https://registry.npm.taobao.org/webpack-merge/download/webpack-merge-5.7.2.tgz?cache=0&sync_timestamp=1608125940795&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fwebpack-merge%2Fdownload%2Fwebpack-merge-5.7.2.tgz#55320baf05d8be068ff8112be72c04d7c14a9abd"
+  integrity sha1-VTILrwXYvgaP+BEr5ywE18FKmr0=
+  dependencies:
+    clone-deep "^4.0.1"
+    wildcard "^2.0.0"
+
 webpack-sources@^1.1.0, webpack-sources@^1.3.0, webpack-sources@^1.4.0, webpack-sources@^1.4.1, webpack-sources@^1.4.3:
   version "1.4.3"
   resolved "https://registry.npm.taobao.org/webpack-sources/download/webpack-sources-1.4.3.tgz?cache=0&sync_timestamp=1603965313080&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fwebpack-sources%2Fdownload%2Fwebpack-sources-1.4.3.tgz#eedd8ec0b928fbf1cbfe994e22d2d890f330a933"
@@ -13591,6 +13585,11 @@ widest-line@^3.1.0:
   integrity sha1-gpIzO79my0X/DeFgOxNreuFJbso=
   dependencies:
     string-width "^4.0.0"
+
+wildcard@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.npm.taobao.org/wildcard/download/wildcard-2.0.0.tgz#a77d20e5200c6faaac979e4b3aadc7b3dd7f8fec"
+  integrity sha1-p30g5SAMb6qsl55LOq3Hs91/j+w=
 
 word-wrap@^1.2.3, word-wrap@~1.2.3:
   version "1.2.3"

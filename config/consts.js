@@ -1,16 +1,17 @@
-const { resolveProjectPath } = require('../scripts/utils')
+const { resolveProjectPath: resolve } = require('../scripts/lib/utils')
 
 module.exports = {
-  MAIN_CONTEXT_ALIAS: '#',
+  // renderer
   RENDERER_CONTEXT_ALIAS: '@',
-  BUILD_PATH: resolveProjectPath('build/'),
-  MAIN_ENTRY: resolveProjectPath('src/electron.ts'),
+  RENDERER_CONTEXT: resolve('src/renderer/'),
+  RENDERER_ENTRY: resolve('src/renderer/index.tsx'),
+  RENDERER_BUILD_PATH: resolve('build/renderer/'),
+  // main
+  MAIN_CONTEXT_ALIAS: '#',
+  MAIN_CONTEXT: resolve('src/main/'),
+  MAIN_ENTRY: resolve('src/main/index.ts'),
   MAIN_BUILD_FILE_NAME: 'electron.js',
-  //
-  PROJECT_CONTEXT: resolveProjectPath('.'),
-  MAIN_CONTEXT: resolveProjectPath('src/main/'),
-  RENDERER_CONTEXT: resolveProjectPath('src/renderer/'),
-  RENDERER_TARGET: 'electron-renderer',
-  //
+  MAIN_BUILD_PATH: resolve('build/main/'),
+  // misc
   CSS_MODULE_LOCAL_IDENT_NAME: '[local]___[hash:base64:5]',
 }

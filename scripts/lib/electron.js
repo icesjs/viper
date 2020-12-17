@@ -5,13 +5,13 @@ const kill = require('tree-kill')
 const { debounce } = require('throttle-debounce')
 const { log } = require('./utils')
 
-const { BUILD_PATH, MAIN_BUILD_FILE_NAME, PROJECT_CONTEXT } = require('../config/consts')
-const mainFilePath = path.join(BUILD_PATH, MAIN_BUILD_FILE_NAME)
+const { MAIN_BUILD_PATH, MAIN_BUILD_FILE_NAME } = require('../../config/consts')
+const mainFilePath = path.join(MAIN_BUILD_PATH, MAIN_BUILD_FILE_NAME)
 const autoRelaunch = !/^false$/.test(process.env.AUTO_RELAUNCH_APP)
 
 const command = ['electron', `${mainFilePath}`]
 monitorCrash(command, {
-  cwd: PROJECT_CONTEXT,
+  cwd: process.cwd(),
   name: command[0],
   stdio: 'inherit',
   maxRestarts: -1,

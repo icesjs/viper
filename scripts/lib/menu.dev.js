@@ -1,3 +1,4 @@
+// 开发模式下，初始化开发辅助菜单
 const devToolsInstaller = require('electron-devtools-installer')
 const { app, dialog, shell, BrowserWindow } = require('electron')
 const isChina = /^cn$/i.test(app.getLocaleCountryCode())
