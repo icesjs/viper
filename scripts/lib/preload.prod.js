@@ -4,7 +4,7 @@ const path = require('path')
 const url = require('url')
 
 const indexHTMLPath = process.env.ELECTRON_RENDERER_INDEX_HTML_PATH
-// 这里的 __dirname 为运行时的目录名，存在与app包中
+// 这里的 __dirname 为运行时的目录名，存在于app包中
 const absIndexHTMLPath = path.join(__dirname, indexHTMLPath)
 // 将绝对路径转换为file协议路径
 const indexHTMLFileURL = url.format({

@@ -1,6 +1,6 @@
 //
 const StyleLintPlugin = require('stylelint-webpack-plugin')
-const { customizeCracoWebpack, resolvePackage } = require('../scripts/lib/utils')
+const { resolvePackage } = require('../scripts/lib/utils')
 const webpack = resolvePackage('webpack')
 
 const {
@@ -15,8 +15,8 @@ const target = !/^(web|electron-renderer)$/.test(RENDERER_BUILD_TARGET)
   ? 'electron-renderer'
   : RegExp.$1
 
-module.exports = customizeCracoWebpack({
-  //
+//
+const customizeWebpackConfig = {
   target,
   entry: RENDERER_ENTRY,
   output: { path: RENDERER_BUILD_PATH },
@@ -35,5 +35,9 @@ module.exports = customizeCracoWebpack({
       IS_ELECTRON: target !== 'web',
     }),
   ],
-  //
-})
+}
+
+//
+module.exports = {
+  configure: customizeWebpackConfig,
+}

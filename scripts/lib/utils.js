@@ -1,8 +1,6 @@
 const path = require('path')
 const log = require('electron-log')
 const chalk = require('chalk')
-const { mergeWithCustomize } = require('webpack-merge')
-const cwd = process.cwd()
 
 module.exports = exports = {
   //
@@ -66,22 +64,6 @@ module.exports = exports = {
     //
     return logger
   },
-
-  //
-  customizeCracoWebpack(customizeConfig = {}) {
-    return {
-      configure: (originalConfig, context) => {
-        //
-        overrideEntry(context, originalConfig, customizeConfig)
-        overrideOutputPath(context, customizeConfig)
-        //
-        return mergeWithCustomize({
-          customizeObject(a, b, key) {},
-          customizeArray(a, b, key) {},
-        })(originalConfig, customizeConfig)
-      },
-    }
-  },
 }
 
 exports.log = exports.createLogger('builder')
@@ -91,48 +73,5 @@ exports.log.processExitError = function (error = {}) {
     if (!Number.isNaN(exitCode)) {
       process.exit(exitCode)
     }
-  }
-}
-
-//
-function overrideEntry(context, originalConfig, customizeConfig) {
-  const customizeEntry = customizeConfig.entry
-  if (customizeEntry) {
-    if (!Array.isArray(customizeEntry) && Array.isArray(originalConfig.entry)) {
-      originalConfig.entry.splice(-1, 1, customizeEntry)
-      delete customizeConfig.entry
-    }
-    overrideCRAPaths(context, 'appIndexJs', customizeEntry)
-  }
-}
-
-//
-function overrideOutputPath(context, customizeConfig) {
-  if (customizeConfig.output) {
-    const outputPath = customizeConfig.output.path
-    if (outputPath) {
-      overrideCRAPaths(context, 'appBuild', outputPath)
-    }
-  }
-}
-
-//
-function overrideCRAPaths({ paths }, prop, val) {
-  const cracoConfig = require(path.resolve(cwd, 'craco.config.js'))
-  const ownPath =
-    paths['ownPath'] ||
-    path.join(
-      require.resolve(`${cracoConfig['reactScriptsVersion'] || 'react-scripts'}/package.json`, {
-        paths: [cwd],
-      }),
-      '../'
-    )
-  const modulePath = require.resolve(path.join(ownPath, 'config', 'paths.js'), {
-    paths: [cwd],
-  })
-  paths[prop] = val
-  const cached = require.cache[modulePath].exports
-  if (cached[prop] !== val) {
-    cached[prop] = val
   }
 }

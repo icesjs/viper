@@ -1,6 +1,7 @@
 const path = require('path')
 const respawn = require('respawn')
 const chokidar = require('chokidar')
+const fetch = require('node-fetch')
 const kill = require('tree-kill')
 const { debounce } = require('throttle-debounce')
 const { MAIN_BUILD_PATH, MAIN_BUILD_FILE_NAME } = require('../../config/consts')
@@ -34,8 +35,7 @@ function monitorCrash(cmd, opts) {
     }
   })
   //
-  setRelaunchWatcher(mo)
-  //
+  setFileChangeWatcher(mo, sendRecompileRequest)
   mo.start()
 
   registerShutdown(stop)
@@ -44,64 +44,82 @@ function monitorCrash(cmd, opts) {
   return mo
 }
 
-function setRelaunchWatcher(mo) {
-  const { AUTO_RELAUNCH_APP, NODE_ENV } = process.env
-  if (AUTO_RELAUNCH_APP !== 'false' && NODE_ENV === 'development') {
-    let watcher
-    const mainFilePath = path.join(MAIN_BUILD_PATH, MAIN_BUILD_FILE_NAME)
-    //
-    mo.on('spawn', () => {
-      log.info(`${watcher ? 'Relaunched' : 'Launched'} the Electron.app`)
-      if (!watcher || watcher.closed) {
-        watcher = watchChange(mainFilePath, mo)
-      }
-    })
+function setFileChangeWatcher(mo, callback) {
+  const { NODE_ENV, AUTO_RELAUNCH_APP, AUTO_RELAUNCH_DELAY } = process.env
+  if (NODE_ENV !== 'development') {
+    return
   }
+
+  let childProcess
+  const autoRelaunch = AUTO_RELAUNCH_APP !== 'false'
+
+  const changeHandle = debounce(+AUTO_RELAUNCH_DELAY || 5000, false, async () => {
+    await callback()
+
+    if (childProcess && autoRelaunch) {
+      const { pid } = childProcess
+      childProcess = null
+      kill(pid, 'SIGTERM')
+
+      log.info('Restarting the running Electron.app')
+    }
+  })
+
+  let watcher
+  mo.on('spawn', (child) => {
+    childProcess = child
+    log.info(`${watcher ? 'Relaunched' : 'Launched'} the Electron.app`)
+
+    if (!watcher) {
+      watcher = watchChange(changeHandle)
+    }
+  })
+
+  mo.on('exit', async (code) => {
+    if (code === 0 && watcher) {
+      let w = watcher
+      watcher = null
+      await w.close()
+    }
+  })
 }
 
 //
-function watchChange(file, mo) {
-  let process = null
-  let watcher = chokidar.watch(file, {
+function watchChange(callback) {
+  const mainFilePath = path.join(MAIN_BUILD_PATH, MAIN_BUILD_FILE_NAME)
+
+  const watcher = chokidar.watch(mainFilePath, {
     disableGlobbing: true,
     ignoreInitial: true,
     awaitWriteFinish: false,
     cwd: MAIN_BUILD_PATH,
   })
 
-  watcher.on(
-    'all',
-    debounce(5000, true, () => {
-      if (process) {
-        let p = process
-        process = null
-        kill(p['pid'], 'SIGTERM')
-        log.info('Electron entry file has been changed. Restarting the running Electron.app')
-      }
-    })
-  )
+  log.info('Watching the electron entry file for updates...')
 
-  const close = async () => {
-    if (watcher) {
-      process = null
-      await watcher.close()
-      watcher.closed = true
-      watcher = null
-      log.info('Closed the electron entry file watcher')
-    }
-  }
-  //
-  mo.on('exit', async (code) => {
-    process = null
-    if (code === 0) {
-      await close()
-    }
+  watcher.on('all', () => {
+    log.info('Electron entry file has been updated')
+    callback && callback()
   })
 
-  mo.on('spawn', (p) => (process = p))
+  const fn = watcher.close
+  watcher['close'] = async () => {
+    await fn.call(watcher)
+    log.info('Closed the electron entry file watcher')
+  }
 
-  registerShutdown(close)
+  registerShutdown(watcher.close)
 
-  log.info('Watching the electron entry file for updates...')
   return watcher
+}
+
+// 发送HTTP请求至开发服务器，请求执行重新编译
+async function sendRecompileRequest() {
+  const { APP_INDEX_HTML_URL } = process.env
+  const url = `${APP_INDEX_HTML_URL}/webpack-dev-server/invalidate?${Date.now()}`
+  //
+  await fetch(url, {
+    method: 'GET',
+    cache: 'no-cache',
+  }).catch(log.error)
 }

@@ -28,9 +28,9 @@ const {
   RENDERER_BUILD_TARGET,
   WEBPACK_ELECTRON_ENTRY_PRELOAD,
 } = process.env
-const isDev = NODE_ENV === 'development'
-const isProd = NODE_ENV === 'production'
-const mode = isDev ? 'development' : 'production'
+const isEnvDevelopment = NODE_ENV === 'development'
+const isEnvProduction = NODE_ENV === 'production'
+const mode = isEnvDevelopment ? 'development' : 'production'
 const shouldUseSourceMap = GENERATE_SOURCEMAP !== 'false'
 const context = process.cwd()
 
@@ -50,8 +50,10 @@ module.exports = {
       [MAIN_CONTEXT_ALIAS]: MAIN_CONTEXT,
     },
   },
-  devtool: (isDev || shouldUseSourceMap) && 'source-map',
-  bail: isProd,
+  devtool:
+    (isEnvDevelopment || shouldUseSourceMap) &&
+    (isEnvDevelopment ? 'eval-source-map' : 'source-map'),
+  bail: isEnvProduction,
   module: {
     rules: [
       {
@@ -65,7 +67,7 @@ module.exports = {
     ],
   },
   optimization: {
-    minimize: isProd,
+    minimize: isEnvProduction,
     minimizer: [
       new TerserPlugin({
         sourceMap: shouldUseSourceMap,
@@ -81,8 +83,8 @@ module.exports = {
     __filename: false,
   },
   plugins: [
-    isDev && new CaseSensitivePathsPlugin(),
-    isProd && new CleanWebpackPlugin(),
+    isEnvDevelopment && new CaseSensitivePathsPlugin(),
+    isEnvProduction && new CleanWebpackPlugin(),
     //
     new webpack.EnvironmentPlugin({
       NODE_ENV: mode,
@@ -101,7 +103,7 @@ module.exports = {
     errors: true,
     errorDetails: true,
     context: MAIN_CONTEXT,
-    ...(isDev
+    ...(isEnvDevelopment
       ? {
           entrypoints: true,
         }

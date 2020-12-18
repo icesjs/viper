@@ -1,4 +1,4 @@
-import { ipcMain, IpcRendererEvent, IpcMain, IpcMainEvent } from 'electron'
+import { ipcMain, IpcMainEvent } from 'electron'
 import * as os from 'os'
 
 export const enableIPC = () => {

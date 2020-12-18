@@ -1,8 +1,5 @@
-import path from 'path'
-import url from 'url'
 import { app, BrowserWindow, shell } from 'electron'
 import AppUpdater from './updater'
-import { developmentLogger as log } from './logger'
 
 let mainWindow: BrowserWindow | null = null
 
@@ -34,7 +31,7 @@ async function createWindow() {
     // focusable: false,
     width: 1024,
     height: 728,
-    // backgroundColor: '#202020',
+    backgroundColor: 'transparent',
     // icon: getAssetPath('icon.png'),
     webPreferences: {
       nodeIntegration,

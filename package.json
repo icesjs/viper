@@ -15,22 +15,19 @@
     "test": "craco test",
     "pack": "electron-builder --dir -c build.yml",
     "dist": "electron-builder -c build.yml",
-    "postinstall": "electron-builder install-app-deps && yarn-deduplicate yarn.lock"
+    "postinstall": "electron-builder install-app-deps -c build.yml && yarn-deduplicate yarn.lock"
   },
   "dependencies": {
     "chalk": "^4.1.0",
     "electron-log": "^4.3.0",
     "electron-store": "^6.0.1",
     "electron-updater": "^4.3.5",
+    "node-fetch": "^2.6.1",
     "throttle-debounce": "^3.0.1"
   },
   "devDependencies": {
-    "@reduxjs/toolkit": "^1.2.5",
-    "react": "^17.0.1",
-    "react-dom": "^17.0.1",
-    "react-redux": "^7.2.0",
-    "react-router-dom": "^5.2.0",
     "@craco/craco": "^6.0.0",
+    "@reduxjs/toolkit": "^1.2.5",
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.3.2",
     "@testing-library/user-event": "^7.1.2",
@@ -54,6 +51,10 @@
     "lint-staged": "^10.5.3",
     "portfinder": "^1.0.28",
     "prettier": "^2.2.1",
+    "react": "^17.0.1",
+    "react-dom": "^17.0.1",
+    "react-redux": "^7.2.0",
+    "react-router-dom": "^5.2.0",
     "react-scripts": "4.0.1",
     "respawn": "^2.6.0",
     "sass": "^1.30.0",
