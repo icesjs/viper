@@ -1,1 +1,1 @@
-require('./build/main/app.js')
+require('./build/main/index.js')

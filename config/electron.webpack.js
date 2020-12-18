@@ -1,5 +1,6 @@
 const path = require('path')
-const { resolvePackage: resolve, createLogger } = require('../scripts/lib/utils')
+const { createLogger } = require('../scripts/lib/utils')
+const resolve = require('../scripts/lib/resolve')
 
 //
 const webpack = resolve('webpack')
@@ -15,6 +16,7 @@ const {
   MAIN_BUILD_FILE_NAME,
   MAIN_CONTEXT,
   MAIN_CONTEXT_ALIAS,
+  PROJECT_CONTEXT: context,
 } = require('./consts')
 
 const {
@@ -32,7 +34,6 @@ const isEnvDevelopment = NODE_ENV === 'development'
 const isEnvProduction = NODE_ENV === 'production'
 const mode = isEnvDevelopment ? 'development' : 'production'
 const shouldUseSourceMap = GENERATE_SOURCEMAP !== 'false'
-const context = process.cwd()
 
 //
 module.exports = {

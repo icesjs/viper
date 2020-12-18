@@ -1,9 +1,10 @@
 //
 const StyleLintPlugin = require('stylelint-webpack-plugin')
-const { resolvePackage } = require('../scripts/lib/utils')
+const resolvePackage = require('../scripts/lib/resolve')
 const webpack = resolvePackage('webpack')
 
 const {
+  PROJECT_CONTEXT,
   RENDERER_CONTEXT,
   RENDERER_CONTEXT_ALIAS,
   RENDERER_ENTRY,
@@ -18,7 +19,9 @@ const target = !/^(web|electron-renderer)$/.test(RENDERER_BUILD_TARGET)
 //
 const customizeWebpackConfig = {
   target,
-  entry: RENDERER_ENTRY,
+  entry: {
+    index: RENDERER_ENTRY,
+  },
   output: { path: RENDERER_BUILD_PATH },
   resolve: {
     alias: {
@@ -27,7 +30,7 @@ const customizeWebpackConfig = {
   },
   plugins: [
     new StyleLintPlugin({
-      configBasedir: process.cwd(),
+      configBasedir: PROJECT_CONTEXT,
       context: RENDERER_CONTEXT,
       files: ['**/*.{css,scss}'],
     }),

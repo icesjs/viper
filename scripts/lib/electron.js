@@ -5,11 +5,11 @@ const fetch = require('node-fetch')
 const kill = require('tree-kill')
 const { debounce } = require('throttle-debounce')
 const { MAIN_BUILD_PATH, MAIN_BUILD_FILE_NAME } = require('../../config/consts')
-const { log, registerShutdown } = require('./utils')
+const { log, registerShutdown, PROJECT_CONTEXT: cwd } = require('./utils')
 
 const command = ['electron', '.']
 monitorCrash(command, {
-  cwd: process.cwd(),
+  cwd,
   name: command[0],
   stdio: 'inherit',
   maxRestarts: -1,

@@ -1,19 +1,12 @@
+const fs = require('fs')
 const path = require('path')
 const log = require('electron-log')
 const chalk = require('chalk')
 
 module.exports = exports = {
-  //
-  resolvePackage(pack) {
-    try {
-      const packPath = require.resolve(pack)
-      return require(packPath)
-    } catch (e) {
-      exports.log.error(`You must install ${pack} manually`)
-      throw e
-    }
-  },
+  PROJECT_CONTEXT: fs.realpathSync(process.cwd()),
 
+  //
   relativePath(from, to) {
     let relativePath = path.relative(from, to).replace(/\\/g, '/')
     if (!/^..?\//.test(relativePath)) {

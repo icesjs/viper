@@ -5,9 +5,9 @@ productName: Viper
 
 asar: false
 npmRebuild: true
-extends: ~
+extends: null
 
-publish: ~
+publish: null
 
 directories:
   buildResources: assets/
@@ -18,7 +18,7 @@ files:
   - index.js
   - build/**/*
   - '!*.{ js,css }.map'
-#  - node_modules/
+# - node_modules/
 
 extraResources:
   - assets/**/*
@@ -42,7 +42,7 @@ mac:
   target: dmg
   category: public.app-category.entertainment
   entitlements: assets/entitlements.mac.plist
-  entitlementsInherit: assets/entitlements.mac.plist,
+  entitlementsInherit: assets/entitlements.mac.plist
   hardenedRuntime: true
   gatekeeperAssess: false
   icon: assets/icon.icns

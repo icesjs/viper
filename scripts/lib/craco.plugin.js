@@ -46,7 +46,7 @@ module.exports = {
 
 const path = require('path')
 const { mergeWithCustomize } = require('webpack-merge')
-const cwd = process.cwd()
+const resolvePackage = require('./resolve')
 
 //
 function customizeDevServerBefore(app, server) {
@@ -68,11 +68,31 @@ function customizeCracoWebpackConfigure(customizeConfig = {}) {
 
 //
 function overrideEntry(context, originalConfig, customizeConfig) {
-  const customizeEntry = customizeConfig.entry
+  let customizeEntry = customizeConfig.entry
   if (customizeEntry) {
+    let chunkName
+    if (typeof customizeEntry === 'object') {
+      const keys = Object.keys(customizeEntry)
+      if (!keys.length) {
+        delete customizeConfig.entry
+        return
+      }
+      if (keys.length > 1) {
+        throw new Error('Does not support the creation of multi-page entry applications')
+      }
+      chunkName = keys[0]
+      customizeEntry = customizeEntry[chunkName]
+    }
     if (!Array.isArray(customizeEntry) && Array.isArray(originalConfig.entry)) {
       originalConfig.entry.splice(-1, 1, customizeEntry)
       delete customizeConfig.entry
+    }
+    if (chunkName) {
+      originalConfig.entry = { [chunkName]: originalConfig.entry }
+      if (customizeConfig.entry) {
+        customizeConfig.entry = { [chunkName]: customizeEntry }
+      }
+      overrideManifestPluginForEntry(chunkName, originalConfig)
     }
     overrideCRAPaths(context, 'appIndexJs', customizeEntry)
   }
@@ -90,21 +110,33 @@ function overrideOutputPath(context, customizeConfig) {
 
 //
 function overrideCRAPaths({ paths }, prop, val) {
-  const cracoConfig = require(path.resolve(cwd, 'craco.config.js'))
-  const ownPath =
-    paths['ownPath'] ||
-    path.join(
-      require.resolve(`${cracoConfig['reactScriptsVersion'] || 'react-scripts'}/package.json`, {
-        paths: [cwd],
-      }),
-      '../'
-    )
+  const ownPath = paths['ownPath'] || resolvePackage.resolveReactScriptsPath()
   const modulePath = require.resolve(path.join(ownPath, 'config', 'paths.js'), {
-    paths: [cwd],
+    paths: [resolvePackage.cwd],
   })
   paths[prop] = val
   const cached = require.cache[modulePath].exports
   if (cached[prop] !== val) {
     cached[prop] = val
+  }
+}
+
+//
+function overrideManifestPluginForEntry(chunkName, originalConfig) {
+  const ManifestPlugin = resolvePackage('webpack-manifest-plugin')
+  for (const plug of originalConfig.plugins) {
+    if (plug instanceof ManifestPlugin) {
+      const { opts } = plug
+      const { generate } = opts
+      opts.generate = (seed, files, entrypoints) => {
+        const replaced = entrypoints[chunkName]
+        delete entrypoints[chunkName]
+        entrypoints.main = replaced
+        const res = generate(seed, files, entrypoints)
+        delete entrypoints.main
+        entrypoints[chunkName] = replaced
+        return res
+      }
+    }
   }
 }
