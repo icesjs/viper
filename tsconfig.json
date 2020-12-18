@@ -30,9 +30,6 @@
     "jsx": "react-jsx"
   },
   "include": [
-    "src/**/*"
-  ],
-  "exclude": [
-    "src/main/**/*"
+    "src"
   ]
 }

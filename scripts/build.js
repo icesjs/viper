@@ -2,19 +2,13 @@ const path = require('path')
 const concurrently = require('concurrently')
 const { RENDERER_BUILD_PATH, MAIN_BUILD_PATH } = require('../config/consts')
 const dotenv = require('./lib/dotenv')
-const { relativePath } = require('./lib/utils')
+const { relativePath, log } = require('./lib/utils')
 
 require('./lib/setup')
 
-build().catch((e) => {
-  for (const { exitCode } of e) {
-    if (!Number.isNaN(exitCode)) {
-      process.exit(exitCode)
-    }
-  }
-})
+run().catch(log.processExitError)
 
-async function build() {
+async function run() {
   const NODE_ENV = 'production'
   const { GENERATE_SOURCEMAP, ...restEnvs } = dotenv.parseEnv(NODE_ENV)
   const env = { ...process.env, ...restEnvs, GENERATE_SOURCEMAP, NODE_ENV }

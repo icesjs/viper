@@ -24,6 +24,19 @@ module.exports = exports = {
     return relativePath
   },
 
+  registerShutdown(fn) {
+    let run = false
+    const wrapper = (...args) => {
+      if (!run) {
+        run = true
+        fn(...args)
+      }
+    }
+    process.on('SIGINT', wrapper)
+    process.on('SIGTERM', wrapper)
+    process.on('exit', wrapper)
+  },
+
   //
   createLogger(id = 'builder', replaceConsole = false) {
     const logger = log.create(id)
@@ -72,6 +85,14 @@ module.exports = exports = {
 }
 
 exports.log = exports.createLogger('builder')
+
+exports.log.processExitError = function (error = {}) {
+  for (const { exitCode } of Array.isArray(error) ? error : [error]) {
+    if (!Number.isNaN(exitCode)) {
+      process.exit(exitCode)
+    }
+  }
+}
 
 //
 function overrideEntry(context, originalConfig, customizeConfig) {

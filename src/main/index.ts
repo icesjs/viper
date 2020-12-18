@@ -27,14 +27,6 @@ let mainWindow: BrowserWindow | null = null
 
 //
 async function createWindow() {
-  const RESOURCES_PATH = app.isPackaged
-    ? path.join(process.resourcesPath, 'resources')
-    : path.join(__dirname, '../resources')
-
-  const getAssetPath = (...paths: string[]): string => {
-    return path.join(RESOURCES_PATH, ...paths)
-  }
-
   const nodeIntegration = !!process.env.ELECTRON_RENDERER_NODE_INTEGRATION
 
   mainWindow = new BrowserWindow({

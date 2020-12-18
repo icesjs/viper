@@ -11,11 +11,12 @@ const {
 } = require('./consts')
 
 const { RENDERER_BUILD_TARGET } = process.env
-const target = /^(web|electron-renderer)$/.test(RENDERER_BUILD_TARGET)
-  ? RegExp.$1
-  : 'electron-renderer'
+const target = !/^(web|electron-renderer)$/.test(RENDERER_BUILD_TARGET)
+  ? 'electron-renderer'
+  : RegExp.$1
 
 module.exports = customizeCracoWebpack({
+  //
   target,
   entry: RENDERER_ENTRY,
   output: { path: RENDERER_BUILD_PATH },
@@ -34,4 +35,5 @@ module.exports = customizeCracoWebpack({
       IS_ELECTRON: target !== 'web',
     }),
   ],
+  //
 })

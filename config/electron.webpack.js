@@ -10,8 +10,8 @@ const { CleanWebpackPlugin } = require('clean-webpack-plugin')
 createLogger('webpack:electron', true)
 
 const {
-  MAIN_BUILD_PATH,
   MAIN_ENTRY,
+  MAIN_BUILD_PATH,
   MAIN_BUILD_FILE_NAME,
   MAIN_CONTEXT,
   MAIN_CONTEXT_ALIAS,
@@ -45,7 +45,7 @@ module.exports = {
     filename: MAIN_BUILD_FILE_NAME,
   },
   resolve: {
-    extensions: ['.ts', '.js'],
+    extensions: ['.ts', '.js', '.json'],
     alias: {
       [MAIN_CONTEXT_ALIAS]: MAIN_CONTEXT,
     },
@@ -76,6 +76,7 @@ module.exports = {
     ],
   },
   node: {
+    global: false,
     __dirname: false,
     __filename: false,
   },
