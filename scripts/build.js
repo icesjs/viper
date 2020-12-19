@@ -10,8 +10,15 @@ run().catch(log.processExitError)
 
 async function run() {
   const NODE_ENV = 'production'
-  const { GENERATE_SOURCEMAP, ...restEnvs } = dotenv.parseEnv(NODE_ENV)
-  const env = { ...process.env, ...restEnvs, GENERATE_SOURCEMAP, NODE_ENV }
+  const { DEBUG, GENERATE_SOURCEMAP, ...restEnvs } = dotenv.parseEnv(NODE_ENV)
+  const env = { ...process.env, ...restEnvs, NODE_ENV }
+  const isDebugMode = DEBUG && DEBUG !== 'false'
+  if (isDebugMode) {
+    env.DEBUG = DEBUG
+  } else {
+    delete env.DEBUG
+  }
+
   const indexRelativeDir = relativePath(MAIN_BUILD_PATH, RENDERER_BUILD_PATH)
   const indexRelativePath = path.join(indexRelativeDir, 'index.html')
 
@@ -29,7 +36,7 @@ async function run() {
       {
         name: ' compile-renderer ',
         command: 'craco build',
-        env: { ...env },
+        env: { ...env, GENERATE_SOURCEMAP: isDebugMode || GENERATE_SOURCEMAP },
       },
     ],
     {
@@ -38,7 +45,8 @@ async function run() {
     }
   )
 
-  if (GENERATE_SOURCEMAP !== 'false') {
+  // 开启调试模式，启动Electron应用
+  if (isDebugMode) {
     await concurrently([
       {
         name: '   electron-app   ',

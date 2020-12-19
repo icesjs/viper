@@ -27,7 +27,8 @@ async function createWindow() {
   const nodeIntegration = !!process.env.ELECTRON_RENDERER_NODE_INTEGRATION
 
   mainWindow = new BrowserWindow({
-    show: false,
+    // show: false,
+    show: true,
     // focusable: false,
     width: 1024,
     height: 728,

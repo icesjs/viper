@@ -13,9 +13,9 @@
     "start": "node scripts/start",
     "build": "node scripts/build",
     "test": "craco test",
-    "pack": "electron-builder --dir -c build.yml",
-    "dist": "electron-builder -c build.yml",
-    "postinstall": "electron-builder install-app-deps -c build.yml && yarn-deduplicate yarn.lock"
+    "pack": "yarn build && electron-builder -c build.yml --dir",
+    "dist": "yarn build && electron-builder -c build.yml -mlw",
+    "postinstall": "electron-builder install-app-deps && yarn-deduplicate yarn.lock"
   },
   "dependencies": {
     "chalk": "^4.1.0",
@@ -49,6 +49,7 @@
     "eslint-plugin-prettier": "^3.2.0",
     "husky": "^4.3.5",
     "lint-staged": "^10.5.3",
+    "node-loader": "^1.0.2",
     "portfinder": "^1.0.28",
     "prettier": "^2.2.1",
     "react": "^17.0.1",

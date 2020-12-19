@@ -1,8 +1,8 @@
 import log, { LevelOption } from 'electron-log'
 import { app } from 'electron'
 
-const developmentLogger = log.create('development')
-const productionLogger = log.create('production')
+const developmentLogger = log.create('viper:dev')
+const productionLogger = log.create('viper:prod')
 
 const devLogLevel = (process.env.ELECTRON_APP_DEV_LOG_LEVEL || 'silly') as LevelOption
 const proLogLevel = (process.env.ELECTRON_APP_PRO_LOG_LEVEL || 'silly') as LevelOption

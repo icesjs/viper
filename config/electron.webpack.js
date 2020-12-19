@@ -8,7 +8,7 @@ const TerserPlugin = resolve('terser-webpack-plugin')
 const CaseSensitivePathsPlugin = resolve('case-sensitive-paths-webpack-plugin')
 const { CleanWebpackPlugin } = require('clean-webpack-plugin')
 
-createLogger('webpack:electron', true)
+createLogger('builder-scripts:electron', true)
 
 const {
   MAIN_ENTRY,
@@ -20,8 +20,8 @@ const {
 } = require('./consts')
 
 const {
+  DEBUG,
   NODE_ENV,
-  GENERATE_SOURCEMAP,
   AUTO_OPEN_DEV_TOOLS,
   APP_INDEX_HTML_URL,
   APP_INDEX_HTML_PATH,
@@ -30,10 +30,11 @@ const {
   RENDERER_BUILD_TARGET,
   WEBPACK_ELECTRON_ENTRY_PRELOAD,
 } = process.env
+
 const isEnvDevelopment = NODE_ENV === 'development'
 const isEnvProduction = NODE_ENV === 'production'
 const mode = isEnvDevelopment ? 'development' : 'production'
-const shouldUseSourceMap = GENERATE_SOURCEMAP !== 'false'
+const shouldUseSourceMap = DEBUG && DEBUG !== 'false'
 
 //
 module.exports = {
@@ -65,10 +66,17 @@ module.exports = {
           transpileOnly: true,
         },
       },
-    ],
+      isEnvDevelopment && {
+        test: /\.node$/,
+        loader: 'node-loader',
+        options: {
+          name: '[path][name].[ext]',
+        },
+      },
+    ].filter(Boolean),
   },
   optimization: {
-    minimize: isEnvProduction,
+    minimize: !isEnvDevelopment,
     minimizer: [
       new TerserPlugin({
         sourceMap: shouldUseSourceMap,
@@ -79,7 +87,7 @@ module.exports = {
     ],
   },
   node: {
-    global: false,
+    global: false, // 禁止直接使用global对象来修改全局作用域数据
     __dirname: false,
     __filename: false,
   },

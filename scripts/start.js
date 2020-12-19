@@ -13,8 +13,14 @@ run().catch(log.processExitError)
 async function run() {
   //
   const NODE_ENV = 'development'
-  const { HTTPS, HOST, PORT, ...restEnvs } = dotenv.parseEnv(NODE_ENV)
+  const { DEBUG, HTTPS, HOST, PORT, ...restEnvs } = dotenv.parseEnv(NODE_ENV)
   const env = { ...process.env, ...restEnvs, NODE_ENV }
+  if (DEBUG && DEBUG !== 'false') {
+    env.DEBUG = DEBUG
+  } else {
+    delete env.DEBUG
+  }
+
   const port = await portfinder.getPortPromise({
     port: +PORT,
     stopPort: +PORT + 1000,
@@ -24,6 +30,7 @@ async function run() {
     hostname: HOST || 'localhost',
     port,
   })
+
   // exec command
   await concurrently(
     [
@@ -52,7 +59,7 @@ async function run() {
       // 通过监听进程1构建输出的文件发生的变化，或者应用崩溃时，对electron应用进行重启
       // ts类型检查错误提示信息，需要通过进程2的wds推送到应用窗口显示
       // 需要通过进程3来感知进程1新构建的结束，并通知进程2进行invalidate操作，触发ts检查，并推送提示信息到窗口
-      // 进程2的开发服务器(wds)在启用状态下，可以通过发送http请求至自定义的中间件，来实现该目的
+      // 进程2的开发服务器(wds)在启用状态下，可以通过发送http请求，来实现该目的
       {
         name: '   electron-app   ',
         command: `wait-on '${indexURL}' && node scripts/lib/electron`,
