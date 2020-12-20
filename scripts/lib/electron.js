@@ -5,7 +5,8 @@ const fetch = require('node-fetch')
 const kill = require('tree-kill')
 const { debounce } = require('throttle-debounce')
 const { MAIN_BUILD_PATH, MAIN_BUILD_FILE_NAME } = require('../../config/consts')
-const { log, registerShutdown, PROJECT_CONTEXT: cwd } = require('./utils')
+const { registerShutdown, PROJECT_CONTEXT: cwd } = require('./utils')
+const { log } = require('./logger')
 
 const command = ['electron', '.']
 monitorCrash(command, {
@@ -86,7 +87,7 @@ function setFileChangeWatcher(mo, callback) {
 
 //
 function watchChange(callback) {
-  const mainFilePath = path.join(MAIN_BUILD_PATH, MAIN_BUILD_FILE_NAME)
+  const mainFilePath = path.resolve(MAIN_BUILD_PATH, MAIN_BUILD_FILE_NAME)
 
   const watcher = chokidar.watch(mainFilePath, {
     disableGlobbing: true,

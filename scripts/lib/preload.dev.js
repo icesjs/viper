@@ -1,6 +1,10 @@
 // 开发模式下才会加载此脚本
 // 用于设置辅助开发工具等
 
+const ev = require('fsevents')
+
+const he = require('../test-addons')
+
 const getContextMenuTemplate = require('./menu.dev')
 
 const useModuleProxy = process.env.USE_MODULE_PROXY_FOR_ELECTRON !== 'false'

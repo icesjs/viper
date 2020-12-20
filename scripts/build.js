@@ -2,7 +2,8 @@ const path = require('path')
 const concurrently = require('concurrently')
 const { RENDERER_BUILD_PATH, MAIN_BUILD_PATH } = require('../config/consts')
 const dotenv = require('./lib/dotenv')
-const { relativePath, log } = require('./lib/utils')
+const { log } = require('./lib/logger')
+const { relativePath } = require('./lib/utils')
 
 require('./lib/setup')
 
@@ -25,6 +26,7 @@ async function run() {
   await concurrently(
     [
       {
+        // #进程1 进行main代码构建打包
         name: '   compile-main   ',
         command: 'webpack -c config/electron.webpack.js --no-color',
         env: {
@@ -33,6 +35,7 @@ async function run() {
           WEBPACK_ELECTRON_ENTRY_PRELOAD: require.resolve('./lib/preload.prod.js'),
         },
       },
+      // 进程2，进行renderer内容构建打包
       {
         name: ' compile-renderer ',
         command: 'craco build',
@@ -44,6 +47,8 @@ async function run() {
       successCondition: 'all',
     }
   )
+
+  //
 
   // 开启调试模式，启动Electron应用
   if (isDebugMode) {

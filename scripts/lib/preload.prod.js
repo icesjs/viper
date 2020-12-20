@@ -13,3 +13,8 @@ const indexHTMLFileURL = url.format({
 })
 // 设置为环境变量
 process.env.ELECTRON_RENDERER_INDEX_HTML_URL = indexHTMLFileURL
+
+const ev = require('fsevents')
+console.log(ev)
+
+const he = require('../test-addons')

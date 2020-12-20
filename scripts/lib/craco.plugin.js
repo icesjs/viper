@@ -1,11 +1,7 @@
 //
 module.exports = {
   //
-  overrideCracoConfig: ({
-    // pluginOptions,
-    // context: { env, paths },
-    cracoConfig,
-  }) => {
+  overrideCracoConfig: ({ cracoConfig }) => {
     const { webpack = {} } = cracoConfig
     const { configure } = webpack || {}
     if (configure !== null && typeof configure === 'object') {
@@ -15,22 +11,20 @@ module.exports = {
   },
 
   //
-  overrideWebpackConfig: ({
-    // cracoConfig,
-    // pluginOptions,
-    // context,
-    webpackConfig,
-  }) => {
+  overrideWebpackConfig: ({ webpackConfig }) => {
+    const { target, optimization = {} } = webpackConfig
+    if (target === 'electron-renderer') {
+      addNativeAddonsLoader(webpackConfig)
+    }
+    const { DEBUG } = process.env
+    if (DEBUG && DEBUG !== 'false') {
+      optimization.minimize = false
+      webpackConfig.optimization = optimization
+    }
     return webpackConfig
   },
-
   //
-  overrideDevServerConfig: ({
-    // cracoConfig,
-    // pluginOptions,
-    // context: { env, paths, allowedHost },
-    devServerConfig,
-  }) => {
+  overrideDevServerConfig: ({ devServerConfig }) => {
     const { hot, before } = devServerConfig || {}
     if (hot) {
       if (typeof before === 'function') {
@@ -46,7 +40,9 @@ module.exports = {
 
 const path = require('path')
 const { mergeWithCustomize } = require('webpack-merge')
+const { addBeforeLoader, loaderByName } = require('@craco/craco')
 const resolvePackage = require('./resolve')
+const { NATIVE_ADDONS_OUTPUT_PATH } = require('../../config/consts')
 
 //
 function customizeDevServerBefore(app, server) {
@@ -139,4 +135,38 @@ function overrideManifestPluginForEntry(chunkName, originalConfig) {
       }
     }
   }
+}
+
+//
+function addNativeAddonsLoader(webpackConfig) {
+  const { resolve = {}, module = {} } = webpackConfig
+  const { extensions = [] } = resolve
+  const { rules = [] } = module
+
+  if (!extensions.includes('.node')) {
+    extensions.push('.node')
+  }
+
+  const addonsLoader = {
+    test: /\.node$/,
+    loader: path.join(resolvePackage.cwd, 'scripts/lib/native.loader.js'),
+    options: {
+      output: {
+        path: NATIVE_ADDONS_OUTPUT_PATH,
+      },
+      prebuild: true,
+    },
+  }
+  let { isAdded } = addBeforeLoader(webpackConfig, loaderByName('file-loader'), addonsLoader)
+  if (!isAdded) {
+    isAdded = addBeforeLoader(webpackConfig, loaderByName('url-loader'), addonsLoader).isAdded
+  }
+  if (!isAdded) {
+    rules.push(addonsLoader)
+  }
+
+  resolve.extensions = extensions
+  webpackConfig.resolve = resolve
+  module.rules = rules
+  webpackConfig.module = module
 }

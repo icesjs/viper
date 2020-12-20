@@ -3,7 +3,7 @@ const { format: urlFormat } = require('url')
 const portfinder = require('portfinder')
 const concurrently = require('concurrently')
 const dotenv = require('./lib/dotenv')
-const { log } = require('./lib/utils')
+const { log } = require('./lib/logger')
 
 //
 require('./lib/setup')

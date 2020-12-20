@@ -1,5 +1,5 @@
 const path = require('path')
-const { createLogger } = require('../scripts/lib/utils')
+const { createLogger } = require('../scripts/lib/logger')
 const resolve = require('../scripts/lib/resolve')
 
 //
@@ -16,12 +16,15 @@ const {
   MAIN_BUILD_FILE_NAME,
   MAIN_CONTEXT,
   MAIN_CONTEXT_ALIAS,
+  NATIVE_ADDONS_OUTPUT_PATH,
+  DISABLE_USE_GLOBAL,
   PROJECT_CONTEXT: context,
 } = require('./consts')
 
 const {
   DEBUG,
   NODE_ENV,
+  GENERATE_SOURCEMAP,
   AUTO_OPEN_DEV_TOOLS,
   APP_INDEX_HTML_URL,
   APP_INDEX_HTML_PATH,
@@ -33,8 +36,9 @@ const {
 
 const isEnvDevelopment = NODE_ENV === 'development'
 const isEnvProduction = NODE_ENV === 'production'
+const isDebugMode = DEBUG && DEBUG !== 'false'
 const mode = isEnvDevelopment ? 'development' : 'production'
-const shouldUseSourceMap = DEBUG && DEBUG !== 'false'
+const shouldUseSourceMap = isDebugMode || GENERATE_SOURCEMAP !== 'false'
 
 //
 module.exports = {
@@ -45,9 +49,10 @@ module.exports = {
   output: {
     path: MAIN_BUILD_PATH,
     filename: MAIN_BUILD_FILE_NAME,
+    publicPath: '/test/public',
   },
   resolve: {
-    extensions: ['.ts', '.js', '.json'],
+    extensions: ['.ts', '.js', '.mjs', '.json', '.node'],
     alias: {
       [MAIN_CONTEXT_ALIAS]: MAIN_CONTEXT,
     },
@@ -57,6 +62,7 @@ module.exports = {
     (isEnvDevelopment ? 'eval-source-map' : 'source-map'),
   bail: isEnvProduction,
   module: {
+    strictExportPresence: true,
     rules: [
       {
         test: /\.ts$/,
@@ -64,19 +70,25 @@ module.exports = {
         include: path.resolve(context, 'src'),
         options: {
           transpileOnly: true,
+          compilerOptions: {
+            sourceMap: isEnvDevelopment || shouldUseSourceMap,
+          },
         },
       },
-      isEnvDevelopment && {
+      {
         test: /\.node$/,
-        loader: 'node-loader',
+        loader: path.resolve(context, 'scripts/lib/native.loader.js'),
         options: {
-          name: '[path][name].[ext]',
+          prebuild: true,
+          output: {
+            path: NATIVE_ADDONS_OUTPUT_PATH,
+          },
         },
       },
     ].filter(Boolean),
   },
   optimization: {
-    minimize: !isEnvDevelopment,
+    minimize: !(isEnvDevelopment || isDebugMode),
     minimizer: [
       new TerserPlugin({
         sourceMap: shouldUseSourceMap,
@@ -87,7 +99,7 @@ module.exports = {
     ],
   },
   node: {
-    global: false, // 禁止直接使用global对象来修改全局作用域数据
+    global: !!DISABLE_USE_GLOBAL, // 禁止直接使用global对象来修改全局作用域数据
     __dirname: false,
     __filename: false,
   },

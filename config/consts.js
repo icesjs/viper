@@ -16,7 +16,10 @@ module.exports = {
   MAIN_ENTRY: resolve('src/main/index.ts'),
   MAIN_BUILD_PATH: resolve('build/main/'),
   MAIN_BUILD_FILE_NAME: 'index.js',
+  // native addons
+  NATIVE_ADDONS_OUTPUT_PATH: resolve('build/addons/'),
   // misc
   PROJECT_CONTEXT: cwd,
+  DISABLE_USE_GLOBAL: true,
   CSS_MODULE_LOCAL_IDENT_NAME: '[local]___[hash:base64:5]',
 }

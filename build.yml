@@ -12,7 +12,7 @@ publish: null
 directories:
   buildResources: assets/
   output: dist/
-  app: build/main/
+  app: build/addons/
 
 files:
   - package.json

@@ -41,7 +41,7 @@ module.exports = function getContextMenuTemplate(window, { x, y }) {
         },
         {
           label: isChina ? 'Node.js文档' : 'Node.js Documentation',
-          click: () => open(`https://nodejs.org/${isChina ? 'zh-cn' : 'en'}/docs/`),
+          click: () => open(isChina ? 'http://nodejs.cn/api/' : `https://nodejs.org/docs/`),
         },
         {
           label: isChina ? 'Electron文档' : 'Electron Documentation',
