@@ -154,7 +154,6 @@ function addNativeAddonsLoader(webpackConfig) {
       output: {
         path: NATIVE_ADDONS_OUTPUT_PATH,
       },
-      prebuild: true,
     },
   }
   let { isAdded } = addBeforeLoader(webpackConfig, loaderByName('file-loader'), addonsLoader)

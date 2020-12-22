@@ -3,12 +3,12 @@ const { format: urlFormat } = require('url')
 const portfinder = require('portfinder')
 const concurrently = require('concurrently')
 const dotenv = require('./lib/dotenv')
-const { log } = require('./lib/logger')
+const { processExitError } = require('./lib/utils')
 
 //
 require('./lib/setup')
 
-run().catch(log.processExitError)
+run().catch(processExitError)
 
 async function run() {
   //

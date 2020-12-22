@@ -5,6 +5,8 @@ const ev = require('fsevents')
 
 const he = require('../test-addons')
 
+const hellow = require('hello_world')
+
 const getContextMenuTemplate = require('./menu.dev')
 
 const useModuleProxy = process.env.USE_MODULE_PROXY_FOR_ELECTRON !== 'false'

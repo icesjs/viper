@@ -5,14 +5,37 @@ module.exports = exports = {
   PROJECT_CONTEXT: fs.realpathSync(process.cwd()),
 
   //
-  relativePath(from, to) {
+  relativePath(from, to, addDotPrefix = true) {
     let relativePath = path.relative(from, to).replace(/\\/g, '/')
-    if (!/^..?\//.test(relativePath)) {
+    if (addDotPrefix && !/^..?\//.test(relativePath)) {
       relativePath = `./${relativePath}`
     }
     return relativePath
   },
 
+  //
+  isProtectedDirectory(pathLike) {
+    const absPath = path.resolve(pathLike)
+    const protectedDir = [
+      'config',
+      'assets',
+      'node_modules',
+      'public',
+      'resources',
+      'scripts',
+      'src',
+      'test',
+      'tests',
+      '__tests__',
+    ]
+    for (const dir of protectedDir) {
+      if (path.resolve(dir) === absPath) {
+        return true
+      }
+    }
+  },
+
+  //
   registerShutdown(fn) {
     let run = false
     const wrapper = (...args) => {

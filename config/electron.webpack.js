@@ -7,6 +7,7 @@ const webpack = resolve('webpack')
 const TerserPlugin = resolve('terser-webpack-plugin')
 const CaseSensitivePathsPlugin = resolve('case-sensitive-paths-webpack-plugin')
 const { CleanWebpackPlugin } = require('clean-webpack-plugin')
+const { aliasMap } = require('../scripts/lib/native.loader')
 
 createLogger('builder-scripts:electron', true)
 
@@ -24,7 +25,6 @@ const {
 const {
   DEBUG,
   NODE_ENV,
-  GENERATE_SOURCEMAP,
   AUTO_OPEN_DEV_TOOLS,
   APP_INDEX_HTML_URL,
   APP_INDEX_HTML_PATH,
@@ -32,6 +32,7 @@ const {
   APP_PRO_LOG_LEVEL,
   RENDERER_BUILD_TARGET,
   WEBPACK_ELECTRON_ENTRY_PRELOAD,
+  GENERATE_SOURCEMAP = 'false',
 } = process.env
 
 const isEnvDevelopment = NODE_ENV === 'development'
@@ -55,6 +56,7 @@ module.exports = {
     extensions: ['.ts', '.js', '.mjs', '.json', '.node'],
     alias: {
       [MAIN_CONTEXT_ALIAS]: MAIN_CONTEXT,
+      ...aliasMap,
     },
   },
   devtool:
@@ -79,7 +81,6 @@ module.exports = {
         test: /\.node$/,
         loader: path.resolve(context, 'scripts/lib/native.loader.js'),
         options: {
-          prebuild: true,
           output: {
             path: NATIVE_ADDONS_OUTPUT_PATH,
           },

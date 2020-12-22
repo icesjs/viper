@@ -42,7 +42,7 @@ function setColor(logger, name, replaceConsole) {
         ](text)
       })
 
-      fn.call(logger, `\n${cText}`)
+      fn.call(logger, `${cText}`)
     } else {
       fn.apply(logger, args)
     }
@@ -62,6 +62,7 @@ function color(text, handle) {
         .replace(/\s*\[webpack-cli]\s*/i, '')
         .match(/[^\n]+|\n+|^/g)
         .map((s) => s.replace(/^[a-z]/, (c) => c.toUpperCase()))
+        .filter((s) => s)
         .map((s) => (/\n/.test(s) ? s : handle(s)))
         .join(''),
     ''

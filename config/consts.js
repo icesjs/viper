@@ -17,7 +17,7 @@ module.exports = {
   MAIN_BUILD_PATH: resolve('build/main/'),
   MAIN_BUILD_FILE_NAME: 'index.js',
   // native addons
-  NATIVE_ADDONS_OUTPUT_PATH: resolve('build/addons/'),
+  NATIVE_ADDONS_OUTPUT_PATH: resolve('build/'),
   // misc
   PROJECT_CONTEXT: cwd,
   DISABLE_USE_GLOBAL: true,

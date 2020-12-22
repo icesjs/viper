@@ -2,12 +2,11 @@ const path = require('path')
 const concurrently = require('concurrently')
 const { RENDERER_BUILD_PATH, MAIN_BUILD_PATH } = require('../config/consts')
 const dotenv = require('./lib/dotenv')
-const { log } = require('./lib/logger')
-const { relativePath } = require('./lib/utils')
+const { relativePath, processExitError } = require('./lib/utils')
 
 require('./lib/setup')
 
-run().catch(log.processExitError)
+run().catch(processExitError)
 
 async function run() {
   const NODE_ENV = 'production'
@@ -20,8 +19,8 @@ async function run() {
     delete env.DEBUG
   }
 
-  const indexRelativeDir = relativePath(MAIN_BUILD_PATH, RENDERER_BUILD_PATH)
-  const indexRelativePath = path.join(indexRelativeDir, 'index.html')
+  const absIndexPath = path.resolve(RENDERER_BUILD_PATH, 'index.html')
+  const relIndexPath = relativePath(MAIN_BUILD_PATH, absIndexPath)
 
   await concurrently(
     [
@@ -31,7 +30,7 @@ async function run() {
         command: 'webpack -c config/electron.webpack.js --no-color',
         env: {
           ...env,
-          APP_INDEX_HTML_PATH: indexRelativePath,
+          APP_INDEX_HTML_PATH: relIndexPath,
           WEBPACK_ELECTRON_ENTRY_PRELOAD: require.resolve('./lib/preload.prod.js'),
         },
       },

@@ -12,11 +12,9 @@ publish: null
 directories:
   buildResources: assets/
   output: dist/
-  app: build/addons/
+  app: build/
 
 files:
-  - package.json
-  - index.js
   - build/**/*
   - '!*.{ js,css }.map'
 
