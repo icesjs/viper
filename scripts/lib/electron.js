@@ -4,7 +4,12 @@ const chokidar = require('chokidar')
 const fetch = require('node-fetch')
 const kill = require('tree-kill')
 const { debounce } = require('throttle-debounce')
-const { MAIN_BUILD_PATH, MAIN_BUILD_FILE_NAME } = require('../../config/consts')
+const {
+  MAIN_BUILD_PATH,
+  MAIN_BUILD_FILE_NAME,
+  NATIVE_ADDONS_OUTPUT_PATH,
+} = require('../../config/consts')
+const { NODE_ENV, AUTO_RELAUNCH_APP, AUTO_RELAUNCH_DELAY, APP_INDEX_HTML_URL } = process.env
 const { registerShutdown, PROJECT_CONTEXT: cwd } = require('./utils')
 const { log } = require('./logger')
 
@@ -46,7 +51,6 @@ function monitorCrash(cmd, opts) {
 }
 
 function setFileChangeWatcher(mo, callback) {
-  const { NODE_ENV, AUTO_RELAUNCH_APP, AUTO_RELAUNCH_DELAY } = process.env
   if (NODE_ENV !== 'development') {
     return
   }
@@ -88,18 +92,19 @@ function setFileChangeWatcher(mo, callback) {
 //
 function watchChange(callback) {
   const mainFilePath = path.resolve(MAIN_BUILD_PATH, MAIN_BUILD_FILE_NAME)
+  const addonsDir = path.resolve(NATIVE_ADDONS_OUTPUT_PATH)
 
-  const watcher = chokidar.watch(mainFilePath, {
+  const watcher = chokidar.watch([mainFilePath, addonsDir], {
     disableGlobbing: true,
     ignoreInitial: true,
     awaitWriteFinish: false,
     cwd: MAIN_BUILD_PATH,
   })
 
-  log.info('Watching the electron entry file for updates...')
+  log.info('Watching the electron app file for updates...')
 
   watcher.on('all', () => {
-    log.info('Electron entry file has been updated')
+    log.info(`Electron app file has been updated (will restarting after ${AUTO_RELAUNCH_DELAY} ms)`)
     callback && callback()
   })
 
@@ -116,7 +121,6 @@ function watchChange(callback) {
 
 // 发送HTTP请求至开发服务器，请求执行重新编译
 async function sendRecompileRequest() {
-  const { APP_INDEX_HTML_URL } = process.env
   const url = `${APP_INDEX_HTML_URL}/webpack-dev-server/invalidate?${Date.now()}`
   //
   await fetch(url, {

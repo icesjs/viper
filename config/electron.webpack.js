@@ -59,9 +59,11 @@ module.exports = {
       ...aliasMap,
     },
   },
-  devtool:
-    (isEnvDevelopment || shouldUseSourceMap) &&
-    (isEnvDevelopment ? 'eval-source-map' : 'source-map'),
+  devtool: isEnvDevelopment
+    ? isDebugMode
+      ? GENERATE_SOURCEMAP !== 'false' && 'source-map'
+      : 'eval-source-map'
+    : shouldUseSourceMap && 'source-map',
   bail: isEnvProduction,
   module: {
     strictExportPresence: true,

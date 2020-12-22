@@ -6430,6 +6430,11 @@ he@^1.2.0:
     bindings "~1.2.1"
     node-addon-api "^1.0.0"
 
+"hello_world_other@file:../../node-addon-examples/1_hello_world/napi":
+  version "0.1.0"
+  dependencies:
+    bindings "~1.2.1"
+
 hex-color-regex@^1.1.0:
   version "1.1.0"
   resolved "https://registry.npm.taobao.org/hex-color-regex/download/hex-color-regex-1.1.0.tgz#4c06fccb4602fe2602b3c93df82d7e7dbf1a8a8e"

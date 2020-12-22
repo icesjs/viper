@@ -1,6 +1,6 @@
 import { app, BrowserWindow, shell } from 'electron'
 import AppUpdater from './updater'
-import './settings/test-addons'
+// import './settings/test-addons'
 
 let mainWindow: BrowserWindow | null = null
 

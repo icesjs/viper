@@ -6,9 +6,9 @@ import { store } from './app/store'
 import { Provider } from 'react-redux'
 import * as serviceWorker from './serviceWorker'
 // @ts-ignore
-import * as addons from '../main/settings/test-addons.node'
+// import * as addons from '../main/settings/test-addons.node'
 
-console.log(addons)
+// console.log(addons)
 
 ReactDOM.render(
   <React.StrictMode>

@@ -6,7 +6,7 @@ module.exports = exports = {
   loaderName,
   //
   getBindingsCodeSnippet(addonsList) {
-    return `/* ${addonsList.map(({ modulePath }) => modulePath).join('\n')} */
+    return `/* ${addonsList.map(({ modulePath }) => modulePath).join('\n * ')} */
   
   function getAddonsByBindingsName(name = 'bindings.node') {
     const addonsList = ${JSON.stringify(addonsList)};
@@ -18,18 +18,17 @@ module.exports = exports = {
   }
  
   function getAddonsObject(addons) {
-    const {
+    const module = {exports: {}}
+    try {
+      const path = __non_webpack_require__('path');
+      const {
       fromBuildOutputModulePath,
       fromRootContextModulePath,
       isFromNodeModules,
       isMainProcess,
-      modulePath,
       flags,
     } = addons;
-    const module = {exports: {}}
-    const usedFlags = typeof flags !== 'undefined';
-    try {
-      const path = __non_webpack_require__('path')
+      const usedFlags = typeof flags !== 'undefined';
       if (isMainProcess) {
          const requirePath = isFromNodeModules 
               ? fromBuildOutputModulePath 
@@ -57,6 +56,7 @@ module.exports = exports = {
     } catch(error) {
       throw new Error('${loaderName}: ' + error)
     }
+    return module.exports
   }
   
   module.exports = exports = function fakedBindings(opts) {

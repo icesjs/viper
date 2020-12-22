@@ -3,7 +3,7 @@ const path = require('path')
 const { promisify } = require('util')
 const findUp = require('find-up')
 const { validate } = require('schema-utils')
-const { getOptions, interpolateName, parseQuery } = require('loader-utils')
+const loaderUtils = require('loader-utils')
 const { relativePath } = require('./utils')
 const { log } = require('./logger')
 
@@ -24,7 +24,7 @@ class Warning extends Error {
 
 //
 function gainOptions(loaderContext) {
-  const options = Object.assign({}, getOptions(loaderContext))
+  const options = Object.assign({}, loaderUtils.getOptions(loaderContext))
   validate({ ...optionsScheme }, options, { baseDataPath: 'options' })
 
   const { output = {}, makeNativeDependencyPackageJson = true } = options
@@ -32,7 +32,7 @@ function gainOptions(loaderContext) {
   if (!path.isAbsolute(outputPath)) {
     output.path = path.resolve(outputPath)
   }
-  let namePattern
+  let namePattern = filename
   if (loaderContext.mode !== 'development') {
     namePattern = '[contenthash:16].[ext]'
   } else if (!filename) {
@@ -50,6 +50,14 @@ function resolveModulePackagePath(rootContext, context) {
   return findUp((dir) => (projectRoot === path.normalize(dir) ? findUp.stop : 'package.json'), {
     cwd: context,
   })
+}
+
+//
+function normalizeModulePath(loaderContext) {
+  return relativePath(loaderContext.rootContext, loaderContext.resourcePath, false).replace(
+    /^node_modules[/\\]/,
+    ''
+  )
 }
 
 //
@@ -90,7 +98,10 @@ function emitRawSourceFile(content, options) {
     // 以后可能会被webpack移除掉
   } = this._compiler
 
-  const filename = interpolateName(this, namePattern, { content, context: this.rootContext })
+  const filename = loaderUtils.interpolateName(this, namePattern, {
+    content,
+    context: this.rootContext,
+  })
   const absFilename = path.join(outputPath, filename)
   const relativeFromBuildOutputEmitFilePath = relativePath(compilerOutput.path, absFilename)
   const relativeFromRootContextEmitFilePath = relativePath(this.rootContext, absFilename)
@@ -110,7 +121,7 @@ function generateProductionCodeForAddons(source, options) {
   return getCodeSnippet.apply(this, [
     {
       ...emitRawSourceFile.apply(this, [source, options]),
-      modulePath: relativePath(this.rootContext, this.resourcePath, false),
+      modulePath: normalizeModulePath.call(this, this),
       isMainProcess: this.target === 'electron-main',
     },
   ])
@@ -156,10 +167,11 @@ function generateRequireModuleCode(content, options, modulePackagePath) {
   if (!modulePackagePath || this.mode !== 'development') {
     return generateProductionCodeForAddons.apply(this, [content, options])
   }
+  const paths = getDevelopmentPathsForAddons.apply(this, [options, modulePackagePath])
   return getCodeSnippet.apply(this, [
     {
-      ...getDevelopmentPathsForAddons.apply(this, [options, modulePackagePath]),
-      modulePath: relativePath(this.rootContext, this.resourcePath, false),
+      ...paths,
+      modulePath: normalizeModulePath.call(this, this),
       isMainProcess: this.target === 'electron-main',
     },
   ])
@@ -175,12 +187,28 @@ async function setNativeDependency(source, options, modulePackagePath) {
     const modulePackageJson = require(modulePackagePath)
     const { name, version } = modulePackageJson
     const {
+      dependencies: projectDeps = {},
+      devDependencies: projectDevDeps,
+    } = require(path.resolve('package.json'))
+    const {
       output: { path: outputPath },
     } = options
     const outputPackagePath = path.resolve(outputPath, 'package.json')
     const outputPackage = requireOutputPackage.apply(this, [outputPackagePath])
-    outputPackage.dependencies[name] = version
-    //
+
+    if (projectDeps[name]) {
+      outputPackage.dependencies[name] = projectDeps[name]
+    } else if (projectDevDeps[name]) {
+      outputPackage.dependencies[name] = projectDevDeps[name]
+      this.emitWarning(
+        new Warning(
+          `You should install the dependency named of ${name} to 'dependencies' rather than 'devDependencies'`
+        )
+      )
+    } else {
+      outputPackage.dependencies[name] = version
+    }
+
     await promisify(fs.writeFile)(outputPackagePath, JSON.stringify(outputPackage))
   } else {
     this.emitWarning(
@@ -193,7 +221,7 @@ async function setNativeDependency(source, options, modulePackagePath) {
 const fakedAddonsResolver = path.join(__dirname, 'native.loader.node')
 const nativeAddonsModuleResolverMap = {
   // bindings是比较多使用的一个包，与webpack有兼容性问题，且不能在electron环境良好使用
-  bindings$: `${fakedAddonsResolver}?name=bindings`,
+  bindings$: `${fakedAddonsResolver}?resolver=bindings`,
 }
 
 //
@@ -216,6 +244,9 @@ async function readNativeAddonsSourceFromContext(context) {
 
   for (const name of names) {
     try {
+      if (name === 'bindings' && sources.length) {
+        break
+      }
       const moduleContext = context
       const filePath = bindings({
         bindings: name,
@@ -248,26 +279,29 @@ async function makeModuleCodeWithBindings(addonsSources, options) {
   const addonsList = []
   const isDevEnvironment = this.mode === 'development'
   for (const { name, path: resourcePath, source, context } of addonsSources) {
-    const modulePackagePath = path.join(context, 'package.json')
-    await setNativeDependency.apply(this, [source, options, modulePackagePath])
+    const addonsLoaderContext = Object.assign(Object.create(this), {
+      resourcePath,
+      context,
+      options,
+    })
+    const addonsModulePackagePath = path.join(context, 'package.json')
+    await setNativeDependency.apply(addonsLoaderContext, [source, options, addonsModulePackagePath])
+    this.addDependency(resourcePath)
     let paths
     // 计算路径信息
     if (isDevEnvironment) {
-      paths = getDevelopmentPathsForAddons.apply(this, [options, modulePackagePath])
+      paths = getDevelopmentPathsForAddons.apply(addonsLoaderContext, [
+        options,
+        addonsModulePackagePath,
+      ])
     } else {
-      paths = emitRawSourceFile.apply(
-        Object.assign(Object.create(this), {
-          resourcePath,
-          options,
-        }),
-        [source, options]
-      )
+      paths = emitRawSourceFile.apply(addonsLoaderContext, [source, options])
     }
 
     addonsList.push({
       ...paths,
       name,
-      modulePath: relativePath(this.rootContext, resourcePath, false),
+      modulePath: normalizeModulePath.call(addonsLoaderContext, addonsLoaderContext),
       isMainProcess: this.target === 'electron-main',
     })
   }
@@ -275,7 +309,7 @@ async function makeModuleCodeWithBindings(addonsSources, options) {
 }
 
 //
-async function requireNativeModuleByBindings(source, options) {
+async function requireNativeAddonsByBindings(options) {
   // 这里用到了hack属性 _module
   // 以后可能会被webpack移除掉
   const module = this._module
@@ -308,12 +342,13 @@ async function requireNativeModuleByBindings(source, options) {
 }
 
 //
-function resolveNativeAddonsFromResolver(source, options, callback) {
+function requireNativeAddonsFromResolver(options, callback) {
   if (path.normalize(this.resourcePath) === fakedAddonsResolver) {
-    const { name } = parseQuery(this.resourceQuery)
-    if (name === 'bindings') {
-      return requireNativeModuleByBindings
-        .apply(this, [source, options])
+    const { resolver } = loaderUtils.parseQuery(this.resourceQuery)
+    this.clearDependencies()
+    if (resolver === 'bindings') {
+      return requireNativeAddonsByBindings
+        .apply(this, [options])
         .then((code) => callback(null, code))
         .catch(callback)
     }
@@ -323,6 +358,7 @@ function resolveNativeAddonsFromResolver(source, options, callback) {
 //
 async function makeDirectRequireAddonsModuleCode(...args) {
   await setNativeDependency.apply(this, args)
+  this.addDependency(this.resourcePath)
   return generateRequireModuleCode.apply(this, args)
 }
 
@@ -344,7 +380,7 @@ module.exports = function NativeAddonsLoader(source) {
   const args = [source, options]
   const callback = this.async()
 
-  if (resolveNativeAddonsFromResolver.apply(this, [...args, callback])) {
+  if (requireNativeAddonsFromResolver.apply(this, [options, callback])) {
     return
   }
 

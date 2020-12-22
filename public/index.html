@@ -1,18 +1,28 @@
 <!DOCTYPE html>
-<html lang='en'>
-<head>
-  <meta charset='utf-8' />
-  <meta http-equiv='Content-Security-Policy' content="script-src 'self' 'unsafe-inline' 'unsafe-eval';" />
-  <link rel='icon' href='%PUBLIC_URL%/favicon.ico' />
-  <meta name='viewport' content='width=device-width, initial-scale=1' />
-  <meta name='theme-color' content='#000000' />
-  <meta name='description' content='Viper' />
-  <link rel='apple-touch-icon' href='%PUBLIC_URL%/logo192.png' />
-  <link rel='manifest' href='%PUBLIC_URL%/manifest.json' />
-  <title>Viper</title>
-</head>
-<body>
-<noscript>You need to enable JavaScript to run this app.</noscript>
-<div id='root'></div>
-</body>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="script-src 'self' 'unsafe-inline' 'unsafe-eval';"
+    />
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="description" content="Viper" />
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    <title>Viper</title>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+    <% if (process.env.IS_ELECTRON) { %>
+    <script>
+      if (!window.process?.versions?.electron) {
+        document.write('This application does not support the current runtime environment.')
+      }
+    </script>
+    <% } %>
+  </body>
 </html>
