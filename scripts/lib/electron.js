@@ -13,6 +13,8 @@ const { NODE_ENV, AUTO_RELAUNCH_APP, AUTO_RELAUNCH_DELAY, APP_INDEX_HTML_URL } =
 const { registerShutdown, PROJECT_CONTEXT: cwd } = require('./utils')
 const { log } = require('./logger')
 
+const refreshDelay = +AUTO_RELAUNCH_DELAY || 5000
+
 const command = ['electron', '.']
 monitorCrash(command, {
   cwd,
@@ -58,7 +60,7 @@ function setFileChangeWatcher(mo, callback) {
   let childProcess
   const autoRelaunch = AUTO_RELAUNCH_APP !== 'false'
 
-  const changeHandle = debounce(+AUTO_RELAUNCH_DELAY || 5000, false, async () => {
+  const changeHandle = debounce(refreshDelay, false, async () => {
     await callback()
 
     if (childProcess && autoRelaunch) {
@@ -66,7 +68,7 @@ function setFileChangeWatcher(mo, callback) {
       childProcess = null
       kill(pid, 'SIGTERM')
 
-      log.info('Restarting the running Electron.app')
+      log.info('Relaunching the running Electron.app')
     }
   })
 
@@ -103,10 +105,13 @@ function watchChange(callback) {
 
   log.info('Watching the electron app file for updates...')
 
-  watcher.on('all', () => {
-    log.info(`Electron app file has been updated (will restarting after ${AUTO_RELAUNCH_DELAY} ms)`)
-    callback && callback()
-  })
+  watcher.on(
+    'all',
+    debounce(refreshDelay, true, () => {
+      log.info(`Electron app file has been updated (will relaunch after ${refreshDelay} ms)`)
+      callback && callback()
+    })
+  )
 
   const fn = watcher.close
   watcher['close'] = async () => {

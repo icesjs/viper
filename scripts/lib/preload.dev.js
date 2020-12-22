@@ -2,14 +2,14 @@
 // 用于设置辅助开发工具等
 
 // const ev = require('fsevents')
-
+//
 // const he = require('../test-addons')
-
-const hellow = require('hello_world')
-
-const hellow_other = require('hello_world_other')
-
-const hellow_other_3 = require('../../src/addons/hello_other_three')
+//
+// const hellow = require('hello_world')
+//
+// const hellow_other = require('hello_world_other')
+//
+// const hellow_other_3 = require('../../src/addons/hello_other_three')
 
 const getContextMenuTemplate = require('./menu.dev')
 

@@ -1,4 +1,4 @@
-const fs = require('fs')
+const fs = require('fs-extra')
 const path = require('path')
 const { promisify } = require('util')
 const findUp = require('find-up')
@@ -28,7 +28,7 @@ function gainOptions(loaderContext) {
   validate({ ...optionsScheme }, options, { baseDataPath: 'options' })
 
   const { output = {}, makeNativeDependencyPackageJson = true } = options
-  const { path: outputPath = 'build', filename } = output
+  const { path: outputPath = 'build/addons/', filename } = output
   if (!path.isAbsolute(outputPath)) {
     output.path = path.resolve(outputPath)
   }
@@ -61,7 +61,7 @@ function normalizeModulePath(loaderContext) {
 }
 
 //
-function requireOutputPackage(pkgPath) {
+function readAddonsOutputPackageJson(pkgPath) {
   const projectPackage = require(path.resolve(this.rootContext, 'package.json'))
   const { name, version, main, author } = projectPackage
   let mainPath = path.resolve(main)
@@ -75,6 +75,7 @@ function requireOutputPackage(pkgPath) {
       name,
       version,
       main: relativeMainPath,
+      description: 'List of native addons dependency required by this project.',
       dependencies: {},
       author,
     }
@@ -87,7 +88,7 @@ function requireOutputPackage(pkgPath) {
 }
 
 // 发布文件资源至webpack
-function emitRawSourceFile(content, options) {
+async function emitRawSourceFile(content, options) {
   const {
     flags,
     output: { filename: namePattern, path: outputPath },
@@ -106,7 +107,13 @@ function emitRawSourceFile(content, options) {
   const relativeFromBuildOutputEmitFilePath = relativePath(compilerOutput.path, absFilename)
   const relativeFromRootContextEmitFilePath = relativePath(this.rootContext, absFilename)
 
+  // 发布文件到webpack文件管理
   this.emitFile(relativeFromBuildOutputEmitFilePath, content)
+
+  if (this.mode === 'development' && this.target === 'electron-renderer') {
+    // 客户端开发环境，会使用内存文件系统，require的插件，还需要写到物理磁盘上
+    await promisify(fs.outputFile)(absFilename, content)
+  }
 
   return {
     flags,
@@ -117,10 +124,10 @@ function emitRawSourceFile(content, options) {
 }
 
 //
-function generateProductionCodeForAddons(source, options) {
+async function generateProductionCodeForAddons(source, options) {
   return getCodeSnippet.apply(this, [
     {
-      ...emitRawSourceFile.apply(this, [source, options]),
+      ...(await emitRawSourceFile.apply(this, [source, options])),
       modulePath: normalizeModulePath.call(this, this),
       isMainProcess: this.target === 'electron-main',
     },
@@ -163,9 +170,9 @@ function getDevelopmentPathsForAddons(options, modulePackagePath) {
 }
 
 //
-function generateRequireModuleCode(content, options, modulePackagePath) {
+async function generateRequireModuleCode(content, options, modulePackagePath) {
   if (!modulePackagePath || this.mode !== 'development') {
-    return generateProductionCodeForAddons.apply(this, [content, options])
+    return await generateProductionCodeForAddons.apply(this, [content, options])
   }
   const paths = getDevelopmentPathsForAddons.apply(this, [options, modulePackagePath])
   return getCodeSnippet.apply(this, [
@@ -194,7 +201,7 @@ async function setNativeDependency(source, options, modulePackagePath) {
       output: { path: outputPath },
     } = options
     const outputPackagePath = path.resolve(outputPath, 'package.json')
-    const outputPackage = requireOutputPackage.apply(this, [outputPackagePath])
+    const outputPackage = readAddonsOutputPackageJson.apply(this, [outputPackagePath])
 
     if (projectDeps[name]) {
       outputPackage.dependencies[name] = projectDeps[name]
@@ -209,7 +216,7 @@ async function setNativeDependency(source, options, modulePackagePath) {
       outputPackage.dependencies[name] = version
     }
 
-    await promisify(fs.writeFile)(outputPackagePath, JSON.stringify(outputPackage))
+    await promisify(fs.outputFile)(outputPackagePath, JSON.stringify(outputPackage))
   } else {
     this.emitWarning(
       new Warning(`The native addons may need to be recompiled to fit the target environment`)
@@ -295,7 +302,7 @@ async function makeModuleCodeWithBindings(addonsSources, options) {
         addonsModulePackagePath,
       ])
     } else {
-      paths = emitRawSourceFile.apply(addonsLoaderContext, [source, options])
+      paths = await emitRawSourceFile.apply(addonsLoaderContext, [source, options])
     }
 
     addonsList.push({
@@ -359,7 +366,7 @@ function requireNativeAddonsFromResolver(options, callback) {
 async function makeDirectRequireAddonsModuleCode(...args) {
   await setNativeDependency.apply(this, args)
   this.addDependency(this.resourcePath)
-  return generateRequireModuleCode.apply(this, args)
+  return await generateRequireModuleCode.apply(this, args)
 }
 
 //

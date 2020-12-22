@@ -140,7 +140,7 @@ function overrideManifestPluginForEntry(chunkName, originalConfig) {
 //
 function addNativeAddonsLoader(webpackConfig) {
   const { resolve = {}, module = {} } = webpackConfig
-  const { extensions = [] } = resolve
+  const { extensions = [], alias = {} } = resolve
   const { rules = [] } = module
 
   if (!extensions.includes('.node')) {
@@ -164,7 +164,10 @@ function addNativeAddonsLoader(webpackConfig) {
     rules.push(addonsLoader)
   }
 
+  Object.assign(alias, { ...require('./native.loader.js').aliasMap })
+
   resolve.extensions = extensions
+  resolve.alias = alias
   webpackConfig.resolve = resolve
   module.rules = rules
   webpackConfig.module = module

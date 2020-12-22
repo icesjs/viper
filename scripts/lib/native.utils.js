@@ -1,4 +1,4 @@
-const fs = require('fs')
+const fs = require('fs-extra')
 const loaderName = 'native-addons-loader'
 
 //
@@ -8,7 +8,7 @@ module.exports = exports = {
   getBindingsCodeSnippet(addonsList) {
     return `/* ${addonsList.map(({ modulePath }) => modulePath).join('\n * ')} */
   
-  function getAddonsByBindingsName(name = 'bindings.node') {
+  function getAddonsByBindingName(name = 'bindings.node') {
     const addonsList = ${JSON.stringify(addonsList)};
     for (const addons of addonsList) {
       if (name === addons.name || \`\${name}.node\` === addons.name) {
@@ -17,7 +17,7 @@ module.exports = exports = {
     }
   }
  
-  function getAddonsObject(addons) {
+  function getAddonsModuleExports(addons) {
     const module = {exports: {}}
     try {
       const path = __non_webpack_require__('path');
@@ -64,7 +64,7 @@ module.exports = exports = {
       opts = { bindings: opts }
     }
     const { bindings } = Object.assign({}, opts);
-    const addons = getAddonsByBindingsName(bindings);
+    const addons = getAddonsByBindingName(bindings);
     if(!addons) {
       throw new Error('${loaderName}: Could not locate the bindings file.')
     }
@@ -72,7 +72,7 @@ module.exports = exports = {
       // un_safe
       return addons.path
     }
-    return getAddonsObject(addons)
+    return getAddonsModuleExports(addons)
   }
   
   exports.getRoot = () => '';
