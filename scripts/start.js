@@ -62,7 +62,7 @@ async function run() {
       // 进程2的开发服务器(wds)在启用状态下，可以通过发送http请求，来实现该目的
       {
         name: '   electron-app   ',
-        command: `wait-on '${indexURL}' && node scripts/lib/electron`,
+        command: `wait-on "${indexURL}" && node scripts/lib/electron`,
         env: { ...env, APP_INDEX_HTML_URL: indexURL },
       },
     ],

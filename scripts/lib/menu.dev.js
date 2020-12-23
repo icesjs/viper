@@ -30,6 +30,24 @@ module.exports = function getContextMenuTemplate(window, { x, y }) {
         }
       },
     },
+    {
+      label: isChina ? '退出应用' : 'Quit',
+      click: async () => {
+        const { response } = await dialog.showMessageBox(window, {
+          title: isChina ? '退出应用' : 'Quit The Application',
+          type: 'question',
+          message: isChina
+            ? '你确定要现在退出应用吗？'
+            : 'Are you sure you want to quit the app immediately?',
+          buttons: [isChina ? '取消' : 'Cancel', isChina ? '退出' : 'Yes'],
+          cancelId: 0,
+          defaultId: 1,
+        })
+        if (response) {
+          app.quit()
+        }
+      },
+    },
     { type: 'separator' },
     {
       label: isChina ? '在线资源' : 'Online Help',

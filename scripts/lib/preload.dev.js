@@ -21,6 +21,9 @@ app.commandLine.appendSwitch('enable-stack-dumping', 'true')
 app.commandLine.appendSwitch('v', '-1')
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true'
 
+// process.on('uncaughtException', errorHandler)
+// process.on('unhandledRejection', errorHandler)
+
 app.on('browser-window-created', (e, window) => {
   if (!/^false$/.test(process.env.ELECTRON_AUTO_OPEN_DEV_TOOLS)) {
     autoOpenDevTools(window)

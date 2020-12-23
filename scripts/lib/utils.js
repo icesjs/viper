@@ -1,5 +1,6 @@
 const fs = require('fs')
 const path = require('path')
+const findUp = require('find-up')
 
 module.exports = exports = {
   PROJECT_CONTEXT: fs.realpathSync(process.cwd()),
@@ -11,6 +12,24 @@ module.exports = exports = {
       relativePath = `./${relativePath}`
     }
     return relativePath
+  },
+
+  //
+  getInstalledCommandPath(module, cliName = module, cwd = process.cwd()) {
+    const moduleMain = require.resolve(module, { paths: [cwd] })
+    if (moduleMain) {
+      const pkg = findUp.sync('package.json', { cwd: path.dirname(moduleMain) })
+      if (pkg) {
+        const modulePath = path.dirname(pkg)
+        let { bin } = require(pkg)
+        if (typeof bin === 'object') {
+          bin = bin[cliName]
+        }
+        if (bin) {
+          return path.join(modulePath, bin)
+        }
+      }
+    }
   },
 
   //
