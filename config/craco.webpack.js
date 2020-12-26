@@ -1,7 +1,10 @@
 //
 const StyleLintPlugin = require('stylelint-webpack-plugin')
-const resolvePackage = require('../scripts/lib/resolve')
+const { resolvePackage } = require('../scripts/lib/resolve')
 const webpack = resolvePackage('webpack')
+const { createLogger } = require('../scripts/lib/logger')
+
+createLogger('builder-scripts:compile', true)
 
 const {
   PROJECT_CONTEXT,

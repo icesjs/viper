@@ -4,8 +4,7 @@ const cwd = fs.realpathSync(process.cwd())
 
 let reactScriptsPath
 
-//
-module.exports = exports = function resolvePackage(pack) {
+function resolvePackage(pack) {
   if (!reactScriptsPath) {
     reactScriptsPath = resolveReactScriptsPath()
   }
@@ -22,10 +21,6 @@ module.exports = exports = function resolvePackage(pack) {
   }
 }
 
-exports.resolveReactScriptsPath = resolveReactScriptsPath
-
-exports.cwd = cwd
-
 function resolveReactScriptsPath() {
   let ownPath
   try {
@@ -41,4 +36,11 @@ function resolveReactScriptsPath() {
     ownPath = ''
   }
   return (reactScriptsPath = ownPath)
+}
+
+//
+module.exports = {
+  cwd,
+  resolvePackage,
+  resolveReactScriptsPath,
 }

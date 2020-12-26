@@ -1,15 +1,14 @@
 const path = require('path')
 const { createLogger } = require('../scripts/lib/logger')
-const resolve = require('../scripts/lib/resolve')
+const { resolvePackage: resolve } = require('../scripts/lib/resolve')
 
+createLogger('builder-scripts:compile', true)
 //
 const webpack = resolve('webpack')
 const TerserPlugin = resolve('terser-webpack-plugin')
 const CaseSensitivePathsPlugin = resolve('case-sensitive-paths-webpack-plugin')
 const { CleanWebpackPlugin } = require('clean-webpack-plugin')
 const { aliasMap } = require('../scripts/lib/native.loader')
-
-createLogger('builder-scripts:electron', true)
 
 const {
   MAIN_ENTRY,

@@ -1,30 +1,20 @@
+// setup需要最先执行
+require('./lib/setup')('development')
+
 //
 const { format: urlFormat } = require('url')
-const portfinder = require('portfinder')
 const concurrently = require('concurrently')
-const dotenv = require('./lib/dotenv')
-const { processExitError } = require('./lib/utils')
+const { printProcessErrorAndExit, getAvailablePort } = require('./lib/utils')
+const { PROCESS_DETACHED } = require('./lib/electron.helper')
 
-//
-require('./lib/setup')
-
-run().catch(processExitError)
+// 运行构建
+run().catch(printProcessErrorAndExit)
 
 async function run() {
   //
-  const NODE_ENV = 'development'
-  const { DEBUG, HTTPS, HOST, PORT, ...restEnvs } = dotenv.parseEnv(NODE_ENV)
-  const env = { ...process.env, ...restEnvs, NODE_ENV }
-  if (DEBUG && DEBUG !== 'false') {
-    env.DEBUG = DEBUG
-  } else {
-    delete env.DEBUG
-  }
+  const { HTTPS, HOST, PORT } = process.env
+  const port = await getAvailablePort(PORT)
 
-  const port = await portfinder.getPortPromise({
-    port: +PORT,
-    stopPort: +PORT + 1000,
-  })
   const indexURL = urlFormat({
     protocol: `http${HTTPS ? 's' : ''}`,
     hostname: HOST || 'localhost',
@@ -41,7 +31,7 @@ async function run() {
         name: '   compile-main   ',
         command: 'webpack -c config/electron.webpack.js -w --no-hot --no-color',
         env: {
-          ...env,
+          ...process.env,
           APP_INDEX_HTML_URL: indexURL,
           WEBPACK_ELECTRON_ENTRY_PRELOAD: require.resolve('./lib/preload.dev.js'),
         },
@@ -52,7 +42,7 @@ async function run() {
       {
         name: ' compile-renderer ',
         command: 'craco start',
-        env: { ...env, HTTPS, HOST, PORT: `${port}`, BROWSER: 'none' },
+        env: { ...process.env, PORT: `${port}`, BROWSER: 'none' },
       },
       // 进程3
       // 监听electron运行状况的进程
@@ -62,8 +52,10 @@ async function run() {
       // 进程2的开发服务器(wds)在启用状态下，可以通过发送http请求，来实现该目的
       {
         name: '   electron-app   ',
-        command: `wait-on "${indexURL}" && node scripts/lib/electron`,
-        env: { ...env, APP_INDEX_HTML_URL: indexURL },
+        command: `wait-on "${indexURL}" && node scripts/lib/${
+          PROCESS_DETACHED ? 'electron.win' : 'electron.main'
+        }`,
+        env: { ...process.env, APP_INDEX_HTML_URL: indexURL },
       },
     ],
     {

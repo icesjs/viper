@@ -1,24 +1,19 @@
+// setup需要最先执行
+require('./lib/setup')('production')
+
+//
 const path = require('path')
 const concurrently = require('concurrently')
 const { RENDERER_BUILD_PATH, MAIN_BUILD_PATH } = require('../config/consts')
-const dotenv = require('./lib/dotenv')
-const { relativePath, processExitError } = require('./lib/utils')
+const { relativePath, printProcessErrorAndExit } = require('./lib/utils')
+const { PROCESS_DETACHED } = require('./lib/electron.helper')
 
-require('./lib/setup')
-
-run().catch(processExitError)
+// 运行构建
+run().catch(printProcessErrorAndExit)
 
 async function run() {
-  const NODE_ENV = 'production'
-  const { DEBUG, GENERATE_SOURCEMAP, ...restEnvs } = dotenv.parseEnv(NODE_ENV)
-  const env = { ...process.env, ...restEnvs, NODE_ENV }
-  const isDebugMode = DEBUG && DEBUG !== 'false'
-  if (isDebugMode) {
-    env.DEBUG = DEBUG
-  } else {
-    delete env.DEBUG
-  }
-
+  const { DEBUG, GENERATE_SOURCEMAP } = process.env
+  const isDebugMode = DEBUG !== 'false'
   const absIndexPath = path.resolve(RENDERER_BUILD_PATH, 'index.html')
   const relIndexPath = relativePath(MAIN_BUILD_PATH, absIndexPath)
 
@@ -29,7 +24,7 @@ async function run() {
         name: '   compile-main   ',
         command: 'webpack -c config/electron.webpack.js --no-color',
         env: {
-          ...env,
+          ...process.env,
           APP_INDEX_HTML_PATH: relIndexPath,
           WEBPACK_ELECTRON_ENTRY_PRELOAD: require.resolve('./lib/preload.prod.js'),
         },
@@ -38,7 +33,7 @@ async function run() {
       {
         name: ' compile-renderer ',
         command: 'craco build',
-        env: { ...env, GENERATE_SOURCEMAP: isDebugMode || GENERATE_SOURCEMAP },
+        env: { ...process.env, GENERATE_SOURCEMAP: isDebugMode || GENERATE_SOURCEMAP },
       },
     ],
     {
@@ -47,15 +42,13 @@ async function run() {
     }
   )
 
-  //
-
   // 开启调试模式，启动Electron应用
   if (isDebugMode) {
     await concurrently([
       {
         name: '   electron-app   ',
-        command: `node scripts/lib/electron`,
-        env: { ...env },
+        command: `node scripts/lib/${PROCESS_DETACHED ? 'electron.win' : 'electron.main'}`,
+        env: { ...process.env },
       },
     ])
   }

@@ -9,51 +9,77 @@ const usedColor = {
   log: 'cyan',
 }
 
-module.exports = exports = {
-  createLogger(id = 'builder-scripts', replaceConsole = false) {
-    const logger = log.create(id)
-    logger.transports.file.level = false
-    logger.transports.console.format = '{text}'
+const root = process.cwd()
+const cRoot = 'cyan'
 
-    for (const name of Object.keys(usedColor)) {
-      setColor(logger, name, replaceConsole)
+function createLogger(id = 'builder-scripts', replaceConsole = false) {
+  let logger = log.create(id)
+  logger.console = { ...console }
+  logger.transports.file.level = false
+  logger.transports.console.format = '{text}'
+
+  for (const type of Object.keys(usedColor)) {
+    logger[type] = getLogHandler(logger, type)
+    if (replaceConsole) {
+      console[type] = logger[type]
     }
+  }
 
-    return logger
-  },
+  //
+  makeEchoTextProxy(logger)
+
+  if (process.env.WRITE_LOGS_TO_FILE) {
+    logger = writeLogsToFile(logger)
+  }
+
+  return logger
 }
 
-exports.log = exports.createLogger()
-
 //
-function setColor(logger, name, replaceConsole) {
-  const fn = logger[name]
-  logger[name] = function (...args) {
+function getLogHandler(logger, logType) {
+  const log = logger[logType]
+  return (...args) => {
+    let isError = logType === 'error'
     if (args[0] instanceof Error) {
-      args[0] = args[0].message
+      isError = true
+      args[0] = stringifyError(args[0])
     }
-
-    if (args.length === 1 && /string|number|boolean/.test(typeof args[0])) {
-      const cText = color(args[0], (text) => {
+    const isText = /string|number|boolean/.test(typeof args[0])
+    if (isText && args.length === 1) {
+      const cText = colorify(args[0], (text) => {
+        if (isError) {
+          return colorifyError(text)
+        }
         return chalk[
           /^\s*\w?(error|warning|warn):?\b/i.test(text)
             ? usedColor[RegExp.$1.replace(/ing$/i, '').toLowerCase()]
-            : usedColor[name]
+            : usedColor[logType]
         ](text)
       })
 
-      fn.call(logger, `${cText}`)
+      log.call(logger, `${cText}`)
     } else {
-      fn.apply(logger, args)
+      log.apply(logger, args)
     }
-  }
-  if (replaceConsole) {
-    console[name] = logger[name]
   }
 }
 
 //
-function color(text, handle) {
+function stringifyError(err) {
+  let stack = err.stack
+  const msg = err.message
+  if (msg && stack) {
+    stack = `${stack}`
+    const firstLF = stack.indexOf('\n')
+    if (firstLF !== -1) {
+      stack = stack.substring(0, firstLF).replace(msg, '') + stack.substring(firstLF)
+    }
+  }
+  return `${/^error:?\s*/i.test(msg) ? msg : `Error: ${msg}`}${stack ? `\n${stack}\n` : ''}`
+}
+
+//
+function colorify(text, colorSetter) {
   const pieces = `${text}`.match(/.*?(\n+|.$)/g) || [text]
   return pieces.reduce(
     (str, p) =>
@@ -63,8 +89,91 @@ function color(text, handle) {
         .match(/[^\n]+|\n+|^/g)
         .map((s) => s.replace(/^[a-z]/, (c) => c.toUpperCase()))
         .filter((s) => s)
-        .map((s) => (/\n/.test(s) ? s : handle(s)))
+        .map((s) => (/\n/.test(s) ? s : colorSetter(s)))
         .join(''),
     ''
   )
+}
+
+//
+function colorifyError(text) {
+  if (/^[^\s]|[/\\]node_modules[/\\]/.test(text)) {
+    return chalk[usedColor['error']](text)
+  }
+  if (text.indexOf(root) !== -1) {
+    return chalk[cRoot](text)
+  }
+  return chalk.gray(text)
+}
+
+//
+function makeEchoTextProxy(logger) {
+  logger.text = new Proxy(logger, {
+    get(target, prop) {
+      const val = target[prop]
+      if (typeof val === 'function') {
+        return new Proxy(val, {
+          apply(tar, ctx, args) {
+            return stripColor(`${args[0] instanceof Error ? stringifyError(args[0]) : args[0]}`)
+          },
+        })
+      }
+      return val
+    },
+  })
+}
+
+//
+function writeLogsToFile(log, handle = null) {
+  const EOL = require('os').EOL
+  const path = require('path')
+  const { outputFileSync, appendFileSync } = require('fs-extra')
+  const env = path.resolve('app.env.json')
+  const out = path.resolve('app.out.log')
+  const err = path.resolve('app.err.log')
+  let logProxy
+  //
+  process.on('uncaughtException', (err) => {
+    logProxy.error(err)
+    process.exit(1)
+  })
+  process.on('unhandledRejection', (reason) => {
+    logProxy.error(reason)
+  })
+  //
+  if (typeof handle !== 'function') {
+    const timeString = new Date().toLocaleTimeString()
+    const pid = process.pid
+    outputFileSync(env, JSON.stringify(process.env))
+    outputFileSync(out, `[${timeString}] #pid: ${pid}${EOL}`)
+    outputFileSync(err, `[${timeString}] #pid: ${pid}${EOL}`)
+  }
+  //
+  logProxy = new Proxy(log, {
+    get(target, prop) {
+      const val = target[prop]
+      if (typeof val === 'function') {
+        return (txt, ...args) => {
+          if (typeof handle === 'function') {
+            handle([txt, ...args], target.text[prop](txt))
+          } else {
+            val.apply(target, [txt, ...args])
+            appendFileSync(
+              prop === 'error' || txt instanceof Error ? err : out,
+              `[${new Date().toLocaleTimeString()}] ${target.text[prop](txt)}${EOL}`
+            )
+          }
+        }
+      }
+      return val
+    },
+  })
+  return logProxy
+}
+
+//
+module.exports = {
+  createLogger,
+  writeLogsToFile,
+  log: createLogger(),
 }

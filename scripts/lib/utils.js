@@ -1,6 +1,8 @@
 const fs = require('fs')
 const path = require('path')
 const findUp = require('find-up')
+const portfinder = require('portfinder')
+const { log } = require('./logger')
 
 module.exports = exports = {
   PROJECT_CONTEXT: fs.realpathSync(process.cwd()),
@@ -30,6 +32,15 @@ module.exports = exports = {
         }
       }
     }
+  },
+
+  //
+  async getAvailablePort(defaultPort) {
+    defaultPort = +defaultPort || 5000
+    return portfinder.getPortPromise({
+      port: defaultPort,
+      stopPort: defaultPort + 1000,
+    })
   },
 
   //
@@ -68,11 +79,20 @@ module.exports = exports = {
     process['on']('exit', wrapper)
   },
 
-  processExitError(error = {}) {
-    for (const { exitCode } of Array.isArray(error) ? error : [error]) {
-      if (!Number.isNaN(exitCode)) {
+  //
+  printProcessErrorAndExit(error = {}) {
+    let hasError
+    for (const err of Array.isArray(error) ? error : [error]) {
+      const { exitCode, code, message } = err
+      if (err instanceof Error && (code || message)) {
+        hasError = true
+        log.error(`${code ? `\n${code}` : ''}${message ? `\n${message}` : ''}`)
+      } else if (!Number.isNaN(exitCode)) {
         process.exit(exitCode)
       }
+    }
+    if (hasError) {
+      process.exit(1)
     }
   },
 }

@@ -41,7 +41,7 @@ module.exports = {
 const path = require('path')
 const { mergeWithCustomize } = require('webpack-merge')
 const { addBeforeLoader, loaderByName } = require('@craco/craco')
-const resolvePackage = require('./resolve')
+const { resolvePackage, resolveReactScriptsPath, cwd } = require('./resolve')
 const { NATIVE_ADDONS_OUTPUT_PATH } = require('../../config/consts')
 
 //
@@ -106,9 +106,9 @@ function overrideOutputPath(context, customizeConfig) {
 
 //
 function overrideCRAPaths({ paths }, prop, val) {
-  const ownPath = paths['ownPath'] || resolvePackage.resolveReactScriptsPath()
+  const ownPath = paths['ownPath'] || resolveReactScriptsPath()
   const modulePath = require.resolve(path.join(ownPath, 'config', 'paths.js'), {
-    paths: [resolvePackage.cwd],
+    paths: [cwd],
   })
   paths[prop] = val
   const cached = require.cache[modulePath].exports
@@ -149,7 +149,7 @@ function addNativeAddonsLoader(webpackConfig) {
 
   const addonsLoader = {
     test: /\.node$/,
-    loader: path.join(resolvePackage.cwd, 'scripts/lib/native.loader.js'),
+    loader: path.join(cwd, 'scripts/lib/native.loader.js'),
     options: {
       output: {
         path: NATIVE_ADDONS_OUTPUT_PATH,
