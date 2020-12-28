@@ -232,7 +232,7 @@ module.exports = {
         () => process.env.LOG_PREFIX_COLOR_SCRIPT,
         true
       )
-      return defaultScriptLog
     }
+    return defaultScriptLog
   },
 }
