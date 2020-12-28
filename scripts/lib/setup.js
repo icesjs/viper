@@ -45,7 +45,7 @@ function setEnvironment(NODE_ENV) {
       delete envs[name]
     }
   }
-  Object.assign(envFromProcess, envFromConfig, { NODE_ENV })
+  Object.assign(envFromProcess, envFromConfig, { NODE_ENV, FORCE_COLOR: 2 })
   if (envFromProcess.DEBUG === 'false') {
     delete envFromProcess.DEBUG
   }
