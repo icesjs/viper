@@ -47,7 +47,9 @@ class Runner extends EventEmitter {
     const { childProcess } = this
     if (childProcess) {
       this.childProcess = null
-      if (childProcess.kill('SIGTERM')) {
+      const isWin = process.platform === 'win32'
+      const killed = childProcess.kill(isWin ? 'SIGKILL' : 'SIGTERM')
+      if (!isWin && !killed) {
         childProcess.kill('SIGKILL')
       }
       this.emit('stop', childProcess)

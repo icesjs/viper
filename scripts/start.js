@@ -45,6 +45,14 @@ async function run() {
     log.info('Relaunched the Electron.app')
   })
 
+  // Renderer
+  runScript({
+    logger: createNamedLogger('renderer', LOG_PREFIX_COLOR_RENDERER),
+    script: require.resolve('@craco/craco/scripts/start', { paths: [process.cwd()] }),
+    env: { PORT: `${port}`, BROWSER: 'none' },
+    crashRestarts: 0,
+  }).start()
+
   // Main
   const mainRunner = runWebpack({
     logger: createNamedLogger('main', LOG_PREFIX_COLOR_MAIN),
@@ -58,14 +66,6 @@ async function run() {
     beforeWatchRun: () => log.info('Compiling the main files for changes... '),
     afterWatchRun: () => AUTO_RELAUNCH_APP && electronRunner.pid && electronRunner.restart(),
   }).then(() => log.info('Watching the main files for updates...'))
-
-  // Renderer
-  runScript({
-    logger: createNamedLogger('renderer', LOG_PREFIX_COLOR_RENDERER),
-    script: require.resolve('@craco/craco/scripts/start', { paths: [process.cwd()] }),
-    env: { PORT: `${port}`, BROWSER: 'none' },
-    crashRestarts: 0,
-  }).start()
 
   await Promise.all([mainRunner, wait({ resources: [indexURL], delay: 2000 })])
 

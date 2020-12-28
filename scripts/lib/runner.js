@@ -49,10 +49,7 @@ function runScript({ logger, script, exitHandle, args = [], crashRestarts = 3, .
   const runner = respawn(script, args, options)
   if (typeof exitHandle !== 'function') {
     exitHandle = (code, signal) => {
-      if (code === 0) {
-        process.exit(0)
-      }
-      if (process.env.NODE_ENV !== 'development') {
+      if (code === 0 || process.env.NODE_ENV !== 'development') {
         process.exit(code)
       }
       // code=15为开发菜单里定义的重启退出代码
