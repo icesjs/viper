@@ -6,76 +6,116 @@ const usedColor = {
   info: 'green',
   warn: 'yellow',
   error: 'red',
-  log: 'cyan',
+  log: '',
 }
 
+const defaultScriptLogName = 'script'
 const root = process.cwd()
 const cRoot = 'cyan'
 
-function createLogger(id = 'builder-scripts', replaceConsole = false) {
+function createLogger(...args) {
+  const { id, replaceConsole, format, colorFormat, file } = getObjectOptions(args)
+
   let logger = log.create(id)
   logger.console = { ...console }
   logger.transports.file.level = false
-  logger.transports.console.format = '{text}'
+  logger.transports.console.format = format
 
   for (const type of Object.keys(usedColor)) {
-    logger[type] = getLogHandler(logger, type)
+    logger[type] = getLogHandler(logger, type, colorFormat)
     if (replaceConsole) {
       console[type] = logger[type]
     }
   }
-
-  //
-  makeEchoTextProxy(logger)
-
-  if (process.env.WRITE_LOGS_TO_FILE) {
-    logger = writeLogsToFile(logger)
+  makeEchoTextLogger(logger)
+  if (file) {
+    logger = makeWriteFileLogger(logger)
   }
 
   return logger
 }
 
-//
-function getLogHandler(logger, logType) {
-  const log = logger[logType]
-  return (...args) => {
-    let isError = logType === 'error'
-    if (args[0] instanceof Error) {
-      isError = true
-      args[0] = stringifyError(args[0])
+function getObjectOptions(args) {
+  let options
+  if (typeof args[0] === 'object') {
+    options = args[0]
+  } else {
+    options = {
+      id: args[0],
+      replaceConsole: args[1],
+      format: args[2],
     }
-    const isText = /string|number|boolean/.test(typeof args[0])
-    if (isText && args.length === 1) {
-      const cText = colorify(args[0], (text) => {
-        if (isError) {
-          return colorifyError(text)
-        }
-        return chalk[
-          /^\s*\w?(error|warning|warn):?\b/i.test(text)
-            ? usedColor[RegExp.$1.replace(/ing$/i, '').toLowerCase()]
-            : usedColor[logType]
-        ](text)
-      })
+  }
+  return Object.assign(
+    {
+      id: 'builder-scripts',
+      replaceConsole: false,
+      format: '{text}',
+    },
+    options
+  )
+}
 
-      log.call(logger, `${cText}`)
-    } else {
-      log.apply(logger, args)
+//
+function getLogHandler(logger, type, colorFormat) {
+  const getColorSetter = (text) => {
+    const color = /^\s*\w?(error|warning|warn):?\b/i.test(text)
+      ? usedColor[RegExp.$1.replace(/ing$/i, '').toLowerCase()]
+      : usedColor[type]
+    return color ? chalk[color] : (str) => str
+  }
+  const originalLog = logger[type]
+
+  return (...args) => {
+    if (args.length > 1) {
+      originalLog.apply(logger, args)
+      return
     }
+
+    let msg = args[0]
+    const isError = type === 'error' || msg instanceof Error
+    if (isError) {
+      msg = stringifyError(msg)
+    }
+
+    if (typeof msg === 'string' || Buffer.isBuffer(msg)) {
+      msg = `${msg}`.replace(/\r\n?/g, '\n').replace(/\u2026/g, '...')
+    }
+
+    let cText
+    if (typeof colorFormat === 'function') {
+      cText = colorFormat(msg)
+    } else {
+      cText = colorify(`${msg}`, (line) => {
+        if (isError) {
+          return colorifyError(line)
+        }
+        return getColorSetter(line)(line)
+      })
+    }
+
+    originalLog.call(logger, `${cText}`)
   }
 }
 
 //
 function stringifyError(err) {
-  let stack = err.stack
-  const msg = err.message
-  if (msg && stack) {
-    stack = `${stack}`
-    const firstLF = stack.indexOf('\n')
-    if (firstLF !== -1) {
-      stack = stack.substring(0, firstLF).replace(msg, '') + stack.substring(firstLF)
+  let msg
+  let stack
+  if (err instanceof Error) {
+    msg = err.message
+    stack = err.stack
+    if (msg && stack) {
+      stack = `${stack}`
+      const firstLF = stack.indexOf('\n')
+      if (firstLF !== -1) {
+        stack = stack.substring(0, firstLF).replace(msg, '') + stack.substring(firstLF)
+      }
     }
+  } else {
+    msg = `${err}`
   }
-  return `${/^error:?\s*/i.test(msg) ? msg : `Error: ${msg}`}${stack ? `\n${stack}\n` : ''}`
+  return `${msg}${stack ? stack : ''}`
 }
 
 //
@@ -85,9 +125,7 @@ function colorify(text, colorSetter) {
     (str, p) =>
       str +
       stripColor(p)
-        .replace(/\s*\[webpack-cli]\s*/i, '')
         .match(/[^\n]+|\n+|^/g)
-        .map((s) => s.replace(/^[a-z]/, (c) => c.toUpperCase()))
         .filter((s) => s)
         .map((s) => (/\n/.test(s) ? s : colorSetter(s)))
         .join(''),
@@ -107,73 +145,94 @@ function colorifyError(text) {
 }
 
 //
-function makeEchoTextProxy(logger) {
+function makeEchoTextLogger(logger) {
   logger.text = new Proxy(logger, {
     get(target, prop) {
       const val = target[prop]
-      if (typeof val === 'function') {
-        return new Proxy(val, {
-          apply(tar, ctx, args) {
-            return stripColor(`${args[0] instanceof Error ? stringifyError(args[0]) : args[0]}`)
-          },
-        })
+      if (typeof val !== 'function') {
+        return val
       }
-      return val
+      return new Proxy(val, {
+        apply(tar, ctx, args) {
+          return stripColor(`${args[0] instanceof Error ? stringifyError(args[0]) : args[0]}`)
+        },
+      })
     },
   })
 }
 
 //
-function writeLogsToFile(log, handle = null) {
+function makeWriteFileLogger(log) {
   const EOL = require('os').EOL
   const path = require('path')
   const { outputFileSync, appendFileSync } = require('fs-extra')
   const env = path.resolve('app.env.json')
   const out = path.resolve('app.out.log')
   const err = path.resolve('app.err.log')
-  let logProxy
-  //
-  process.on('uncaughtException', (err) => {
-    logProxy.error(err)
-    process.exit(1)
-  })
-  process.on('unhandledRejection', (reason) => {
-    logProxy.error(reason)
-  })
-  //
-  if (typeof handle !== 'function') {
-    const timeString = new Date().toLocaleTimeString()
-    const pid = process.pid
-    outputFileSync(env, JSON.stringify(process.env))
-    outputFileSync(out, `[${timeString}] #pid: ${pid}${EOL}`)
-    outputFileSync(err, `[${timeString}] #pid: ${pid}${EOL}`)
-  }
-  //
-  logProxy = new Proxy(log, {
+
+  const timeString = new Date().toLocaleTimeString()
+  const pid = process.pid
+  outputFileSync(env, JSON.stringify(process.env))
+  outputFileSync(out, `[${timeString}] #pid: ${pid}${EOL}`)
+  outputFileSync(err, `[${timeString}] #pid: ${pid}${EOL}`)
+
+  return new Proxy(log, {
     get(target, prop) {
       const val = target[prop]
-      if (typeof val === 'function') {
-        return (txt, ...args) => {
-          if (typeof handle === 'function') {
-            handle([txt, ...args], target.text[prop](txt))
-          } else {
-            val.apply(target, [txt, ...args])
-            appendFileSync(
-              prop === 'error' || txt instanceof Error ? err : out,
-              `[${new Date().toLocaleTimeString()}] ${target.text[prop](txt)}${EOL}`
-            )
-          }
-        }
+      if (typeof val !== 'function') {
+        return val
       }
-      return val
+      return new Proxy(val, {
+        apply(tar, ctx, args) {
+          Reflect.apply(tar, target, args)
+          let text = `[${new Date().toLocaleTimeString()}] ${target.text[prop](args[0])}`
+          text = text.replace(/^\s*\r?\n|\s*\r?\n$/, '').replace(/\r?\n/g, EOL) + EOL
+          appendFileSync(prop === 'error' || args[0] instanceof Error ? err : out, text)
+        },
+      })
     },
   })
-  return logProxy
 }
 
-//
+function createNamedLogger(name, nameColor, stripColor) {
+  const names = (createNamedLogger.registeredNames = createNamedLogger.registeredNames || [
+    defaultScriptLogName,
+  ])
+  const id = name.trim()
+  names.push(id)
+  names.sort((a, b) => b.length - a.length)
+  return createLogger({
+    id,
+    colorFormat: !stripColor && ((str) => str),
+    file: process.env.WRITE_LOGS_TO_FILE !== 'false',
+    format: ({ data }) => {
+      const maxLen = names[0].length
+      const padLength = Math.floor((maxLen - id.length) / 2)
+      const name = id.padEnd(padLength + id.length).padStart(maxLen)
+      const color = typeof nameColor === 'function' ? nameColor() : nameColor
+      const p = (chalk[color] || chalk['gray'])(`[ ${name} ] `)
+      return data
+        .join('')
+        .replace(/^\s*\n|\n\s*$/, '')
+        .match(/[^\n]+|\n+|^/g)
+        .map((l) => (/\n(\n+)?/.test(l) ? `\n${RegExp.$1.replace(/\n/g, `${p}\n`)}` : `${p}${l}`))
+        .join('')
+    },
+  })
+}
+
+let defaultScriptLog
 module.exports = {
   createLogger,
-  writeLogsToFile,
-  log: createLogger(),
+  createNamedLogger,
+  get log() {
+    if (!defaultScriptLog) {
+      defaultScriptLog = createNamedLogger(
+        defaultScriptLogName,
+        () => process.env.LOG_PREFIX_COLOR_SCRIPT,
+        true
+      )
+      return defaultScriptLog
+    }
+  },
 }

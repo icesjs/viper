@@ -1,31 +1,14 @@
 // 开发模式下才会加载此脚本
-// 用于设置辅助开发工具等
-
-// const ev = require('fsevents')
-//
-// const he = require('../test-addons')
-//
-// const hellow = require('hello_world')
-//
-// const hellow_other = require('hello_world_other')
-//
-// const hellow_other_3 = require('../../src/addons/hello_other_three')
 
 const getContextMenuTemplate = require('./menu.dev')
 
 const useModuleProxy = process.env.USE_MODULE_PROXY_FOR_ELECTRON !== 'false'
 const { app, Menu } = useModuleProxy ? proxyElectron() : require('electron')
 
-app.commandLine.appendSwitch('enable-logging', 'true')
-app.commandLine.appendSwitch('enable-stack-dumping', 'true')
-app.commandLine.appendSwitch('v', '-1')
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true'
 
-// process.on('uncaughtException', errorHandler)
-// process.on('unhandledRejection', errorHandler)
-
 app.on('browser-window-created', (e, window) => {
-  if (!/^false$/.test(process.env.ELECTRON_AUTO_OPEN_DEV_TOOLS)) {
+  if (process.env.ELECTRON_AUTO_OPEN_DEV_TOOLS !== 'false') {
     autoOpenDevTools(window)
   }
   window.webContents.on('context-menu', (e, cord) => {
@@ -36,7 +19,7 @@ app.on('browser-window-created', (e, window) => {
 
 //
 function autoOpenDevTools(window) {
-  window.once('show', () => window.webContents.openDevTools())
+  window['once']('show', () => window.webContents.openDevTools())
 }
 
 //
@@ -116,7 +99,7 @@ function proxyBrowserWindowInstance(BrowserWindow, opts) {
 
 //
 function proxyBrowserWindowInstanceShow(opts, afterCreated) {
-  if (!process.env.WINDOW_FIRST_SHOW_INACTIVE) {
+  if (process.env.WINDOW_FIRST_SHOW_INACTIVE === 'false') {
     return
   }
   const { show: defaultShow } = opts

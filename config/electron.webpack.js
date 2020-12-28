@@ -1,8 +1,6 @@
 const path = require('path')
-const { createLogger } = require('../scripts/lib/logger')
 const { resolvePackage: resolve } = require('../scripts/lib/resolve')
 
-createLogger('builder-scripts:compile', true)
 //
 const webpack = resolve('webpack')
 const TerserPlugin = resolve('terser-webpack-plugin')
@@ -18,8 +16,8 @@ const {
   MAIN_CONTEXT_ALIAS,
   NATIVE_ADDONS_OUTPUT_PATH,
   DISABLE_USE_GLOBAL,
-  PROJECT_CONTEXT: context,
 } = require('./consts')
+const context = process.cwd()
 
 const {
   DEBUG,
@@ -36,16 +34,17 @@ const {
 
 const isEnvDevelopment = NODE_ENV === 'development'
 const isEnvProduction = NODE_ENV === 'production'
-const isDebugMode = DEBUG && DEBUG !== 'false'
+const isDebugMode = !!DEBUG
 const mode = isEnvDevelopment ? 'development' : 'production'
 const shouldUseSourceMap = isDebugMode || GENERATE_SOURCEMAP !== 'false'
+const MAIN_PRELOAD = path.join(__dirname, 'preload.main.js')
 
 //
 module.exports = {
   mode,
   context,
   target: 'electron-main',
-  entry: [WEBPACK_ELECTRON_ENTRY_PRELOAD, MAIN_ENTRY].filter(Boolean),
+  entry: [WEBPACK_ELECTRON_ENTRY_PRELOAD, MAIN_PRELOAD, MAIN_ENTRY].filter(Boolean),
   output: {
     path: MAIN_BUILD_PATH,
     filename: MAIN_BUILD_FILE_NAME,
@@ -122,6 +121,7 @@ module.exports = {
   //
   stats: {
     all: false,
+    colors: true,
     warnings: true,
     errors: true,
     errorDetails: true,

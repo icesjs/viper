@@ -19,7 +19,6 @@ module.exports = {
   // native addons
   NATIVE_ADDONS_OUTPUT_PATH: resolve('build/addons/'),
   // misc
-  PROJECT_CONTEXT: cwd,
   DISABLE_USE_GLOBAL: true,
   CSS_MODULE_LOCAL_IDENT_NAME: '[local]___[hash:base64:5]',
 }

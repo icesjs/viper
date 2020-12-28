@@ -1,15 +1,22 @@
 const fs = require('fs-extra')
 const path = require('path')
+const logger = require('./logger')
 const dotenv = require('./dotenv')
+const { relativePath, isProtectedDirectory } = require('./utils')
 const {
   MAIN_BUILD_PATH,
   MAIN_BUILD_FILE_NAME,
   NATIVE_ADDONS_OUTPUT_PATH,
 } = require('../../config/consts')
-const { relativePath, isProtectedDirectory, PROJECT_CONTEXT: cwd } = require('./utils')
-const { createLogger } = require('./logger')
 
-createLogger('builder-scripts:script', true)
+//
+function catchUncaughtException() {
+  process.on('unhandledRejection', (reason) => logger.log.error(reason))
+  process.on('uncaughtException', (err) => {
+    logger.log.error(err)
+    process.exit(1)
+  })
+}
 
 //
 function getReady() {
@@ -17,7 +24,7 @@ function getReady() {
   const main = path.resolve(MAIN_BUILD_PATH, MAIN_BUILD_FILE_NAME)
 
   // 根据配置文件中的定义参数，更新应用的执行入口信息
-  fs.writeFileSync(index, `require('${relativePath(cwd, main)}')\n`)
+  fs.writeFileSync(index, `require('${relativePath(process.cwd(), main)}')\n`)
 
   // 清空addons构建输出目录
   if (!isProtectedDirectory(NATIVE_ADDONS_OUTPUT_PATH)) {
@@ -46,6 +53,7 @@ function setEnvironment(NODE_ENV) {
 }
 
 //
+catchUncaughtException()
 getReady()
 
 // 设置环境变量

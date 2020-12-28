@@ -40,7 +40,6 @@ function resolveReactScriptsPath() {
 
 //
 module.exports = {
-  cwd,
   resolvePackage,
   resolveReactScriptsPath,
 }

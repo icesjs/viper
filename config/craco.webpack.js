@@ -1,20 +1,19 @@
 //
+const path = require('path')
 const StyleLintPlugin = require('stylelint-webpack-plugin')
 const { resolvePackage } = require('../scripts/lib/resolve')
 const webpack = resolvePackage('webpack')
-const { createLogger } = require('../scripts/lib/logger')
-
-createLogger('builder-scripts:compile', true)
 
 const {
-  PROJECT_CONTEXT,
   RENDERER_CONTEXT,
   RENDERER_CONTEXT_ALIAS,
   RENDERER_ENTRY,
   RENDERER_BUILD_PATH,
 } = require('./consts')
+const cwd = process.cwd()
 
 const { RENDERER_BUILD_TARGET } = process.env
+const RENDERER_PRELOAD = path.join(__dirname, 'preload.renderer.js')
 const target = !/^(web|electron-renderer)$/.test(RENDERER_BUILD_TARGET)
   ? 'electron-renderer'
   : RegExp.$1
@@ -23,7 +22,7 @@ const target = !/^(web|electron-renderer)$/.test(RENDERER_BUILD_TARGET)
 const customizeWebpackConfig = {
   target,
   entry: {
-    index: RENDERER_ENTRY,
+    index: [RENDERER_PRELOAD, RENDERER_ENTRY],
   },
   output: { path: RENDERER_BUILD_PATH },
   resolve: {
@@ -33,7 +32,7 @@ const customizeWebpackConfig = {
   },
   plugins: [
     new StyleLintPlugin({
-      configBasedir: PROJECT_CONTEXT,
+      configBasedir: cwd,
       context: RENDERER_CONTEXT,
       files: ['**/*.{css,scss}'],
     }),

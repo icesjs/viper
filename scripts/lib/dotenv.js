@@ -1,7 +1,7 @@
 const fs = require('fs')
 const path = require('path')
 const dotenv = require('dotenv')
-const { PROJECT_CONTEXT: cwd } = require('./utils')
+const cwd = process.cwd()
 
 function parseFile(filename) {
   const file = filename ? path.resolve(cwd, filename) : path.join(__dirname, '.env')

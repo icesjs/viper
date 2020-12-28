@@ -1,123 +1,82 @@
 const { EventEmitter } = require('events')
-const execa = require('execa')
+const spawn = require('cross-spawn')
 
-// 子进程运行监视
-class Monitor extends EventEmitter {
-  constructor({ sleep, maxRestarts, spawnSettings }) {
+class Runner extends EventEmitter {
+  constructor(spawnSettings) {
     super()
     this.spawnSettings = spawnSettings
-    this.sleep = sleep
-    this.maxRestarts = maxRestarts
     this.childProcess = null
     this.stopped = false
-    this.restarts = 0
-    this.promise = null
   }
 
-  // 启动监听
-  async start() {
+  get pid() {
+    return this.childProcess ? this.childProcess.pid : 0
+  }
+
+  wait() {
+    return new Promise((resolve, reject) => {
+      this.once('exit', (code) => {
+        if (code !== 0) {
+          reject(code)
+        } else {
+          resolve()
+        }
+      }).start()
+    })
+  }
+
+  start() {
     if (this.childProcess) {
       return this.childProcess
     }
-    // 初始化进程
-    const childProcess = execa(...this.spawnSettings)
+    const childProcess = spawn(...this.spawnSettings)
     this.childProcess = childProcess
-    this.stopped = false
+    childProcess.on('exit', (code, signal) => {
+      if (!childProcess.killed) {
+        this.emit('exit', code, signal)
+      }
+    })
+    childProcess.on('error', (err) => {
+      this.emit('err', err)
+    })
     this.emit('start', childProcess)
-    try {
-      // 等待进程执行
-      const res = await childProcess
-      // 执行结束
-      this.childProcess = null
-      this.stopped = true
-      this.restarts = 0
-      if (!childProcess.killed) {
-        this.emit('exit', res)
-      } else {
-        res.killed = true
-      }
-      return res
-      //
-    } catch (err) {
-      let res = err
-      // 执行异常
-      this.childProcess = null
-      if (!childProcess.killed) {
-        this.emit('error', res)
-        // 计数重启
-        if (!this.stopped && ++this.restarts < this.maxRestarts) {
-          await this.sleep()
-          if (!this.childProcess && !this.stopped) {
-            res = await this.start()
-          }
-        }
-      } else {
-        res.killed = true
-      }
-      // j计数重启后的新的结果
-      return res
-    }
+    return childProcess
   }
 
-  // 结束监听
-  async stop() {
+  stop() {
     const { childProcess } = this
     if (childProcess) {
-      this.stopped = true
-      this.restarts = 0
-      childProcess.kill(process.platform === 'win32' ? 'SIGKILL' : 'SIGTERM', {
-        forceKillAfterTimeout: 2000,
-      })
+      this.childProcess = null
+      if (childProcess.kill('SIGTERM')) {
+        childProcess.kill('SIGKILL')
+      }
       this.emit('stop', childProcess)
-      return childProcess
     }
-    return {}
   }
 
-  // 重启
-  async restart() {
-    await this.stop()
-    const res = this.start()
-    this.emit('restart', res)
-    return res
+  restart() {
+    this.stop()
+    const childProcess = this.start()
+    this.emit('restart', childProcess)
   }
 }
 
-//
-const getDefaultSleepHandler = (sleepTime) => {
-  return async () => {
-    await new Promise((resolve) => {
-      setTimeout(resolve, +sleepTime || 1000)
-    })
-  }
-}
-
-//
 const respawn = function (cmd, args, opts) {
-  if (args && !Array.isArray(args)) {
-    opts = args
+  if (!Array.isArray(args)) {
+    if (args) {
+      opts = args
+    }
     args = []
   }
-  const {
-    sleep, // 返回启动间隔时间的函数
-    maxRestarts, // Infinity表示不限制重新启动次数，0表示不进行重启
-    ...spawnOptions
-  } = Object.assign({}, opts)
-  return new Monitor({
-    sleep: typeof sleep === 'function' ? sleep : getDefaultSleepHandler(sleep),
-    maxRestarts: Number.isNaN(+maxRestarts) ? 3 : Math.max(0, Math.floor(+maxRestarts)),
-    spawnSettings: [
-      cmd,
-      args,
-      Object.assign(
-        {
-          stdio: 'inherit',
-          windowsHide: true,
-        },
-        spawnOptions
-      ),
-    ],
-  })
+  const { env = {}, cwd = process.cwd(), ...spawnOptions } = Object.assign({}, opts)
+  if (/\.js$/.test(cmd)) {
+    if (process.env.NODE_ENV === 'development') {
+      args.unshift('--inspect')
+    }
+    args.unshift(cmd)
+    cmd = 'node'
+  }
+  return new Runner([cmd, args, { ...spawnOptions, env: { ...process.env, ...env }, cwd }])
 }
 
 module.exports = respawn

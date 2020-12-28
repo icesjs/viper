@@ -1,7 +1,7 @@
 //
 module.exports = {
   //
-  overrideCracoConfig: ({ cracoConfig }) => {
+  overrideCracoConfig({ cracoConfig }) {
     const { webpack = {} } = cracoConfig
     const { configure } = webpack || {}
     if (configure !== null && typeof configure === 'object') {
@@ -11,43 +11,26 @@ module.exports = {
   },
 
   //
-  overrideWebpackConfig: ({ webpackConfig }) => {
+  overrideWebpackConfig({ webpackConfig }) {
     const { target, optimization = {} } = webpackConfig
     if (target === 'electron-renderer') {
       addNativeAddonsLoader(webpackConfig)
     }
     const { DEBUG } = process.env
-    if (DEBUG && DEBUG !== 'false') {
+    if (DEBUG) {
       optimization.minimize = false
       webpackConfig.optimization = optimization
     }
     return webpackConfig
-  },
-  //
-  overrideDevServerConfig: ({ devServerConfig }) => {
-    const { hot, before } = devServerConfig || {}
-    if (hot) {
-      if (typeof before === 'function') {
-        devServerConfig.before = (...args) => {
-          customizeDevServerBefore(...args)
-          return before(...args)
-        }
-      }
-    }
-    return devServerConfig
   },
 }
 
 const path = require('path')
 const { mergeWithCustomize } = require('webpack-merge')
 const { addBeforeLoader, loaderByName } = require('@craco/craco')
-const { resolvePackage, resolveReactScriptsPath, cwd } = require('./resolve')
+const { resolvePackage, resolveReactScriptsPath } = require('./resolve')
 const { NATIVE_ADDONS_OUTPUT_PATH } = require('../../config/consts')
-
-//
-function customizeDevServerBefore(app, server) {
-  //
-}
+const cwd = process.cwd()
 
 //
 function customizeCracoWebpackConfigure(customizeConfig = {}) {
@@ -79,18 +62,24 @@ function overrideEntry(context, originalConfig, customizeConfig) {
       chunkName = keys[0]
       customizeEntry = customizeEntry[chunkName]
     }
-    if (!Array.isArray(customizeEntry) && Array.isArray(originalConfig.entry)) {
-      originalConfig.entry.splice(-1, 1, customizeEntry)
-      delete customizeConfig.entry
+    if (Array.isArray(originalConfig.entry)) {
+      // 老版本构建脚本，hmr使用entry形式
+      const replaced = Array.isArray(customizeEntry) ? customizeEntry : [customizeEntry]
+      originalConfig.entry.splice(-1, 1, ...replaced)
+    } else {
+      // 新版本构建脚本，react v17使用fast refresh
+      originalConfig.entry = customizeEntry
     }
+    delete customizeConfig.entry
     if (chunkName) {
       originalConfig.entry = { [chunkName]: originalConfig.entry }
-      if (customizeConfig.entry) {
-        customizeConfig.entry = { [chunkName]: customizeEntry }
-      }
       overrideManifestPluginForEntry(chunkName, originalConfig)
     }
-    overrideCRAPaths(context, 'appIndexJs', customizeEntry)
+    overrideCRAPaths(
+      context,
+      'appIndexJs',
+      Array.isArray(customizeEntry) ? customizeEntry[customizeEntry.length - 1] : customizeEntry
+    )
   }
 }
 
