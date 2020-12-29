@@ -1,3 +1,4 @@
+const util = require('util')
 const chalk = require('chalk')
 const stripColor = require('strip-ansi')
 
@@ -48,16 +49,20 @@ function defaultColorFormat(cont, level) {
 }
 
 //
+function stripDebugFormatPrefix(content, namespace) {
+  const index = content.indexOf(namespace)
+  if (index !== -1) {
+    content = content.substring(index + namespace.length + 1)
+  }
+  return content
+}
+
+//
 function defaultDebugInit(debug) {
   const debugLog = require('debug').log
   const { namespace } = debug
-  debug.useColors = false
   debug.log = (msg, ...args) => {
-    const index = msg.indexOf(namespace)
-    if (index !== -1) {
-      msg = msg.substring(index + namespace.length + 1)
-    }
-    debugLog.apply(debug, [msg, ...args])
+    debugLog.apply(debug, [stripDebugFormatPrefix(msg, namespace), ...args])
   }
 }
 
@@ -67,7 +72,8 @@ function getLogLevelHandle({ id, level, format, colorFormat, init }) {
   return (msg, ...args) => {
     if (!debug) {
       debug = require('debug')(id)
-      init(debug)
+      debug.useColors = false
+      init(debug, level)
     }
     const msgLevel = msg instanceof Error ? 'error' : level
 
@@ -206,6 +212,21 @@ function creteFileLogger(log) {
   })
 }
 
+//
+function formatPrefixedLogs({ content, name, level, nameColor }) {
+  const color = `${typeof nameColor === 'function' ? nameColor() : nameColor}`
+  const maxNameLength = createPrefixedLogger.registeredNames[0].length
+  const p = (chalk[color] || chalk['gray'])(formatLogPrefix(name, level, maxNameLength)) + ' '
+  //
+  return content
+    .replace(/\r\n?/g, '\n')
+    .replace(/^\s*\n|\n\s*$/, '')
+    .match(/[^\n]+|\n+|^/g)
+    .map((l) => (/\n(\n+)?/.test(l) ? `\n${RegExp.$1.replace(/\n/g, `${p}\n`)}` : `${p}${l}`))
+    .join('')
+}
+
+//
 function createPrefixedLogger(name, nameColor, contentColorFormat = (str) => str) {
   const registered = createPrefixedLogger.registeredNames
   registered.push((name = name.trim()))
@@ -214,27 +235,27 @@ function createPrefixedLogger(name, nameColor, contentColorFormat = (str) => str
     name,
     file: process.env.WRITE_LOGS_TO_FILE !== 'false',
     colorFormat: contentColorFormat,
-    format: (cont, level) => {
-      const color = `${typeof nameColor === 'function' ? nameColor() : nameColor}`
-      const p =
-        (chalk[color] || chalk['gray'])(formatLogPrefix(name, level, registered[0].length)) + ' '
-      return cont
-        .replace(/^\s*\n|\n\s*$/, '')
-        .match(/[^\n]+|\n+|^/g)
-        .map((l) => (/\n(\n+)?/.test(l) ? `\n${RegExp.$1.replace(/\n/g, `${p}\n`)}` : `${p}${l}`))
-        .join('')
+    init: (debug, level) => {
+      const { namespace } = debug
+      debug.log = (msg, ...args) => {
+        const content = util.format(stripDebugFormatPrefix(msg, namespace), ...args)
+        const prefixed = formatPrefixedLogs({ content, level, name, nameColor })
+        process.stderr.write(prefixed + '\n')
+      }
     },
   })
 }
 //
 createPrefixedLogger.registeredNames = [defaultScriptLogName]
 
+//
 let defaultScriptLog
 function getDefaultLog() {
   if (!defaultScriptLog) {
     defaultScriptLog = createPrefixedLogger(
       defaultScriptLogName,
-      () => process.env.LOG_PREFIX_COLOR_SCRIPT
+      () => process.env.LOG_PREFIX_COLOR_SCRIPT,
+      defaultColorFormat
     )
   }
   return defaultScriptLog

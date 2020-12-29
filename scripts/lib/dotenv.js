@@ -21,6 +21,7 @@ exports.parseEnv = function parseEnv(env) {
   return {
     ...parseFile(), // inner default
     ...parseFile('.env'),
+    ...parseFile('.env.local'),
     ...parseFile(`.env.${env}`),
   }
 }
