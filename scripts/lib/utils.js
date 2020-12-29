@@ -1,4 +1,5 @@
 const path = require('path')
+const fs = require('fs-extra')
 const portfinder = require('portfinder')
 
 module.exports = exports = {
@@ -9,6 +10,18 @@ module.exports = exports = {
       relativePath = `./${relativePath}`
     }
     return relativePath
+  },
+
+  //
+  getPackageJson() {
+    return require(path.resolve(process.cwd(), 'package.json'))
+  },
+
+  //
+  emptyDirSync(dir) {
+    if (!exports.isProtectedDirectory(dir)) {
+      fs.emptyDirSync(path.resolve(dir))
+    }
   },
 
   //

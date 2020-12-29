@@ -45,7 +45,7 @@ function runWebpack({ config, logger, env, watch, watchOptions, beforeWatchRun, 
   })
 }
 
-function runScript({ logger, script, exitHandle, args = [], crashRestarts = 3, ...options }) {
+function runScript({ script, exitHandle, logger = log, args = [], crashRestarts = 0, ...options }) {
   const runner = respawn(script, args, options)
   if (typeof exitHandle !== 'function') {
     exitHandle = (code, signal) => {

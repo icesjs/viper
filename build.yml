@@ -1,29 +1,9 @@
-# used for electron-builder
 appId: com.icesjs.viper
 copyright: Copyright © 2020 Icesjs️
 productName: Viper
-
-asar: false
-npmRebuild: true
-extends: null
-
 publish: null
-
-directories:
-  buildResources: assets/
-  output: dist/
-  app: build/
-
-files:
-  - build/**/*
-  - '!*.{ js,css }.map'
-
 extraResources:
   - assets/**/*
-
-extraMetadata:
-  main: index.js
-
 dmg:
   sign: false
   icon: assets/icon.dmg.icns
@@ -31,11 +11,10 @@ dmg:
     - type: link
       path: /Applications
       x: 410
-      y: 150
+      'y': 150
     - type: file
       x: 130
-      y: 150
-
+      'y': 150
 mac:
   target: dmg
   category: public.app-category.entertainment
@@ -44,14 +23,27 @@ mac:
   hardenedRuntime: true
   gatekeeperAssess: false
   icon: assets/icon.icns
-
 win:
   target: nsis
   icon: assets/icon.ico
-
 linux:
   target:
     - deb
     - AppImage
   category: Entertainment
   icon: assets/icon.png
+asar: false
+extends: null
+directories:
+  buildResources: build/
+  output: dist/
+  app: build/
+files:
+  - '!*.{js,css}.map'
+  - package.json
+  - main/index.js
+  - main/**/*
+  - renderer/**/*
+  - addons/**/*
+extraMetadata:
+  main: main/index.js

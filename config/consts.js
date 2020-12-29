@@ -5,20 +5,21 @@ const resolve = (...args) => path.resolve(cwd, ...args)
 
 // 定义构建相关的路径参数等
 module.exports = {
+  // build输出路径，该目录会作为app打包发布
+  BUILD_PATH: resolve('build/'),
+  // 相关资源的输出路径，需要在打包目录下
+  MAIN_BUILD_PATH: resolve('build/main/'),
+  RENDERER_BUILD_PATH: resolve('build/renderer/'),
+  ADDONS_BUILD_PATH: resolve('build/addons/'),
   // renderer
   RENDERER_CONTEXT_ALIAS: '@',
   RENDERER_CONTEXT: resolve('src/renderer/'),
   RENDERER_ENTRY: resolve('src/renderer/index.tsx'),
-  RENDERER_BUILD_PATH: resolve('build/renderer/'),
   // main
   MAIN_CONTEXT_ALIAS: '#',
   MAIN_CONTEXT: resolve('src/main/'),
   MAIN_ENTRY: resolve('src/main/index.ts'),
-  MAIN_BUILD_PATH: resolve('build/main/'),
   MAIN_BUILD_FILE_NAME: 'index.js',
-  // native addons
-  NATIVE_ADDONS_OUTPUT_PATH: resolve('build/addons/'),
   // misc
-  DISABLE_USE_GLOBAL: true,
   CSS_MODULE_LOCAL_IDENT_NAME: '[local]___[hash:base64:5]',
 }

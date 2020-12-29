@@ -40,9 +40,9 @@ async function run() {
     exitHandle: (code) => code !== 0 && process.exit(code),
   })
 
-  await Promise.all([mainRunner, rendererRunner.awaitExit()])
+  await Promise.all([mainRunner, rendererRunner])
 
-  if (ENABLE_PRODUCTION_DEBUG) {
+  if (ENABLE_PRODUCTION_DEBUG !== 'false') {
     log.info('Launch the Electron.app for production debug')
     // Electron
     runScript({

@@ -8,14 +8,12 @@
     "email": "icesjs@outlook.com",
     "url": "https://github.com/icesjs"
   },
-  "main": "index.js",
   "scripts": {
     "start": "node scripts/start",
     "build": "node scripts/build",
     "test": "craco test",
-    "pack": "yarn build && electron-builder -c build.yml --dir",
-    "dist": "yarn build && electron-builder -c build.yml -mlw",
-    "postinstall": "electron-builder install-app-deps && yarn-deduplicate yarn.lock"
+    "pack": "node scripts/pack --dir",
+    "dist": "yarn build && electron-builder -c build.yml -mlw"
   },
   "dependencies": {
     "electron-log": "^4.3.0",
@@ -38,12 +36,14 @@
     "@types/react": "^17.0.0",
     "@types/react-dom": "^17.0.0",
     "@types/react-redux": "^7.1.14",
+    "ansi-regex": "^5.0.0",
     "babel-plugin-react-css-modules": "^5.2.6",
     "bindings": "^1.5.0",
     "chalk": "^4.1.0",
     "clean-webpack-plugin": "^3.0.0",
     "cross-spawn": "^7.0.3",
     "debug": "^4.3.1",
+    "deepmerge": "^4.2.2",
     "dotenv": "^8.2.0",
     "electron": "^11.1.1",
     "electron-builder": "^22.9.1",
@@ -54,8 +54,10 @@
     "find-up": "^5.0.0",
     "fs-extra": "^9.0.1",
     "husky": "^4.3.6",
+    "js-yaml": "^3.14.1",
     "lint-staged": "^10.5.3",
     "loader-utils": "^2.0.0",
+    "minimist": "^1.2.5",
     "portfinder": "^1.0.28",
     "prettier": "^2.2.1",
     "react-scripts": "4.0.1",
@@ -66,11 +68,18 @@
     "stylelint-config-css-modules": "^2.2.0",
     "stylelint-config-recommended": "^3.0.0",
     "stylelint-webpack-plugin": "^2.1.1",
+    "term-size": "^2.2.1",
     "ts-loader": "^8.0.12",
     "typescript": "^4.1.3",
     "wait-on": "^5.2.1",
     "webpack-merge": "^5.7.3",
     "yarn-deduplicate": "^3.1.0"
+  },
+  "build": {
+    "extends": null,
+    "extraMetadata": {
+      "main": "index.js"
+    }
   },
   "stylelint": {
     "extends": [

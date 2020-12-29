@@ -1,6 +1,8 @@
 const util = require('util')
 const chalk = require('chalk')
 const stripColor = require('strip-ansi')
+const termSize = require('term-size')
+const ansiRegexCon = require('ansi-regex')
 
 const usedColor = {
   info: 'green',
@@ -13,6 +15,8 @@ const defaultScriptLogName = 'script'
 const root = process.cwd()
 const rootColor = 'cyan'
 const namespace = process.env.npm_package_name
+const terminalSize = termSize()
+const ansiRegex = ansiRegexCon({ onlyFirst: true })
 
 function createLogger(opts) {
   opts = Object.assign(
@@ -68,10 +72,12 @@ function defaultDebugInit(debug) {
 
 //
 function getLogLevelHandle({ id, level, format, colorFormat, init }) {
+  let createDebug
   let debug
   return (msg, ...args) => {
     if (!debug) {
-      debug = require('debug')(id)
+      createDebug = require('debug')
+      debug = createDebug(id)
       debug.useColors = false
       init(debug, level)
     }
@@ -82,7 +88,7 @@ function getLogLevelHandle({ id, level, format, colorFormat, init }) {
     } else if (msg instanceof Error) {
       msg = stringifyError(msg)
     } else if (typeof msg === 'object') {
-      msg = debug.formatters.O.call(debug, msg)
+      msg = createDebug.formatters.O.call(debug, msg)
     }
     msg = `${msg}`.replace(/\r\n?/g, '\n').replace(/\u2026/g, '...')
 
@@ -93,7 +99,7 @@ function getLogLevelHandle({ id, level, format, colorFormat, init }) {
       msg = format(msg, msgLevel)
     }
 
-    debug(msg, ...args)
+    debug.apply(debug, [msg, ...args])
   }
 }
 
@@ -203,13 +209,43 @@ function creteFileLogger(log) {
       return new Proxy(val, {
         apply(tar, ctx, args) {
           Reflect.apply(tar, target, args)
-          let text = `[${new Date().toLocaleTimeString()}] ${target.text[prop](args[0])}`
-          text = text.replace(/^\s*\r?\n|\s*\r?\n$/, '').replace(/\r?\n/g, EOL) + EOL
-          appendFileSync(prop === 'error' || args[0] instanceof Error ? err : out, text)
+          const prefix = new Date().toLocaleTimeString()
+          const text = target.text[prop](args[0]).replace(/^(?:\s*\r?\n)+/g, '')
+          const content = `[${prefix}] ${text.replace(/\r?\n/g, EOL)}` + EOL
+          appendFileSync(prop === 'error' || args[0] instanceof Error ? err : out, content)
         },
       })
     },
   })
+}
+
+//
+function wrapStringRow(prefix, str) {
+  const preWidth = prefix.length
+  const termCols = Math.max(terminalSize.columns, preWidth + 80)
+  if (preWidth + str.length <= termCols) {
+    str = prefix + str
+  } else {
+    const maxStrWidth = termCols - preWidth
+    const rows = []
+    do {
+      if (preWidth + str.length > termCols) {
+        let sub = str.substring(0, maxStrWidth)
+        if (ansiRegex.test(sub.substr(-preWidth))) {
+          sub = str.substring(0, maxStrWidth - preWidth)
+          str = str.substring(maxStrWidth - preWidth)
+        } else {
+          str = str.substring(maxStrWidth)
+        }
+        rows.push(prefix + sub + '\n')
+      } else if (str.length) {
+        rows.push(prefix + str)
+        str = ''
+      }
+    } while (str)
+    str = rows.join('')
+  }
+  return str.substr(-1) !== '\n' ? str + '\n' : str
 }
 
 //
@@ -220,9 +256,9 @@ function formatPrefixedLogs({ content, name, level, nameColor }) {
   //
   return content
     .replace(/\r\n?/g, '\n')
-    .replace(/^\s*\n|\n\s*$/, '')
-    .match(/[^\n]+|\n+|^/g)
-    .map((l) => (/\n(\n+)?/.test(l) ? `\n${RegExp.$1.replace(/\n/g, `${p}\n`)}` : `${p}${l}`))
+    .replace(/\n$/, '')
+    .match(/.+\n?|\n|^/g)
+    .map((l) => wrapStringRow(p, l))
     .join('')
 }
 
@@ -240,7 +276,7 @@ function createPrefixedLogger(name, nameColor, contentColorFormat = (str) => str
       debug.log = (msg, ...args) => {
         const content = util.format(stripDebugFormatPrefix(msg, namespace), ...args)
         const prefixed = formatPrefixedLogs({ content, level, name, nameColor })
-        process.stderr.write(prefixed + '\n')
+        process.stderr.write(prefixed.replace(/\n$/, '') + '\n')
       }
     },
   })

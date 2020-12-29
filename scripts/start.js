@@ -50,7 +50,6 @@ async function run() {
     logger: createPrefixedLogger('renderer', LOG_PREFIX_COLOR_RENDERER),
     script: require.resolve('@craco/craco/scripts/start', { paths: [process.cwd()] }),
     env: { PORT: `${port}`, BROWSER: 'none' },
-    crashRestarts: 0,
   }).start()
 
   // Main

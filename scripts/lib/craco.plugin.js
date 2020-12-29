@@ -25,7 +25,7 @@ const path = require('path')
 const { mergeWithCustomize } = require('webpack-merge')
 const { addBeforeLoader, loaderByName } = require('@craco/craco')
 const { resolvePackage, resolveReactScriptsPath } = require('./resolve')
-const { NATIVE_ADDONS_OUTPUT_PATH } = require('../../config/consts')
+const { ADDONS_BUILD_PATH } = require('../../config/consts')
 const cwd = process.cwd()
 
 //
@@ -146,7 +146,7 @@ function addNativeAddonsLoader(webpackConfig) {
     loader: path.join(cwd, 'scripts/lib/native.loader.js'),
     options: {
       output: {
-        path: NATIVE_ADDONS_OUTPUT_PATH,
+        path: ADDONS_BUILD_PATH,
       },
     },
   }

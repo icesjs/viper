@@ -14,8 +14,7 @@ const {
   MAIN_BUILD_FILE_NAME,
   MAIN_CONTEXT,
   MAIN_CONTEXT_ALIAS,
-  NATIVE_ADDONS_OUTPUT_PATH,
-  DISABLE_USE_GLOBAL,
+  ADDONS_BUILD_PATH,
 } = require('./consts')
 const context = process.cwd()
 
@@ -83,7 +82,7 @@ module.exports = {
         loader: path.resolve(context, 'scripts/lib/native.loader.js'),
         options: {
           output: {
-            path: NATIVE_ADDONS_OUTPUT_PATH,
+            path: ADDONS_BUILD_PATH,
           },
         },
       },
@@ -101,7 +100,6 @@ module.exports = {
     ],
   },
   node: {
-    global: !!DISABLE_USE_GLOBAL, // 禁止直接使用global对象来修改全局作用域数据
     __dirname: false,
     __filename: false,
   },

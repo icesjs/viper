@@ -6,6 +6,10 @@ class Runner extends EventEmitter {
     super()
     this.spawnSettings = spawnSettings
     this.childProcess = null
+    this.processResult = null
+    this.on('exit', (code, signal) => {
+      this.processResult = { code, signal }
+    })
   }
 
   get pid() {
@@ -16,16 +20,26 @@ class Runner extends EventEmitter {
     return !!this.childProcess
   }
 
-  awaitExit() {
+  then(resolve, reject) {
     return new Promise((resolve, reject) => {
-      this.once('exit', (code) => {
-        if (code !== 0) {
-          reject(code)
+      const determine = (res) => {
+        if (res.code !== 0) {
+          reject(res)
         } else {
-          resolve()
+          resolve(res)
         }
-      }).start()
-    })
+      }
+      if (!this.processResult) {
+        this.once('exit', (code, signal) => determine({ code, signal }))
+        this.start()
+      } else {
+        determine(this.processResult)
+      }
+    }).then(resolve, reject)
+  }
+
+  catch(reject) {
+    return this.then((res) => res, reject)
   }
 
   start() {
@@ -57,6 +71,7 @@ class Runner extends EventEmitter {
     const { childProcess } = this
     if (childProcess) {
       this.childProcess = null
+      this.processResult = null
       const isWin = process.platform === 'win32'
       const killed = childProcess.kill(isWin ? 'SIGKILL' : 'SIGTERM')
       if (!isWin && !killed) {

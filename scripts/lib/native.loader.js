@@ -4,7 +4,7 @@ const { promisify } = require('util')
 const findUp = require('find-up')
 const { validate } = require('schema-utils')
 const loaderUtils = require('loader-utils')
-const { relativePath } = require('./utils')
+const { relativePath, getPackageJson } = require('./utils')
 const { log } = require('./logger')
 
 const {
@@ -62,7 +62,7 @@ function normalizeModulePath(loaderContext) {
 
 //
 function readAddonsOutputPackageJson(pkgPath) {
-  const projectPackage = require(path.resolve(this.rootContext, 'package.json'))
+  const projectPackage = getPackageJson()
   const { name, version, main, author } = projectPackage
   let mainPath = path.resolve(main)
   try {
@@ -193,10 +193,7 @@ async function setNativeDependency(source, options, modulePackagePath) {
     // 写入依赖信息到工程构建配置
     const modulePackageJson = require(modulePackagePath)
     const { name, version } = modulePackageJson
-    const {
-      dependencies: projectDeps = {},
-      devDependencies: projectDevDeps,
-    } = require(path.resolve('package.json'))
+    const { dependencies: projectDeps = {}, devDependencies: projectDevDeps } = getPackageJson()
     const {
       output: { path: outputPath },
     } = options
