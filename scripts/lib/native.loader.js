@@ -269,10 +269,7 @@ async function readNativeAddonsSourceFromContext(context) {
         })
       }
     } catch (e) {
-      const { DEBUG } = process.env
-      if (DEBUG) {
-        log.error(e.message)
-      }
+      log.error(e)
     }
   }
   if (sources.length) {

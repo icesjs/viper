@@ -33,22 +33,37 @@ function getReady() {
 }
 
 function setEnvironment(NODE_ENV) {
-  if (!NODE_ENV) {
-    throw new Error('NODE_ENV is not set')
-  }
   const envFromConfig = dotenv.parseEnv(NODE_ENV)
   const envFromProcess = process.env
   const envs = { ...envFromProcess, ...envFromConfig, NODE_ENV }
+
   for (const [name, value] of Object.entries(envs)) {
     if (!value || value === 'undefined') {
       delete envFromProcess[name]
       delete envs[name]
     }
   }
-  Object.assign(envFromProcess, envFromConfig, { NODE_ENV, FORCE_COLOR: 2 })
-  if (envFromProcess.DEBUG === 'false') {
+
+  NODE_ENV = envs.NODE_ENV
+  if (!NODE_ENV) {
+    throw new Error('NODE_ENV is not set')
+  }
+
+  const {
+    ENABLE_PRODUCTION_DEBUG = 'false',
+    GENERATE_FULL_SOURCEMAP = 'false',
+    DEBUG,
+  } = Object.assign(envFromProcess, envFromConfig, {
+    NODE_ENV,
+    FORCE_COLOR: 2,
+  })
+  if (ENABLE_PRODUCTION_DEBUG !== 'false' || GENERATE_FULL_SOURCEMAP !== 'false') {
+    envFromProcess.GENERATE_SOURCEMAP = 'true'
+  }
+  if (DEBUG === 'false') {
     delete envFromProcess.DEBUG
   }
+
   return envFromProcess
 }
 
@@ -56,5 +71,4 @@ function setEnvironment(NODE_ENV) {
 catchUncaughtException()
 getReady()
 
-// 设置环境变量
 module.exports = setEnvironment

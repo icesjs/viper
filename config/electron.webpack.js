@@ -20,7 +20,6 @@ const {
 const context = process.cwd()
 
 const {
-  DEBUG,
   NODE_ENV,
   AUTO_OPEN_DEV_TOOLS,
   APP_INDEX_HTML_URL,
@@ -29,14 +28,16 @@ const {
   APP_PRO_LOG_LEVEL,
   RENDERER_BUILD_TARGET,
   WEBPACK_ELECTRON_ENTRY_PRELOAD,
+  GENERATE_FULL_SOURCEMAP = 'false',
   GENERATE_SOURCEMAP = 'false',
 } = process.env
 
 const isEnvDevelopment = NODE_ENV === 'development'
 const isEnvProduction = NODE_ENV === 'production'
-const isDebugMode = !!DEBUG
 const mode = isEnvDevelopment ? 'development' : 'production'
-const shouldUseSourceMap = isDebugMode || GENERATE_SOURCEMAP !== 'false'
+
+const shouldUseSourceMap = GENERATE_SOURCEMAP !== 'false'
+
 const MAIN_PRELOAD = path.join(__dirname, 'preload.main.js')
 
 //
@@ -58,8 +59,8 @@ module.exports = {
     },
   },
   devtool: isEnvDevelopment
-    ? isDebugMode
-      ? GENERATE_SOURCEMAP !== 'false' && 'source-map'
+    ? GENERATE_FULL_SOURCEMAP !== 'false'
+      ? 'source-map'
       : 'eval-source-map'
     : shouldUseSourceMap && 'source-map',
   bail: isEnvProduction,
@@ -89,7 +90,7 @@ module.exports = {
     ].filter(Boolean),
   },
   optimization: {
-    minimize: !(isEnvDevelopment || isDebugMode),
+    minimize: !(isEnvDevelopment || GENERATE_FULL_SOURCEMAP !== 'false'),
     minimizer: [
       new TerserPlugin({
         sourceMap: shouldUseSourceMap,

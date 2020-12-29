@@ -5,7 +5,7 @@ const path = require('path')
 const { format: urlFormat } = require('url')
 const fetch = require('node-fetch')
 const wait = require('wait-on')
-const { log, createNamedLogger } = require('./lib/logger')
+const { log, createPrefixedLogger } = require('./lib/logger')
 const { getAvailablePort } = require('./lib/utils')
 const { runWebpack, runScript } = require('./lib/runner')
 
@@ -35,7 +35,7 @@ async function run() {
 
   // Electron
   const electronRunner = runScript({
-    logger: createNamedLogger('electron', LOG_PREFIX_COLOR_ELECTRON),
+    logger: createPrefixedLogger('electron', LOG_PREFIX_COLOR_ELECTRON),
     env: { APP_INDEX_HTML_URL: indexURL },
     script: require('electron'),
     args: ['.'],
@@ -47,7 +47,7 @@ async function run() {
 
   // Renderer
   runScript({
-    logger: createNamedLogger('renderer', LOG_PREFIX_COLOR_RENDERER),
+    logger: createPrefixedLogger('renderer', LOG_PREFIX_COLOR_RENDERER),
     script: require.resolve('@craco/craco/scripts/start', { paths: [process.cwd()] }),
     env: { PORT: `${port}`, BROWSER: 'none' },
     crashRestarts: 0,
@@ -55,7 +55,7 @@ async function run() {
 
   // Main
   const mainRunner = runWebpack({
-    logger: createNamedLogger('main', LOG_PREFIX_COLOR_MAIN),
+    logger: createPrefixedLogger('main', LOG_PREFIX_COLOR_MAIN),
     config: path.resolve('config/electron.webpack.js'),
     env: {
       APP_INDEX_HTML_URL: indexURL,

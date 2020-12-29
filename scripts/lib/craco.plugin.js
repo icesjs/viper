@@ -12,15 +12,11 @@ module.exports = {
 
   //
   overrideWebpackConfig({ webpackConfig }) {
-    const { target, optimization = {} } = webpackConfig
+    const { target } = webpackConfig
     if (target === 'electron-renderer') {
       addNativeAddonsLoader(webpackConfig)
     }
-    const { DEBUG } = process.env
-    if (DEBUG) {
-      optimization.minimize = false
-      webpackConfig.optimization = optimization
-    }
+    customizeOptimization(webpackConfig)
     return webpackConfig
   },
 }
@@ -42,6 +38,15 @@ function customizeCracoWebpackConfigure(customizeConfig = {}) {
       customizeObject(a, b, key) {},
       customizeArray(a, b, key) {},
     })(originalConfig, customizeConfig)
+  }
+}
+
+function customizeOptimization(webpackConfig) {
+  const { optimization = {} } = webpackConfig
+  const { GENERATE_FULL_SOURCEMAP } = process.env
+  if (GENERATE_FULL_SOURCEMAP !== 'false') {
+    optimization.minimize = false
+    webpackConfig.optimization = optimization
   }
 }
 

@@ -6,14 +6,17 @@ class Runner extends EventEmitter {
     super()
     this.spawnSettings = spawnSettings
     this.childProcess = null
-    this.stopped = false
   }
 
   get pid() {
     return this.childProcess ? this.childProcess.pid : 0
   }
 
-  wait() {
+  get stopped() {
+    return !!this.childProcess
+  }
+
+  awaitExit() {
     return new Promise((resolve, reject) => {
       this.once('exit', (code) => {
         if (code !== 0) {
@@ -43,6 +46,13 @@ class Runner extends EventEmitter {
     return childProcess
   }
 
+  restart() {
+    this.stop()
+    const childProcess = this.start()
+    this.emit('restart', childProcess)
+    return childProcess
+  }
+
   stop() {
     const { childProcess } = this
     if (childProcess) {
@@ -54,12 +64,7 @@ class Runner extends EventEmitter {
       }
       this.emit('stop', childProcess)
     }
-  }
-
-  restart() {
-    this.stop()
-    const childProcess = this.start()
-    this.emit('restart', childProcess)
+    return this
   }
 }
 
