@@ -11,7 +11,7 @@ function resolvePackage(pack) {
   try {
     const paths = [cwd]
     if (reactScriptsPath) {
-      paths.push(reactScriptsPath)
+      paths.unshift(reactScriptsPath)
     }
     const packPath = require.resolve(pack, { paths })
     return require(packPath)

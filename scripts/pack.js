@@ -1,10 +1,10 @@
 //
 require('./lib/setup')('production', {
   // 这些环境变量强制被使用
-  ENABLE_PRODUCTION_DEBUG: false,
-  GENERATE_FULL_SOURCEMAP: false,
-  GENERATE_SOURCEMAP: false,
-  WRITE_LOGS_TO_FILE: false,
+  ENABLE_PRODUCTION_DEBUG: 'false',
+  GENERATE_FULL_SOURCEMAP: 'false',
+  GENERATE_SOURCEMAP: 'false',
+  // WRITE_LOGS_TO_FILE: 'false',
   // DEBUG命名空间强制为构建相关命名
   DEBUG: `${process.env.npm_package_name}:*,electron-builder`,
 })

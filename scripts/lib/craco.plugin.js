@@ -33,11 +33,25 @@ function customizeCracoWebpackConfigure(customizeConfig = {}) {
   return (originalConfig, context) => {
     overrideEntry(context, originalConfig, customizeConfig)
     overrideOutputPath(context, customizeConfig)
+    overridePublicAssetsPath(context, originalConfig, customizeConfig)
     //
     return mergeWithCustomize({
       customizeObject(a, b, key) {},
       customizeArray(a, b, key) {},
     })(originalConfig, customizeConfig)
+  }
+}
+
+function overridePublicAssetsPath(context, originalConfig, customizeConfig) {
+  const { publicAssets } = customizeConfig
+  if (typeof publicAssets !== 'undefined') {
+    delete customizeConfig.publicAssets
+    const template = path.join(publicAssets, 'index.html')
+    if (publicAssets !== context.paths['appPublic']) {
+      overrideHtmlWebpackPluginForPublicAssets(template, originalConfig)
+      overrideCRAPaths(context, 'appPublic', publicAssets)
+      overrideCRAPaths(context, 'appHtml', template)
+    }
   }
 }
 
@@ -53,7 +67,7 @@ function customizeOptimization(webpackConfig) {
 //
 function overrideEntry(context, originalConfig, customizeConfig) {
   let customizeEntry = customizeConfig.entry
-  if (customizeEntry) {
+  if (customizeEntry && JSON.stringify(customizeEntry) !== JSON.stringify(originalConfig.entry)) {
     let chunkName
     if (typeof customizeEntry === 'object') {
       const keys = Object.keys(customizeEntry)
@@ -127,6 +141,15 @@ function overrideManifestPluginForEntry(chunkName, originalConfig) {
         entrypoints[chunkName] = replaced
         return res
       }
+    }
+  }
+}
+
+function overrideHtmlWebpackPluginForPublicAssets(template, originalConfig) {
+  const HtmlWebpackPlugin = resolvePackage('html-webpack-plugin')
+  for (const plug of originalConfig.plugins) {
+    if (plug instanceof HtmlWebpackPlugin) {
+      plug.options.template = template
     }
   }
 }

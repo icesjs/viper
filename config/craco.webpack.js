@@ -30,6 +30,9 @@ const customizeWebpackConfig = {
       [RENDERER_CONTEXT_ALIAS]: RENDERER_CONTEXT,
     },
   },
+  // 这是个publicAssets是自定义的属性，并不属于webpack配置项
+  // 用于修改public静态资源目录，craco.plugin.js插件会处理这个属性
+  publicAssets: path.resolve('public/web/'),
   plugins: [
     new StyleLintPlugin({
       configBasedir: cwd,
