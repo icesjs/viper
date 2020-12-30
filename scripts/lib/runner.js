@@ -1,3 +1,4 @@
+const chalk = require('chalk')
 const { log } = require('./logger')
 const { resolvePackage } = require('./resolve')
 const respawn = require('./respawn')
@@ -8,11 +9,13 @@ function runWebpack({ config, logger, env, watch, watchOptions, beforeWatchRun, 
   const { stats: statsOptions, ...options } = require(config)
   const compiler = webpack(options)
   compiler.hooks.done.tapAsync('done', (stats, done) => {
-    !stats.hasErrors() && logger.info('Compiled successfully!')
+    !stats.hasErrors() && logger.info(chalk.green('Compiled successfully!'))
     done()
   })
+
   //
-  return new Promise((resolve, reject) => {
+  let watching
+  const task = new Promise((resolve, reject) => {
     let isFirstRun = true
     const callback = (err, stats) => {
       if (err) {
@@ -38,31 +41,68 @@ function runWebpack({ config, logger, env, watch, watchOptions, beforeWatchRun, 
           done()
         })
       }
-      compiler.watch(watchOptions || {}, callback)
+      watching = compiler.watch(watchOptions || {}, callback)
     } else {
       compiler.run(callback)
     }
   })
+  //
+  task.stop = (callback = () => {}) => (watching ? watching.close(callback) : callback())
+  return task
 }
 
-function runScript({ script, exitHandle, logger = log, args = [], crashRestarts = 0, ...options }) {
+function runScript({
+  script,
+  args = [],
+  logger = log,
+  crashRestarts = 0,
+  exitHandle = null,
+  beforeExit = null,
+  ...options
+}) {
+  if (!Array.isArray(runScript.runners)) {
+    runScript.runners = []
+  }
+  const runners = runScript.runners
   const runner = respawn(script, args, options)
+  runners.push(runner)
+
   if (typeof exitHandle !== 'function') {
+    const clear = (code) => {
+      let task
+      while ((task = runners.pop())) {
+        task !== runner && task.stop()
+      }
+      process.exitCode = code
+      const exit = () => process.nextTick(() => process.exit())
+      if (typeof beforeExit === 'function') {
+        try {
+          beforeExit(exit)
+        } catch (e) {
+          log.error(e)
+          exit()
+        }
+      } else {
+        exit()
+      }
+    }
     exitHandle = (code, signal) => {
       if (code === 0 || process.env.NODE_ENV !== 'development') {
-        process.exit(code)
-      }
-      // code=15为开发菜单里定义的重启退出代码
-      if (code !== 15) {
-        log.error(`The process was crashed${signal ? ' with signal' + signal : ''}`)
-        if (!crashRestarts--) {
-          process.exit(code)
+        clear(code)
+      } else {
+        // code=15为开发菜单里定义的重启退出代码
+        if (code !== 15) {
+          log.error(`The process was crashed${signal ? ' with signal' + signal : ''}`)
+          if (!crashRestarts--) {
+            return clear(code)
+          }
+          log.info(`Starting the process again...`)
         }
-        log.info(`Starting the process again...`)
+        runner.restart()
       }
-      runner.restart()
     }
   }
+
   return runner
     .on('start', ({ stdout, stderr }) => {
       stdout && stdout.on('data', logger.info)

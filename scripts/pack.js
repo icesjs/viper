@@ -16,7 +16,7 @@ const yaml = require('js-yaml')
 const merge = require('deepmerge')
 const minimist = require('minimist')
 const { log, createPrefixedLogger } = require('./lib/logger')
-const { relativePath, emptyDirSync, getPackageJson } = require('./lib/utils')
+const { relativePath, emptyDirSync, getPackageJson, printErrorAndExit } = require('./lib/utils')
 const { runScript } = require('./lib/runner')
 const {
   BUILD_PATH,
@@ -27,15 +27,7 @@ const {
 
 if (require.main === module) {
   // 从命令行进入
-  const rawArgv = process.argv.slice(2)
-  const { platform, arch, dir } = minimist(rawArgv, {
-    boolean: ['dir'],
-  })
-  // 执行打包
-  run({ platform, arch, dir }).catch((err) => {
-    log.error(err)
-    process.exitCode = err.code || 1
-  })
+  run({ ...getCommandArgs(), publish: null }).catch(printErrorAndExit)
 }
 
 async function run(commandArgs = {}) {
@@ -44,26 +36,37 @@ async function run(commandArgs = {}) {
   // 清理构建输出目录
   emptyDirSync(BUILD_PATH)
   // 安装依赖
-  await installDependencies({
+  await reinstallDependencies({
     ...commandArgs,
     logger: createPrefixedLogger(taskNames[0], 'yellow'),
   })
   // 编译构建
-  await build({
+  await buildResources({
     ...commandArgs,
     logger: createPrefixedLogger(taskNames[1], 'red'),
   })
   // 打包产品
-  await pack({
+  await packApplication({
     ...commandArgs,
     logger: createPrefixedLogger(taskNames[2], 'blue'),
   })
+  // 打包成功
+  log.info('Packaged successfully!')
+}
+
+//
+function getCommandArgs() {
+  const rawArgv = process.argv.slice(2)
+  const { platform, arch, dir, config, publish } = minimist(rawArgv, {
+    boolean: ['dir'],
+  })
+  return { platform, arch, dir, config, publish }
 }
 
 function noop() {}
 
 // 重新安装平台相关的依赖
-async function installDependencies({ platform, arch, logger }) {
+async function reinstallDependencies({ platform, arch, logger }) {
   const args = ['install-app-deps']
   if (platform) {
     args.push('--platform', platform)
@@ -80,7 +83,7 @@ async function installDependencies({ platform, arch, logger }) {
 }
 
 // 编译构建
-async function build({ logger }) {
+async function buildResources({ logger }) {
   await runScript({
     logger,
     env: { WRITE_LOGS_TO_FILE: false },
@@ -90,9 +93,16 @@ async function build({ logger }) {
 }
 
 // 打包产品
-async function pack({ platform, arch, dir, logger }) {
+async function packApplication({
+  platform,
+  arch,
+  dir,
+  logger,
+  publish = false,
+  config = 'build.yml',
+}) {
   // 同步打包配置文件
-  await synchronizeBuilderConfig('build.yml', { dir })
+  await synchronizeBuilderConfig(config, { dir, publish })
   const args = ['build']
   const platformArg = {
     darwin: '--mac',
@@ -105,7 +115,7 @@ async function pack({ platform, arch, dir, logger }) {
   if (arch) {
     args.push(`--${arch}`)
   }
-  args.push('--config', 'build.yml')
+  args.push('--config', config)
   await runScript({
     logger,
     script: 'electron-builder',
@@ -114,7 +124,7 @@ async function pack({ platform, arch, dir, logger }) {
   })
 }
 
-async function synchronizeBuilderConfig(filepath, { dir }) {
+async function synchronizeBuilderConfig(filepath, { dir, publish = null }) {
   const cwd = process.cwd()
   const mainFile = process.env.ELECTRON_MAIN_ENTRY_PATH
   const buildDir = relativePath(cwd, BUILD_PATH, false)
@@ -138,8 +148,9 @@ async function synchronizeBuilderConfig(filepath, { dir }) {
   )
   // 同步打包配置
   await writeBuilderConfig(filepath, {
-    extends: null,
+    publish,
     asar: !dir,
+    extends: null,
     directories: {
       app: `${buildDir}/`,
       buildResources: `${buildDir}/`,
@@ -171,4 +182,7 @@ async function writeBuilderConfig(filepath, updates) {
   return updatedConfig
 }
 
-module.exports = run
+module.exports = {
+  pack: run,
+  getCommandArgs,
+}

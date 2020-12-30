@@ -3,15 +3,12 @@ require('./lib/setup')('production')
 //
 const path = require('path')
 const { log, createPrefixedLogger } = require('./lib/logger')
-const { relativePath } = require('./lib/utils')
+const { relativePath, printErrorAndExit } = require('./lib/utils')
 const { runScript, runWebpack } = require('./lib/runner')
 const { RENDERER_BUILD_PATH, MAIN_BUILD_PATH } = require('../config/consts')
 
 // 运行构建
-run().catch((err) => {
-  log.error(err)
-  process.exit(1)
-})
+run().catch(printErrorAndExit)
 
 async function run() {
   const {
@@ -24,7 +21,7 @@ async function run() {
   const relIndexPath = relativePath(MAIN_BUILD_PATH, absIndexPath)
 
   // Main
-  const mainRunner = runWebpack({
+  const main = runWebpack({
     logger: createPrefixedLogger('main', LOG_PREFIX_COLOR_MAIN),
     config: path.resolve('config/electron.webpack.js'),
     env: {
@@ -34,13 +31,13 @@ async function run() {
   })
 
   // Renderer
-  const rendererRunner = runScript({
+  const renderer = runScript({
     logger: createPrefixedLogger('renderer', LOG_PREFIX_COLOR_RENDERER),
     script: require.resolve('@craco/craco/scripts/build', { paths: [process.cwd()] }),
     exitHandle: (code) => code !== 0 && process.exit(code),
   })
 
-  await Promise.all([mainRunner, rendererRunner])
+  await Promise.all([main, renderer])
 
   if (ENABLE_PRODUCTION_DEBUG !== 'false') {
     log.info('Launch the Electron.app for production debug')

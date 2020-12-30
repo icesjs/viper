@@ -1,9 +1,7 @@
 appId: com.icesjs.viper
 copyright: Copyright © 2020 Icesjs️
 productName: Viper
-publish: null
-extraResources:
-  - assets/**/*
+publish: false
 dmg:
   sign: false
   icon: assets/icon.dmg.icns
@@ -22,6 +20,10 @@ mac:
   entitlementsInherit: assets/entitlements.mac.plist
   hardenedRuntime: true
   gatekeeperAssess: false
+  darkModeSupport: false
+  electronLanguages:
+    - en_US
+    - zh_CN
   icon: assets/icon.icns
 win:
   target: nsis
@@ -32,7 +34,7 @@ linux:
     - AppImage
   category: Entertainment
   icon: assets/icon.png
-asar: false
+asar: true
 extends: null
 directories:
   buildResources: build/

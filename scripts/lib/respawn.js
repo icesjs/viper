@@ -7,9 +7,6 @@ class Runner extends EventEmitter {
     this.spawnSettings = spawnSettings
     this.childProcess = null
     this.processResult = null
-    this.on('exit', (code, signal) => {
-      this.processResult = { code, signal }
-    })
   }
 
   get pid() {
@@ -17,23 +14,18 @@ class Runner extends EventEmitter {
   }
 
   get stopped() {
-    return !!this.childProcess
+    return !this.childProcess
   }
 
   then(resolve, reject) {
     return new Promise((resolve, reject) => {
-      const determine = (res) => {
-        if (res.code !== 0) {
-          reject(res)
-        } else {
-          resolve(res)
-        }
-      }
-      if (!this.processResult) {
-        this.once('exit', (code, signal) => determine({ code, signal }))
+      const { processResult } = this
+      const determine = (res) => (res.code !== 0 ? reject(res) : resolve(res))
+      if (!processResult) {
+        this.once('exit', () => determine(this.processResult))
         this.start()
       } else {
-        determine(this.processResult)
+        determine(processResult)
       }
     }).then(resolve, reject)
   }
@@ -47,31 +39,37 @@ class Runner extends EventEmitter {
       return this.childProcess
     }
     const childProcess = spawn(...this.spawnSettings)
+    //
     this.childProcess = childProcess
-    childProcess.on('exit', (code, signal) => {
-      if (!childProcess.killed) {
-        this.emit('exit', code, signal)
-      }
-    })
-    childProcess.on('error', (err) => {
-      this.emit('err', err)
-    })
+      .on('error', (err) => {
+        this.emit('err', err)
+      })
+      .once('exit', (code, signal) => {
+        this.childProcess = null
+        this.processResult = { code, signal }
+        if (!childProcess.killed) {
+          // 发布进程任务运行结束
+          this.emit('exit', code, signal)
+        } else {
+          // 通过restart重启情况
+          this.emit('killed', childProcess)
+        }
+      })
+    //
     this.emit('start', childProcess)
-    return childProcess
+    return this
   }
 
   restart() {
-    this.stop()
-    const childProcess = this.start()
-    this.emit('restart', childProcess)
-    return childProcess
+    this.stop().start().emit('restart', this.childProcess)
+    return this
   }
 
   stop() {
     const { childProcess } = this
+    this.processResult = null
     if (childProcess) {
       this.childProcess = null
-      this.processResult = null
       const isWin = process.platform === 'win32'
       const killed = childProcess.kill(isWin ? 'SIGKILL' : 'SIGTERM')
       if (!isWin && !killed) {

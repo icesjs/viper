@@ -6,14 +6,11 @@ const { format: urlFormat } = require('url')
 const fetch = require('node-fetch')
 const wait = require('wait-on')
 const { log, createPrefixedLogger } = require('./lib/logger')
-const { getAvailablePort } = require('./lib/utils')
+const { getAvailablePort, printErrorAndExit } = require('./lib/utils')
 const { runWebpack, runScript } = require('./lib/runner')
 
 // 运行构建
-run().catch((err) => {
-  log.error(err)
-  process.exit(1)
-})
+run().catch(printErrorAndExit)
 
 async function run() {
   const {
@@ -33,27 +30,22 @@ async function run() {
     port,
   })
 
-  // Electron
-  const electronRunner = runScript({
-    logger: createPrefixedLogger('electron', LOG_PREFIX_COLOR_ELECTRON),
-    env: { APP_INDEX_HTML_URL: indexURL },
-    script: require('electron'),
-    args: ['.'],
-    windowsHide: false,
-  }).on('restart', () => {
-    sendRecompileRequest(indexURL)
-    log.info('Relaunched the Electron.app')
-  })
+  let main
+  let electron
+
+  //
+  const beforeExit = (callback) => main && main.stop(callback)
 
   // Renderer
   runScript({
     logger: createPrefixedLogger('renderer', LOG_PREFIX_COLOR_RENDERER),
     script: require.resolve('@craco/craco/scripts/start', { paths: [process.cwd()] }),
     env: { PORT: `${port}`, BROWSER: 'none' },
+    beforeExit,
   }).start()
 
   // Main
-  const mainRunner = runWebpack({
+  main = runWebpack({
     logger: createPrefixedLogger('main', LOG_PREFIX_COLOR_MAIN),
     config: path.resolve('config/electron.webpack.js'),
     env: {
@@ -63,12 +55,28 @@ async function run() {
     watch: true,
     watchOptions: { aggregateTimeout: Math.max(+AUTO_RELAUNCH_DELAY || 0, 2000) },
     beforeWatchRun: () => log.info('Compiling the main files for changes... '),
-    afterWatchRun: () => AUTO_RELAUNCH_APP && electronRunner.pid && electronRunner.restart(),
-  }).then(() => log.info('Watching the main files for updates...'))
+    afterWatchRun: AUTO_RELAUNCH_APP && (() => electron && electron.pid && electron.restart()),
+  })
+  main.then(() => log.info('Watching the main files for updates...'))
 
-  await Promise.all([mainRunner, wait({ resources: [indexURL], delay: 2000 })])
+  // 等待主进程和渲染进程代码构建完成
+  await Promise.all([main, wait({ resources: [indexURL], delay: 2000 })])
 
-  electronRunner.start()
+  // Electron
+  electron = runScript({
+    logger: createPrefixedLogger('electron', LOG_PREFIX_COLOR_ELECTRON),
+    env: { APP_INDEX_HTML_URL: indexURL },
+    script: require('electron'),
+    args: ['.'],
+    windowsHide: false,
+    beforeExit,
+  })
+    .on('restart', () => {
+      sendRecompileRequest(indexURL)
+      log.info('Relaunched the Electron.app')
+    })
+    .start()
+
   log.info('Launched the Electron.app')
 }
 

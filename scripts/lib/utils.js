@@ -1,6 +1,7 @@
 const path = require('path')
 const fs = require('fs-extra')
 const portfinder = require('portfinder')
+const { log } = require('./logger')
 
 module.exports = exports = {
   //
@@ -13,8 +14,14 @@ module.exports = exports = {
   },
 
   //
+  printErrorAndExit(err) {
+    log.error(err)
+    process.nextTick(() => process.exit(process.exitCode || 1))
+  },
+
+  //
   getPackageJson() {
-    return require(path.resolve(process.cwd(), 'package.json'))
+    return require(path.resolve('package.json'))
   },
 
   //

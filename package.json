@@ -2,6 +2,7 @@
   "name": "viper",
   "version": "0.1.0",
   "private": true,
+  "main": "index.js",
   "description": "An video player for funny.",
   "author": {
     "name": "icesjs",
@@ -11,9 +12,8 @@
   "scripts": {
     "start": "node scripts/start",
     "build": "node scripts/build",
-    "test": "craco test",
     "pack": "node scripts/pack --dir",
-    "dist": "yarn build && electron-builder -c build.yml -mlw"
+    "dist": "node scripts/dist"
   },
   "dependencies": {
     "electron-log": "^4.3.0",
