@@ -4,7 +4,7 @@ productName: Viper
 publish: null
 dmg:
   sign: false
-  icon: public/assets/app/icon.dmg.icns
+  icon: public/app/icon.dmg.icns
   contents:
     - type: link
       path: /Applications
@@ -16,24 +16,24 @@ dmg:
 mac:
   target: dmg
   category: public.app-category.entertainment
-  entitlements: public/assets/app/entitlements.mac.plist
-  entitlementsInherit: public/assets/app/entitlements.mac.plist
+  entitlements: public/app/entitlements.mac.plist
+  entitlementsInherit: public/app/entitlements.mac.plist
   hardenedRuntime: true
   gatekeeperAssess: false
   darkModeSupport: false
   electronLanguages:
     - en_US
     - zh_CN
-  icon: public/assets/app/icon.icns
+  icon: public/app/icon.icns
 win:
   target: nsis
-  icon: public/assets/app/icon.ico
+  icon: public/app/icon.ico
 linux:
   target:
     - deb
     - AppImage
   category: Entertainment
-  icon: public/assets/app/icon.png
+  icon: public/app/icon.png
 asar: false
 extends: null
 directories:

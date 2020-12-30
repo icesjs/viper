@@ -86,21 +86,14 @@ async function reinstallDependencies({ platform, arch, logger }) {
 async function buildResources({ logger }) {
   await runScript({
     logger,
-    env: { WRITE_LOGS_TO_FILE: false },
+    env: { WRITE_LOGS_TO_FILE: 'false' },
     script: path.join(__dirname, 'build.js'),
     exitHandle: noop,
   })
 }
 
 // 打包产品
-async function packApplication({
-  platform,
-  arch,
-  dir,
-  logger,
-  publish = false,
-  config = 'build.yml',
-}) {
+async function packApplication({ platform, arch, dir, logger, publish, config = 'build.yml' }) {
   // 同步打包配置文件
   await synchronizeBuilderConfig(config, { dir, publish })
   const args = ['build']
