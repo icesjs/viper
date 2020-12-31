@@ -31,7 +31,11 @@ function runWebpack({ config, logger, env, watch, watchOptions, beforeWatchRun, 
         return typeof afterWatchRun === 'function' && afterWatchRun()
       }
       isFirstRun = false
-      resolve()
+      if (watch) {
+        resolve()
+      } else if (stats.hasErrors()) {
+        reject('Failed to compile!')
+      }
     }
     //
     if (watch) {

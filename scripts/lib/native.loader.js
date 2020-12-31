@@ -204,7 +204,7 @@ async function setNativeDependency(source, options, modulePackagePath) {
       outputPackage.dependencies[name] = projectDevDeps[name]
       this.emitWarning(
         new Warning(
-          `You should install the dependency named of ${name} to 'dependencies' rather than 'devDependencies'`
+          `Waring: You should install the dependency named of ${name} to 'dependencies' rather than 'devDependencies'`
         )
       )
     } else {
@@ -213,10 +213,52 @@ async function setNativeDependency(source, options, modulePackagePath) {
 
     await promisify(fs.outputFile)(outputPackagePath, JSON.stringify(outputPackage))
   } else {
-    this.emitWarning(
-      new Warning(`The native addons may need to be recompiled to fit the target environment`)
-    )
+    // 使用electron加载该插件，判断是否兼容
+    if (!(await isCompatibleForInstalledElectron.apply(this, [source]))) {
+      const error = new Error(
+        `Error: This local addon is not compatible for current platform, you need rebuild it first:\n${this.resourcePath}`
+      )
+      error.name = 'Error'
+      error.stack = ''
+      throw error
+    } else {
+      this.emitWarning(
+        new Warning(
+          'Waring: The native addons may need to be rebuild to fit the target environment'
+        )
+      )
+    }
   }
+}
+
+// 非第三方包的本地插件兼容性检查
+const compatibleResultCache = {}
+async function isCompatibleForInstalledElectron(content) {
+  const hash = loaderUtils.interpolateName(this, '[contenthash]', { content })
+  const cachedResult = compatibleResultCache[hash]
+  if (cachedResult !== undefined) {
+    return cachedResult
+  }
+  let compatible
+  try {
+    // 使用electron运行来检查
+    await new Promise((resolve, reject) => {
+      const spawn = require('cross-spawn')
+      spawn(require('electron'), ['native.check.js'], {
+        stdio: 'ignore',
+        cwd: __dirname,
+        env: {
+          NATIVE_LOADER_ADDONS_COMPATIBLE_CHECK_PATH: this.resourcePath,
+        },
+        windowsHide: true,
+      }).once('exit', (code) => (code === 0 ? resolve() : reject()))
+    })
+    compatible = true
+  } catch (e) {
+    compatible = false
+  }
+  compatibleResultCache[hash] = compatible
+  return compatible
 }
 
 // 用于将require('bindings')转发到当前loader来处理

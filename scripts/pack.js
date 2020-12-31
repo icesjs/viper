@@ -67,11 +67,12 @@ function getCommandArgs() {
     arch = process.arch,
     config = 'build.yml',
     publish = 'never',
+    rebuild,
     dir,
   } = minimist(rawArgv, {
-    boolean: ['dir'],
+    boolean: ['dir', 'rebuild'],
   })
-  return { platform, arch, dir, config, publish }
+  return { platform, arch, dir, config, publish, rebuild }
 }
 
 function noop() {}
@@ -81,13 +82,13 @@ function getElectronVersion() {
 }
 
 // 重新编译本地插件
-async function rebuildNativeModules({ arch, logger }) {
-  const electronVersion = getElectronVersion()
-  const args = ['--types', 'prod', '--version', electronVersion]
+async function rebuildNativeModules({ arch, logger, rebuild }) {
+  // const electronVersion = getElectronVersion()
+  const args = ['--types', 'prod']
   if (arch) {
     args.push('--arch', arch)
   }
-  if (process.env.CI) {
+  if (process.env.CI || rebuild) {
     args.push('--force')
   }
   await runScript({

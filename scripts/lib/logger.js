@@ -11,6 +11,7 @@ const usedColor = {
   warn: { bg: 'bgYellowBright', ft: 'black', bl: true },
   error: 'red',
   success: { ft: 'green', bl: true },
+  failed: { ft: 'red', bl: true },
   errRoot: 'red',
   errFirstRoot: { bg: 'bgCyanBright', ft: 'black' },
   errNodeModules: 'red',
@@ -23,7 +24,7 @@ const root = process.cwd()
 const namespace = process.env.npm_package_name
 const terminalSize = termSize()
 const ansiRegex = ansiRegexCon({ onlyFirst: true })
-const filePosRegex = /[(\[{]?((?:[a-zA-Z]:|file:)?(?:[/\\][^:*?"<>|]+)+:\d+:\d+)[)\]}]?/g
+const filePosRegex = /[[({]?((?:[a-zA-Z]:|file:)?(?:[/\\][^:*?"<>|]+)+:\d+:\d+)[})\]]?/g
 const prefixRegex = /{\s*(y|m|d|h|i|s|ms|level|name)\s*}/g
 const nodeModulesRegex = /^[^\s]|[/\\]node_modules[/\\]/
 const warnAndErrorRegex = /^\s*\w?(error|warning|warn):?\b/i
@@ -205,6 +206,9 @@ function colorifyNormalText(line) {
   if (/\b(?:success|complete)/i.test(line)) {
     return getColorSetter(usedColor.success)(line)
   }
+  if (/\bfailed?/i.test(line)) {
+    return getColorSetter(usedColor.failed)(line)
+  }
   return line
 }
 
@@ -338,7 +342,7 @@ function createPrefixedLogger(name, nameColor, contentColorFormat = defaultColor
       debug.log = (msg, ...args) => {
         const content = util.format(stripDebugFormatPrefix(msg, namespace), ...args)
         const prefixed = formatPrefixedLogs({ content, level, name, nameColor })
-        process.stderr.write(prefixed.replace(/\n$/, '') + '\n')
+        process.stderr['write'](prefixed.replace(/\n$/, '') + '\n')
       }
     },
   })

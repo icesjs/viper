@@ -44,8 +44,11 @@ class Runner extends EventEmitter {
         return
       }
       const cp = childProcess
-      this.childProcess = childProcess = null
-      this.processResult = { code, signal }
+      childProcess = null
+      if (cp === this.childProcess) {
+        this.childProcess = null
+        this.processResult = { code, signal }
+      }
       if (!cp.killed) {
         // 发布进程任务运行结束
         this.emit('exit', code, signal)
