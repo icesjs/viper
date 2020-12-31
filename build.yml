@@ -1,7 +1,6 @@
 appId: com.icesjs.viper
 copyright: Copyright © 2020 Icesjs️
 productName: Viper
-publish: null
 dmg:
   sign: false
   icon: public/app/icon.dmg.icns
@@ -25,17 +24,26 @@ mac:
     - en_US
     - zh_CN
   icon: public/app/icon.icns
+  publish:
+    - github
 win:
   target: nsis
   icon: public/app/icon.ico
+  publish:
+    - github
 linux:
   target:
     - deb
     - AppImage
   category: Entertainment
   icon: public/app/icon.png
-asar: false
+  publish:
+    - github
+asar: true
 extends: null
+npmRebuild: false
+publish: never
+electronVersion: 11.1.1
 directories:
   buildResources: build/
   output: dist/

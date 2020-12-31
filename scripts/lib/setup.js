@@ -71,6 +71,10 @@ function presetEnv() {
   if (DEBUG === 'false') {
     delete process.env.DEBUG
   }
+  if (process.env.CI) {
+    process.env.NO_COLOR = 'true'
+    process.env.WRITE_LOGS_TO_FILE = 'false'
+  }
 }
 
 function setEnvironment(NODE_ENV, forced) {

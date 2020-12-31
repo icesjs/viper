@@ -63,7 +63,7 @@ function normalizeModulePath(loaderContext) {
 //
 function readAddonsOutputPackageJson(pkgPath) {
   const projectPackage = getPackageJson()
-  const { name, version, main, author } = projectPackage
+  const { name, version, main } = projectPackage
   let mainPath = path.resolve(main)
   try {
     mainPath = require.resolve(mainPath)
@@ -74,10 +74,8 @@ function readAddonsOutputPackageJson(pkgPath) {
     return {
       name,
       version,
-      main: relativeMainPath,
       description: 'List of native addons dependency required by this project.',
       dependencies: {},
-      author,
     }
   }
   const { dependencies } = pkg
@@ -238,7 +236,7 @@ async function readNativeAddonsSourceFromContext(context) {
   while ((regxResult = targetNameRegx.exec(gyp)) !== null) {
     names.push(regxResult[3])
   }
-  if (!names.includes('bindings')) {
+  if (!names.length) {
     names.push('bindings')
   }
 

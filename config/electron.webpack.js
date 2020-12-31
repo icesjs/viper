@@ -1,5 +1,6 @@
 const path = require('path')
 const { resolvePackage: resolve } = require('../scripts/lib/resolve')
+const { updateJsonFile } = require('../scripts/lib/utils')
 
 //
 const webpack = resolve('webpack')
@@ -39,6 +40,15 @@ const shouldUseSourceMap = GENERATE_SOURCEMAP !== 'false'
 
 const MAIN_PRELOAD = path.join(__dirname, 'preload.main.js')
 
+// 同步更新sourceMap开关
+updateJsonFile(
+  'tsconfig.json',
+  {
+    compilerOptions: { sourceMap: isEnvDevelopment || shouldUseSourceMap },
+  },
+  false
+)
+
 //
 module.exports = {
   mode,
@@ -72,9 +82,6 @@ module.exports = {
         include: path.resolve(context, 'src'),
         options: {
           transpileOnly: true,
-          compilerOptions: {
-            sourceMap: isEnvDevelopment || shouldUseSourceMap,
-          },
         },
       },
       {

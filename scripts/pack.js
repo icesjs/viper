@@ -4,7 +4,6 @@ require('./lib/setup')('production', {
   ENABLE_PRODUCTION_DEBUG: 'false',
   GENERATE_FULL_SOURCEMAP: 'false',
   GENERATE_SOURCEMAP: 'false',
-  // WRITE_LOGS_TO_FILE: 'false',
   // DEBUG命名空间强制为构建相关命名
   DEBUG: `${process.env.npm_package_name}:*,electron-builder`,
 })
@@ -27,24 +26,30 @@ const {
 
 if (require.main === module) {
   // 从命令行进入
-  run({ ...getCommandArgs(), publish: null }).catch(printErrorAndExit)
+  run(getCommandArgs()).catch(printErrorAndExit)
 }
 
 async function run(commandArgs = {}) {
-  const taskNames = ['install-app-deps', 'build-production', 'packs-production']
-  createPrefixedLogger.registeredNames.push(...taskNames)
+  const taskNames = ['rebuild-app-deps', 'build-production', 'pack-resources']
+  createPrefixedLogger.registerNames(taskNames)
+
+  log.info('Command arguments:')
+  log.info(commandArgs)
   // 清理构建输出目录
   emptyDirSync(BUILD_PATH)
-  // 安装依赖
-  await reinstallDependencies({
+  log.info('Rebuild native addons for current platform...')
+  // 构建本地插件
+  await rebuildNativeModules({
     ...commandArgs,
     logger: createPrefixedLogger(taskNames[0], 'yellow'),
   })
+  log.info('Build app resources...')
   // 编译构建
   await buildResources({
     ...commandArgs,
-    logger: createPrefixedLogger(taskNames[1], 'red'),
+    logger: createPrefixedLogger(taskNames[1], 'red', (s) => s),
   })
+  log.info('Package app resources...')
   // 打包产品
   await packApplication({
     ...commandArgs,
@@ -57,7 +62,13 @@ async function run(commandArgs = {}) {
 //
 function getCommandArgs() {
   const rawArgv = process.argv.slice(2)
-  const { platform, arch, dir, config, publish } = minimist(rawArgv, {
+  const {
+    platform = process.platform,
+    arch = process.arch,
+    config = 'build.yml',
+    publish = 'never',
+    dir,
+  } = minimist(rawArgv, {
     boolean: ['dir'],
   })
   return { platform, arch, dir, config, publish }
@@ -65,35 +76,40 @@ function getCommandArgs() {
 
 function noop() {}
 
-// 重新安装平台相关的依赖
-async function reinstallDependencies({ platform, arch, logger }) {
-  const args = ['install-app-deps']
-  if (platform) {
-    args.push('--platform', platform)
-  }
+function getElectronVersion() {
+  return require('electron/package.json').version
+}
+
+// 重新编译本地插件
+async function rebuildNativeModules({ arch, logger }) {
+  const electronVersion = getElectronVersion()
+  const args = ['--types', 'prod', '--version', electronVersion]
   if (arch) {
     args.push('--arch', arch)
   }
+  if (process.env.CI) {
+    args.push('--force')
+  }
   await runScript({
-    logger,
-    script: 'electron-builder',
-    args,
     exitHandle: noop,
+    logger,
+    script: 'electron-rebuild',
+    args,
   })
 }
 
 // 编译构建
 async function buildResources({ logger }) {
   await runScript({
+    exitHandle: noop,
     logger,
     env: { WRITE_LOGS_TO_FILE: 'false' },
     script: path.join(__dirname, 'build.js'),
-    exitHandle: noop,
   })
 }
 
 // 打包产品
-async function packApplication({ platform, arch, dir, logger, publish, config = 'build.yml' }) {
+async function packApplication({ platform, arch, dir, logger, publish, config }) {
   // 同步打包配置文件
   await synchronizeBuilderConfig(config, { dir, publish })
   const args = ['build']
@@ -110,14 +126,14 @@ async function packApplication({ platform, arch, dir, logger, publish, config = 
   }
   args.push('--config', config)
   await runScript({
+    exitHandle: noop,
     logger,
     script: 'electron-builder',
     args,
-    exitHandle: noop,
   })
 }
 
-async function synchronizeBuilderConfig(filepath, { dir, publish = null }) {
+async function synchronizeBuilderConfig(filepath, { dir, publish }) {
   const cwd = process.cwd()
   const mainFile = process.env.ELECTRON_MAIN_ENTRY_PATH
   const buildDir = relativePath(cwd, BUILD_PATH, false)
@@ -144,6 +160,8 @@ async function synchronizeBuilderConfig(filepath, { dir, publish = null }) {
     publish,
     asar: !dir,
     extends: null,
+    npmRebuild: false,
+    electronVersion: getElectronVersion(),
     directories: {
       app: `${buildDir}/`,
       buildResources: `${buildDir}/`,
@@ -177,5 +195,4 @@ async function writeBuilderConfig(filepath, updates) {
 
 module.exports = {
   pack: run,
-  getCommandArgs,
 }

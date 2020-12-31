@@ -1,6 +1,9 @@
 const path = require('path')
 const fs = require('fs-extra')
 const portfinder = require('portfinder')
+const merge = require('deepmerge')
+const JSON5 = require('json5')
+const spawn = require('cross-spawn')
 const { log } = require('./logger')
 
 module.exports = exports = {
@@ -11,6 +14,29 @@ module.exports = exports = {
       relativePath = `./${relativePath}`
     }
     return relativePath
+  },
+
+  //
+  updateJsonFile(filepath, obj, throwError = true) {
+    try {
+      const file = path.resolve(filepath)
+      const raw = JSON5.parse(fs.readFileSync(file, 'utf8'))
+      const content = JSON.stringify(merge(raw, obj, { arrayMerge: (dest, src) => src }))
+      fs.writeFileSync(file, content)
+      try {
+        const cwd = process.cwd()
+        spawn.sync('prettier', ['--write', path.relative(cwd, file)], {
+          env: process.env,
+          cwd,
+        })
+      } catch (e) {}
+    } catch (e) {
+      if (throwError) {
+        throw e
+      } else {
+        log.error(e)
+      }
+    }
   },
 
   //

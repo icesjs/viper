@@ -58,6 +58,7 @@ function runScript({
   crashRestarts = 0,
   exitHandle = null,
   beforeExit = null,
+  stderrAsError = false,
   ...options
 }) {
   if (!Array.isArray(runScript.runners)) {
@@ -101,12 +102,18 @@ function runScript({
         runner.restart()
       }
     }
+  } else {
+    const originalExitHandle = exitHandle
+    exitHandle = (...args) => {
+      runners.splice(runners.indexOf(runner), 1)
+      originalExitHandle(...args)
+    }
   }
 
   return runner
     .on('start', ({ stdout, stderr }) => {
-      stdout && stdout.on('data', logger.info)
-      stderr && stderr.on('data', logger.error)
+      stdout && stdout.on('data', logger.log)
+      stderr && stderr.on('data', logger[stderrAsError ? 'error' : 'log'])
     })
     .on('exit', exitHandle)
 }

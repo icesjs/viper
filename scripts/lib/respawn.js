@@ -38,23 +38,27 @@ class Runner extends EventEmitter {
     if (this.childProcess) {
       return this.childProcess
     }
-    const childProcess = spawn(...this.spawnSettings)
+    let childProcess = spawn(...this.spawnSettings)
+    const exit = (code, signal) => {
+      if (!childProcess) {
+        return
+      }
+      const cp = childProcess
+      this.childProcess = childProcess = null
+      this.processResult = { code, signal }
+      if (!cp.killed) {
+        // 发布进程任务运行结束
+        this.emit('exit', code, signal)
+      } else {
+        // 通过restart重启情况
+        this.emit('killed', cp)
+      }
+    }
     //
     this.childProcess = childProcess
-      .on('error', (err) => {
-        this.emit('err', err)
-      })
-      .once('exit', (code, signal) => {
-        this.childProcess = null
-        this.processResult = { code, signal }
-        if (!childProcess.killed) {
-          // 发布进程任务运行结束
-          this.emit('exit', code, signal)
-        } else {
-          // 通过restart重启情况
-          this.emit('killed', childProcess)
-        }
-      })
+      .on('error', (err) => this.emit('err', err))
+      .once('close', exit)
+      .once('exit', exit)
     //
     this.emit('start', childProcess)
     return this

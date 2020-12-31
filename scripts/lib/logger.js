@@ -1,22 +1,33 @@
 const util = require('util')
-const chalk = require('chalk')
 const stripColor = require('strip-ansi')
 const termSize = require('term-size')
 const ansiRegexCon = require('ansi-regex')
+const chalk = require('chalk')
 
 const usedColor = {
-  info: 'green',
-  warn: 'yellow',
-  error: 'red',
   log: '',
+  debug: '',
+  info: 'green',
+  warn: { bg: 'bgYellowBright', ft: 'black', bl: true },
+  error: 'red',
+  success: { ft: 'green', bl: true },
+  errRoot: 'red',
+  errFirstRoot: { bg: 'bgCyanBright', ft: 'black' },
+  errNodeModules: 'red',
+  secondary: 'gray',
 }
 
+const enableColor = process.env.NO_COLOR !== 'true'
 const defaultScriptLogName = 'script'
 const root = process.cwd()
-const rootColor = 'cyan'
 const namespace = process.env.npm_package_name
 const terminalSize = termSize()
 const ansiRegex = ansiRegexCon({ onlyFirst: true })
+const filePosRegex = /[(\[{]?((?:[a-zA-Z]:|file:)?(?:[/\\][^:*?"<>|]+)+:\d+:\d+)[)\]}]?/g
+const prefixRegex = /{\s*(y|m|d|h|i|s|ms|level|name)\s*}/g
+const nodeModulesRegex = /^[^\s]|[/\\]node_modules[/\\]/
+const warnAndErrorRegex = /^\s*\w?(error|warning|warn):?\b/i
+const splitLineRegex = /.+\n?|\n|^/g
 
 function createLogger(opts) {
   opts = Object.assign(
@@ -31,7 +42,7 @@ function createLogger(opts) {
   )
   const { name, file } = opts
   const logger = { id: `${namespace}:${name}` }
-  for (const level of Object.keys(usedColor)) {
+  for (const level of ['log', 'info', 'error', 'warn', 'debug']) {
     logger[level] = getLogLevelHandle({ id: logger.id, level, ...opts })
   }
   setPlainTextHandle(logger)
@@ -39,15 +50,14 @@ function createLogger(opts) {
 }
 
 function defaultColorFormat(cont, level) {
-  const noop = (str) => str
-  return colorify(`${cont}`, (line) => {
+  return colorify(`${cont}`, (context, line) => {
     if (level === 'error') {
-      return colorifyError(line)
+      return colorifyError(context, line)
     }
-    const color = /^\s*\w?(error|warning|warn):?\b/i.test(line)
+    const color = warnAndErrorRegex.test(line)
       ? usedColor[RegExp.$1.replace(/ing$/i, '').toLowerCase()]
       : usedColor[level]
-    const colorSetter = (color ? chalk[color] : null) || noop
+    const colorSetter = (color ? getColorSetter(color) : null) || colorifyNormalText
     return colorSetter(line)
   })
 }
@@ -71,6 +81,24 @@ function defaultDebugInit(debug) {
 }
 
 //
+function isErrorStackContent(content) {
+  let hasError
+  let hasStackAt
+  for (const line of content.match(splitLineRegex)) {
+    if (!hasError) {
+      hasError = /^\s*\w?error:\s/i.test(line)
+    }
+    if (!hasStackAt) {
+      hasStackAt = /^\s+at\s/.test(line)
+    }
+    if (hasError && hasStackAt) {
+      return true
+    }
+  }
+  return false
+}
+
+//
 function getLogLevelHandle({ id, level, format, colorFormat, init }) {
   let createDebug
   let debug
@@ -81,17 +109,16 @@ function getLogLevelHandle({ id, level, format, colorFormat, init }) {
       debug.useColors = false
       init(debug, level)
     }
-    const msgLevel = msg instanceof Error ? 'error' : level
-
-    if (Buffer.isBuffer(msg)) {
-      msg = msg.toString()
-    } else if (msg instanceof Error) {
+    const isError = msg instanceof Error
+    if (isError) {
       msg = stringifyError(msg)
+    } else if (Buffer.isBuffer(msg)) {
+      msg = msg.toString()
     } else if (typeof msg === 'object') {
       msg = createDebug.formatters.O.call(debug, msg)
     }
     msg = `${msg}`.replace(/\r\n?/g, '\n').replace(/\u2026/g, '...')
-
+    const msgLevel = isError || isErrorStackContent(msg) ? 'error' : level
     if (typeof colorFormat === 'function') {
       msg = colorFormat(msg, msgLevel)
     }
@@ -128,10 +155,33 @@ function formatLogPrefix(name, level, maxNameLen) {
     s: pad(date.getSeconds()),
     ms: pad(date.getMilliseconds(), 4),
   }
-  return (process.env.LOG_PREFIX_FORMAT || '[ {name} ]').replace(
-    /{\s*(y|m|d|h|i|s|ms|level|name)\s*}/g,
-    (m, g1) => data[g1]
-  )
+  return (process.env.LOG_PREFIX_FORMAT || '[ {name} ]').replace(prefixRegex, (m, g1) => data[g1])
+}
+
+//
+function getColorSetter(color) {
+  let setter = null
+  if (enableColor) {
+    if (typeof color === 'string') {
+      setter = chalk[color]
+    } else if (typeof color === 'object') {
+      const { bg, ft, bl } = color
+      setter = chalk
+      if (bg) {
+        setter = setter[bg]
+      }
+      if (ft) {
+        setter = setter[ft]
+      }
+      if (bl) {
+        setter = setter['bold']
+      }
+      if (setter === chalk) {
+        setter = null
+      }
+    }
+  }
+  return typeof setter === 'function' ? setter : (s) => s
 }
 
 //
@@ -144,28 +194,41 @@ function stringifyError(err) {
 
 //
 function colorify(text, colorSetter) {
-  const pieces = `${text}`.match(/.*?(\n+|.$)/g) || [text]
-  return pieces.reduce(
-    (str, p) =>
-      str +
-      stripColor(p)
-        .match(/[^\n]+|\n+|^/g)
-        .filter((s) => s)
-        .map((s) => (/\n/.test(s) ? s : colorSetter(s)))
-        .join(''),
-    ''
-  )
+  const lines = stripColor(text).match(splitLineRegex)
+  const context = { text, lines }
+  const format = colorSetter.bind(null, context)
+  return lines.map((l) => l.replace(/[^\n]+/, format)).join('')
 }
 
 //
-function colorifyError(text) {
-  if (/^[^\s]|[/\\]node_modules[/\\]/.test(text)) {
-    return chalk[usedColor['error']](text)
+function colorifyNormalText(line) {
+  if (/\b(?:success|complete)/i.test(line)) {
+    return getColorSetter(usedColor.success)(line)
   }
-  if (text.indexOf(root) !== -1) {
-    return chalk[rootColor](text)
+  return line
+}
+
+//
+function colorifyError(context, line) {
+  if (nodeModulesRegex.test(line)) {
+    return getColorSetter(usedColor.errNodeModules)(
+      line.replace(filePosRegex, (t, g1) => getColorSetter(usedColor.secondary)(`[${g1}]`))
+    )
   }
-  return chalk.gray(text)
+  if (line.indexOf(root) !== -1) {
+    const { firstRootLine } = context
+    line = line.replace(filePosRegex, (t, g1) =>
+      !firstRootLine ? `[${g1}]` : getColorSetter(usedColor.secondary)(`[${g1}]`)
+    )
+    if (!firstRootLine) {
+      context.firstRootLine = line
+      return getColorSetter(usedColor.errFirstRoot)(
+        line.replace(/^\s+/, (t) => padStartAndEnd('→', t.length, ' '))
+      )
+    }
+    return getColorSetter(usedColor.errRoot)(line)
+  }
+  return getColorSetter(usedColor.secondary)(line)
 }
 
 //
@@ -251,22 +314,21 @@ function wrapStringRow(prefix, str) {
 //
 function formatPrefixedLogs({ content, name, level, nameColor }) {
   const color = `${typeof nameColor === 'function' ? nameColor() : nameColor}`
-  const maxNameLength = createPrefixedLogger.registeredNames[0].length
-  const p = (chalk[color] || chalk['gray'])(formatLogPrefix(name, level, maxNameLength)) + ' '
+  const maxNameLength = createPrefixedLogger._registeredNames[0].length
+  const p =
+    getColorSetter(color || usedColor.secondary)(formatLogPrefix(name, level, maxNameLength)) + ' '
   //
   return content
     .replace(/\r\n?/g, '\n')
     .replace(/\n$/, '')
-    .match(/.+\n?|\n|^/g)
+    .match(splitLineRegex)
     .map((l) => wrapStringRow(p, l))
     .join('')
 }
 
 //
-function createPrefixedLogger(name, nameColor, contentColorFormat = (str) => str) {
-  const registered = createPrefixedLogger.registeredNames
-  registered.push((name = name.trim()))
-  registered.sort((a, b) => b.length - a.length)
+function createPrefixedLogger(name, nameColor, contentColorFormat = defaultColorFormat) {
+  createPrefixedLogger.registerNames((name = name.trim()))
   return createLogger({
     name,
     file: process.env.WRITE_LOGS_TO_FILE !== 'false',
@@ -281,8 +343,14 @@ function createPrefixedLogger(name, nameColor, contentColorFormat = (str) => str
     },
   })
 }
-//
-createPrefixedLogger.registeredNames = [defaultScriptLogName]
+createPrefixedLogger._registeredNames = [defaultScriptLogName]
+createPrefixedLogger.registerNames = (names) => {
+  if (!Array.isArray(names)) {
+    names = [names]
+  }
+  createPrefixedLogger._registeredNames.push(...names)
+  createPrefixedLogger._registeredNames.sort((a, b) => b.length - a.length)
+}
 
 //
 let defaultScriptLog
