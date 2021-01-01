@@ -5,8 +5,8 @@ const resolve = (...args) => path.resolve(cwd, ...args)
 
 // 定义构建相关的路径参数等
 module.exports = {
-  // build输出路径，该目录会作为app打包发布
-  BUILD_PATH: resolve('build/'),
+  // 应用构建输出路径，该目录会作为app打包发布
+  APP_BUILD_PATH: resolve('build/'),
   // 相关资源的输出路径，需要在打包目录下
   MAIN_BUILD_PATH: resolve('build/main/'),
   RENDERER_BUILD_PATH: resolve('build/renderer/'),

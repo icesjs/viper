@@ -1,4 +1,5 @@
 const path = require('path')
+const NodeAddonsWebpackPlugin = require('../scripts/lib/native.plugin')
 const { resolvePackage: resolve } = require('../scripts/lib/resolve')
 const { updateJsonFile } = require('../scripts/lib/utils')
 
@@ -7,7 +8,6 @@ const webpack = resolve('webpack')
 const TerserPlugin = resolve('terser-webpack-plugin')
 const CaseSensitivePathsPlugin = resolve('case-sensitive-paths-webpack-plugin')
 const { CleanWebpackPlugin } = require('clean-webpack-plugin')
-const { aliasMap } = require('../scripts/lib/native.loader')
 
 const {
   MAIN_ENTRY,
@@ -15,7 +15,6 @@ const {
   MAIN_BUILD_FILE_NAME,
   MAIN_CONTEXT,
   MAIN_CONTEXT_ALIAS,
-  ADDONS_BUILD_PATH,
 } = require('./consts')
 const context = process.cwd()
 
@@ -30,6 +29,7 @@ const {
   WEBPACK_ELECTRON_ENTRY_PRELOAD,
   GENERATE_FULL_SOURCEMAP = 'false',
   GENERATE_SOURCEMAP = 'false',
+  USE_NODE_ADDONS = 'false',
 } = process.env
 
 const isEnvDevelopment = NODE_ENV === 'development'
@@ -61,10 +61,9 @@ module.exports = {
     publicPath: '/test/public',
   },
   resolve: {
-    extensions: ['.ts', '.js', '.mjs', '.json', '.node'],
+    extensions: ['.ts', '.js', '.mjs', '.json'],
     alias: {
       [MAIN_CONTEXT_ALIAS]: MAIN_CONTEXT,
-      ...aliasMap,
     },
   },
   devtool: isEnvDevelopment
@@ -82,15 +81,6 @@ module.exports = {
         include: path.resolve(context, 'src'),
         options: {
           transpileOnly: true,
-        },
-      },
-      {
-        test: /\.node$/,
-        loader: path.resolve(context, 'scripts/lib/native.loader.js'),
-        options: {
-          output: {
-            path: ADDONS_BUILD_PATH,
-          },
         },
       },
     ].filter(Boolean),
@@ -113,6 +103,7 @@ module.exports = {
   plugins: [
     isEnvDevelopment && new CaseSensitivePathsPlugin(),
     isEnvProduction && new CleanWebpackPlugin(),
+    USE_NODE_ADDONS !== 'false' && new NodeAddonsWebpackPlugin(), // 支持node addon的构建与打包
     //
     new webpack.EnvironmentPlugin({
       NODE_ENV: mode,

@@ -7,19 +7,15 @@ import { Provider } from 'react-redux'
 import * as serviceWorker from './serviceWorker'
 // @ts-ignore
 
-// const ev = require('fsevents')
+import helloAddonsTest from '../addons/hello'
+import helloAddonsLibTest from '@ices/node-addons-hello'
+import callbackAddonsLibTest from '@ices/node-addons-callbacks'
 
-// const he = require('../../scripts/test-addons')
-
-// const hellow = require('hello_world')
-//
-// const hellow_other = require('hello_world_other')
-//
-// const hellow_other_3 = require('../addons/hello_other_three')
-
-// import * as addons from '../main/settings/test-addons.node'
-
-// console.log(addons)
+console.log(`Addons say: ${helloAddonsTest.hello()}`)
+console.log(`AddonsLib say: ${helloAddonsLibTest.hello()}`)
+callbackAddonsLibTest(async (msg) => {
+  console.log(`AddonsLib callbacks say: ${msg}`)
+})
 
 ReactDOM.render(
   <React.StrictMode>

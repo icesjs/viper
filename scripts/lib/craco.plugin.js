@@ -12,10 +12,6 @@ module.exports = {
 
   //
   overrideWebpackConfig({ webpackConfig }) {
-    const { target } = webpackConfig
-    if (target === 'electron-renderer') {
-      addNativeAddonsLoader(webpackConfig)
-    }
     customizeOptimization(webpackConfig)
     return webpackConfig
   },
@@ -23,9 +19,7 @@ module.exports = {
 
 const path = require('path')
 const { mergeWithCustomize } = require('webpack-merge')
-const { addBeforeLoader, loaderByName } = require('@craco/craco')
 const { resolvePackage, resolveReactScriptsPath } = require('./resolve')
-const { ADDONS_BUILD_PATH } = require('../../config/consts')
 const cwd = process.cwd()
 
 //
@@ -152,40 +146,4 @@ function overrideHtmlWebpackPluginForPublicAssets(template, originalConfig) {
       plug.options.template = template
     }
   }
-}
-
-//
-function addNativeAddonsLoader(webpackConfig) {
-  const { resolve = {}, module = {} } = webpackConfig
-  const { extensions = [], alias = {} } = resolve
-  const { rules = [] } = module
-
-  if (!extensions.includes('.node')) {
-    extensions.push('.node')
-  }
-
-  const addonsLoader = {
-    test: /\.node$/,
-    loader: path.join(cwd, 'scripts/lib/native.loader.js'),
-    options: {
-      output: {
-        path: ADDONS_BUILD_PATH,
-      },
-    },
-  }
-  let { isAdded } = addBeforeLoader(webpackConfig, loaderByName('file-loader'), addonsLoader)
-  if (!isAdded) {
-    isAdded = addBeforeLoader(webpackConfig, loaderByName('url-loader'), addonsLoader).isAdded
-  }
-  if (!isAdded) {
-    rules.push(addonsLoader)
-  }
-
-  Object.assign(alias, { ...require('./native.loader.js').aliasMap })
-
-  resolve.extensions = extensions
-  resolve.alias = alias
-  webpackConfig.resolve = resolve
-  module.rules = rules
-  webpackConfig.module = module
 }

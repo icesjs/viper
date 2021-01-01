@@ -5,99 +5,30 @@ const loaderName = 'native-addons-loader'
 module.exports = exports = {
   loaderName,
   //
-  getBindingsCodeSnippet(addonsList) {
-    return `/* ${addonsList.map(({ modulePath }) => modulePath).join('\n * ')} */
-  
-  function getAddonsByBindingName(name = 'bindings.node') {
-    const addonsList = ${JSON.stringify(addonsList)};
-    for (const addons of addonsList) {
-      if (name === addons.name || \`\${name}.node\` === addons.name) {
-        return addons
+  getBindingsCodeSnippet(addonsList, runtime) {
+    return `/* ${addonsList.map(({ filePath }) => filePath).join('\n * ')} */
+      const runtime = require(${runtime});
+      module.exports = exports = function fakedBindings(bindingsOptions) {
+        return runtime(bindingsOptions, ${JSON.stringify(
+          addonsList.map(({ filePath, ...addon }) => addon)
+        )}, ${JSON.stringify(loaderName)})
       }
-    }
-  }
- 
-  function getAddonsModuleExports(addons) {
-    const module = {exports: {}}
-    try {
-      const path = __non_webpack_require__('path');
-      const {
-      fromBuildOutputModulePath,
-      fromRootContextModulePath,
-      isFromNodeModules,
-      isMainProcess,
-      flags,
-    } = addons;
-      const usedFlags = typeof flags !== 'undefined';
-      if (isMainProcess) {
-         const requirePath = isFromNodeModules 
-              ? fromBuildOutputModulePath 
-              : path.join(__dirname, fromBuildOutputModulePath);
-         if (usedFlags) {
-            process.dlopen(module,requirePath,flags)
-         } else {
-            module.exports = __non_webpack_require__(requirePath)
-         }
-      } else {
-         const { remote } = __non_webpack_require__('electron');
-         if (!remote) {
-           throw new Error('Can not get remote module from electron. (enableRemoteModule)')
-         }
-         const appPath = remote.app.getAppPath();
-         const requirePath = isFromNodeModules 
-              ? fromRootContextModulePath 
-              : path.join(appPath, fromRootContextModulePath);
-         if (usedFlags) {
-            remote.process.dlopen(module,requirePath,flags)
-         } else {
-            module.exports = remote.require(requirePath)
-         }
-      }
-    } catch(error) {
-      throw new Error('${loaderName}: ' + error)
-    }
-    return module.exports
-  }
-  
-  module.exports = exports = function fakedBindings(opts) {
-    if (typeof opts === 'string') {
-      opts = { bindings: opts }
-    }
-    const { bindings } = Object.assign({}, opts);
-    const addons = getAddonsByBindingName(bindings);
-    if(!addons) {
-      throw new Error('${loaderName}: Could not locate the bindings file.')
-    }
-    if (opts.path) {
-      // un_safe
-      return addons.path
-    }
-    return getAddonsModuleExports(addons)
-  }
-  
-  exports.getRoot = () => '';
-  exports.getFileName = () => '';
-  `
+      exports.getRoot = function getRoot(){return ''}
+      exports.getFileName = function getFileName(){return ''}
+    `
   },
 
   //
-  getCodeSnippet({
-    fromBuildOutputModulePath,
-    fromRootContextModulePath,
-    isFromNodeModules,
-    isMainProcess,
-    modulePath,
-    flags,
-  }) {
+  getCodeSnippet({ isFromNodeModules, isMainProcess, modulePath, filePath, flags }) {
     const usedFlags = typeof flags !== 'undefined'
     return `
       try {
-         /* ${modulePath} */
+         /* ${filePath} */
          const path = __non_webpack_require__('path')
          if (${JSON.stringify(isMainProcess)}) {
            ${usedFlags ? 'process.dlopen(module,' : 'module.exports=__non_webpack_require__('}
            ${isFromNodeModules ? '' : 'path.join(__dirname,'}
-           ${JSON.stringify(fromBuildOutputModulePath)}
+           ${JSON.stringify(modulePath)}
            ${isFromNodeModules ? '' : ')'}
            ${usedFlags ? `,${JSON.stringify(flags)}` : ''})
          } else {
@@ -108,7 +39,7 @@ module.exports = exports = {
            const appPath = remote.app.getAppPath();
            ${usedFlags ? 'remote.process.dlopen(module,' : 'module.exports=remote.require('}
            ${isFromNodeModules ? '' : 'path.join(appPath,'}
-           ${JSON.stringify(fromRootContextModulePath)}
+           ${JSON.stringify(modulePath)}
            ${isFromNodeModules ? '' : ')'}
            ${usedFlags ? `,${JSON.stringify(flags)}` : ''})
          }
@@ -151,6 +82,10 @@ module.exports = exports = {
           },
         },
         additionalProperties: false,
+      },
+      appBuildPath: {
+        description: 'App build dir, for packaged',
+        type: 'string',
       },
       flags: {
         description: 'An integer that allows to specify dlopen behavior. See the [process.dlopen]',

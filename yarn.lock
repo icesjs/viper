@@ -1233,6 +1233,13 @@
   dependencies:
     "@hapi/hoek" "^9.0.0"
 
+"@ices/node-addons-callbacks@^0.0.2":
+  version "0.0.2"
+  resolved "https://registry.npm.taobao.org/@ices/node-addons-callbacks/download/@ices/node-addons-callbacks-0.0.2.tgz?cache=0&sync_timestamp=1609484590197&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2F%40ices%2Fnode-addons-callbacks%2Fdownload%2F%40ices%2Fnode-addons-callbacks-0.0.2.tgz#e16c2d5858201c741bc43df36329764d4b16091e"
+  integrity sha1-4WwtWFggHHQbxD3zYyl2TUsWCR4=
+  dependencies:
+    bindings "~1.2.1"
+
 "@ices/node-addons-hello@^0.0.2":
   version "0.0.2"
   resolved "https://registry.npm.taobao.org/@ices/node-addons-hello/download/@ices/node-addons-hello-0.0.2.tgz#0a73c881efa3c38a99fa2da50840c9b11dd80450"
