@@ -1,7 +1,8 @@
 const util = require('util')
 const stripColor = require('strip-ansi')
 const termSize = require('term-size')
-const ansiRegexCon = require('ansi-regex')
+const sliceAnsi = require('slice-ansi')
+const widestLine = require('widest-line')
 const chalk = require('chalk')
 
 const usedColor = {
@@ -22,13 +23,15 @@ const enableColor = process.env.NO_COLOR !== 'true'
 const defaultScriptLogName = 'script'
 const root = process.cwd()
 const namespace = process.env.npm_package_name
-const terminalSize = termSize()
-const ansiRegex = ansiRegexCon({ onlyFirst: true })
-const filePosRegex = /[[({]?((?:[a-zA-Z]:|file:)?(?:[/\\][^:*?"<>|]+)+:\d+:\d+)[})\]]?/g
+const fileLinkRegex = /[[({]?((?:[a-zA-Z]:|file:)?(?:[/\\][^:*?"<>|]+)+:\d+:\d+)[})\]]?/g
 const prefixRegex = /{\s*(y|m|d|h|i|s|ms|level|name)\s*}/g
 const nodeModulesRegex = /^[^\s]|[/\\]node_modules[/\\]/
 const warnAndErrorRegex = /^\s*\w?(error|warning|warn):?\b/i
 const splitLineRegex = /.+\n?|\n|^/g
+
+// 终端列宽信息
+let terminalSize
+updateTerminalSize()
 
 function createLogger(opts) {
   opts = Object.assign(
@@ -61,6 +64,14 @@ function defaultColorFormat(cont, level) {
     const colorSetter = (color ? getColorSetter(color) : null) || colorifyNormalText
     return colorSetter(line)
   })
+}
+
+function updateTerminalSize() {
+  terminalSize = termSize()
+  const { NODE_ENV, ENABLE_PRODUCTION_DEBUG } = process.env
+  if (NODE_ENV === 'development' || ENABLE_PRODUCTION_DEBUG !== 'false') {
+    setTimeout(updateTerminalSize, 5000)
+  }
 }
 
 //
@@ -216,18 +227,18 @@ function colorifyNormalText(line) {
 function colorifyError(context, line) {
   if (nodeModulesRegex.test(line)) {
     return getColorSetter(usedColor.errNodeModules)(
-      line.replace(filePosRegex, (t, g1) => getColorSetter(usedColor.secondary)(`[${g1}]`))
+      line.replace(fileLinkRegex, (t, g1) => getColorSetter(usedColor.secondary)(`[${g1}]`))
     )
   }
   if (line.indexOf(root) !== -1) {
     const { firstRootLine } = context
-    line = line.replace(filePosRegex, (t, g1) =>
+    line = line.replace(fileLinkRegex, (t, g1) =>
       !firstRootLine ? `[${g1}]` : getColorSetter(usedColor.secondary)(`[${g1}]`)
     )
     if (!firstRootLine) {
       context.firstRootLine = line
       return getColorSetter(usedColor.errFirstRoot)(
-        line.replace(/^\s+/, (t) => padStartAndEnd('→', t.length, ' '))
+        line.replace(/^[\s→]+/, (t) => padStartAndEnd('→', t.length, ' '))
       )
     }
     return getColorSetter(usedColor.errRoot)(line)
@@ -288,39 +299,38 @@ function creteFileLogger(log) {
 
 //
 function wrapStringRow(prefix, str) {
-  const preWidth = prefix.length
-  const termCols = Math.max(terminalSize.columns, preWidth + 80)
-  if (preWidth + str.length <= termCols) {
+  const widestLineWidth = widestLine(prefix + str)
+  const maxCols = Math.max(terminalSize.columns - 1, 40)
+  if (widestLineWidth <= maxCols) {
     str = prefix + str
   } else {
-    const maxStrWidth = termCols - preWidth
+    let strWidth
     const rows = []
-    do {
-      if (preWidth + str.length > termCols) {
-        let sub = str.substring(0, maxStrWidth)
-        if (ansiRegex.test(sub.substr(-preWidth))) {
-          sub = str.substring(0, maxStrWidth - preWidth)
-          str = str.substring(maxStrWidth - preWidth)
-        } else {
-          str = str.substring(maxStrWidth)
-        }
+    const prefixWidth = widestLine(prefix)
+    const maxStrWidth = Math.abs(maxCols - prefixWidth)
+    let sub = sliceAnsi(str, 0, maxStrWidth)
+    str = sliceAnsi(str, maxStrWidth)
+    rows.push(prefix + sub + '\n')
+    while ((strWidth = widestLine(str))) {
+      if (prefixWidth + strWidth > maxCols) {
+        sub = sliceAnsi(str, 0, maxStrWidth)
+        str = sliceAnsi(str, maxStrWidth)
         rows.push(prefix + sub + '\n')
-      } else if (str.length) {
+      } else {
         rows.push(prefix + str)
         str = ''
       }
-    } while (str)
+    }
     str = rows.join('')
   }
-  return str.substr(-1) !== '\n' ? str + '\n' : str
+  return stripColor(str).substr(-1) !== '\n' ? str + '\n' : str
 }
 
 //
 function formatPrefixedLogs({ content, name, level, nameColor }) {
   const color = `${typeof nameColor === 'function' ? nameColor() : nameColor}`
   const maxNameLength = createPrefixedLogger._registeredNames[0].length
-  const p =
-    getColorSetter(color || usedColor.secondary)(formatLogPrefix(name, level, maxNameLength)) + ' '
+  const p = getColorSetter(color)(formatLogPrefix(name, level, maxNameLength)) + ' '
   //
   return content
     .replace(/\r\n?/g, '\n')
