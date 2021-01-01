@@ -30,8 +30,7 @@ const warnAndErrorRegex = /^\s*\w?(error|warning|warn):?\b/i
 const splitLineRegex = /.+\n?|\n|^/g
 
 // 终端列宽信息
-let terminalSize
-updateTerminalSize()
+const terminalSize = termSize()
 
 function createLogger(opts) {
   opts = Object.assign(
@@ -64,14 +63,6 @@ function defaultColorFormat(cont, level) {
     const colorSetter = (color ? getColorSetter(color) : null) || colorifyNormalText
     return colorSetter(line)
   })
-}
-
-function updateTerminalSize() {
-  terminalSize = termSize()
-  const { NODE_ENV, ENABLE_PRODUCTION_DEBUG } = process.env
-  if (NODE_ENV === 'development' || ENABLE_PRODUCTION_DEBUG !== 'false') {
-    setTimeout(updateTerminalSize, 5000)
-  }
 }
 
 //
