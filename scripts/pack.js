@@ -15,14 +15,16 @@ const yaml = require('js-yaml')
 const merge = require('deepmerge')
 const minimist = require('minimist')
 const { log, createPrefixedLogger } = require('./lib/logger')
-const { relativePath, emptyDirSync, getPackageJson, printErrorAndExit } = require('./lib/utils')
+const { relativePath, emptyDirSync, printErrorAndExit } = require('./lib/utils')
 const { runScript } = require('./lib/runner')
 const {
-  BUILD_PATH,
+  APP_BUILD_PATH,
   MAIN_BUILD_PATH,
   RENDERER_BUILD_PATH,
   ADDONS_BUILD_PATH,
 } = require('../config/consts')
+//
+const { CI, ELECTRON_MAIN_ENTRY_PATH, USE_NODE_ADDONS = 'false' } = process.env
 
 if (require.main === module) {
   // 从命令行进入
@@ -35,26 +37,35 @@ async function run(commandArgs = {}) {
 
   log.info('Command arguments:')
   log.info(commandArgs)
+
   // 清理构建输出目录
-  emptyDirSync(BUILD_PATH)
-  log.info('Rebuild native addons for current platform...')
-  // 构建本地插件
-  await rebuildNativeModules({
-    ...commandArgs,
-    logger: createPrefixedLogger(taskNames[0], 'yellow'),
-  })
+  emptyDirSync(APP_BUILD_PATH)
+
+  if (USE_NODE_ADDONS !== 'false') {
+    log.info('Rebuild native addons for current platform...')
+    // 构建本地插件
+    await rebuildNativeModules({
+      ...commandArgs,
+      logger: createPrefixedLogger(taskNames[0], 'yellow'),
+    })
+  } else {
+    taskNames.shift()
+  }
+
   log.info('Build app resources...')
   // 编译构建
   await buildResources({
     ...commandArgs,
     logger: createPrefixedLogger(taskNames[1], 'red', (s) => s),
   })
+
   log.info('Package app resources...')
   // 打包产品
   await packApplication({
     ...commandArgs,
     logger: createPrefixedLogger(taskNames[2], 'blue'),
   })
+
   // 打包成功
   log.info('Packaged successfully!')
 }
@@ -88,7 +99,7 @@ async function rebuildNativeModules({ arch, logger, rebuild }) {
   if (arch) {
     args.push('--arch', arch)
   }
-  if (process.env.CI || rebuild) {
+  if (CI || rebuild) {
     args.push('--force')
   }
   await runScript({
@@ -136,26 +147,13 @@ async function packApplication({ platform, arch, dir, logger, publish, config })
 
 async function synchronizeBuilderConfig(filepath, { dir, publish }) {
   const cwd = process.cwd()
-  const mainFile = process.env.ELECTRON_MAIN_ENTRY_PATH
-  const buildDir = relativePath(cwd, BUILD_PATH, false)
-  const mainDir = relativePath(BUILD_PATH, MAIN_BUILD_PATH, false)
-  const rendererDir = relativePath(BUILD_PATH, RENDERER_BUILD_PATH, false)
-  const addonsDir = relativePath(BUILD_PATH, ADDONS_BUILD_PATH, false)
-  const relativeBuildMainFile = relativePath(BUILD_PATH, mainFile, false)
+  const mainFile = ELECTRON_MAIN_ENTRY_PATH
+  const buildDir = relativePath(cwd, APP_BUILD_PATH, false)
+  const mainDir = relativePath(APP_BUILD_PATH, MAIN_BUILD_PATH, false)
+  const rendererDir = relativePath(APP_BUILD_PATH, RENDERER_BUILD_PATH, false)
+  const addonsDir = relativePath(APP_BUILD_PATH, ADDONS_BUILD_PATH, false)
+  const relativeBuildMainFile = relativePath(APP_BUILD_PATH, mainFile, false)
 
-  // 生成打包用的package.json
-  const { name, version, description } = getPackageJson()
-  await promisify(fs.outputFile)(
-    path.resolve(buildDir, 'package.json'),
-    JSON.stringify({
-      name,
-      version,
-      description,
-      private: true,
-      dependencies: {},
-      main: relativeBuildMainFile,
-    })
-  )
   // 同步打包配置
   await writeBuilderConfig(filepath, {
     publish,

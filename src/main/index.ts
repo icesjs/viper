@@ -1,8 +1,9 @@
 import { app, BrowserWindow, shell, dialog } from 'electron'
 import AppUpdater from './updater'
 // @ts-ignore
-// import helloAddonsTest from '../addons/hello'
+import helloAddonsTest from '../addons/hello'
 import helloAddonsLibTest from '@ices/node-addons-hello'
+import callbackAddonsLibTest from '@ices/node-addons-callbacks'
 
 let mainWindow: BrowserWindow | null = null
 
@@ -53,14 +54,22 @@ async function createWindow() {
   })
 
   mainWindow.once('show', async () => {
-    // await dialog.showMessageBox({
-    //   title: 'Native Addons Test',
-    //   message: `Addons say: ${helloAddonsTest.hello()}`,
-    // })
+    await dialog.showMessageBox({
+      title: 'Native Addons Test',
+      message: `Addons say: ${helloAddonsTest.hello()}`,
+    })
     await dialog.showMessageBox({
       title: 'Native Addons Test',
       message: `AddonsLib say: ${helloAddonsLibTest.hello()}`,
     })
+
+    callbackAddonsLibTest(async (msg) => {
+      await dialog.showMessageBox({
+        title: 'Native Addons Test',
+        message: `AddonsLib callbacks say: ${msg}`,
+      })
+    })
+
     mainWindow?.setBackgroundColor('transparent')
   })
 

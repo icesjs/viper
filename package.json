@@ -13,9 +13,10 @@
     "start": "node scripts/start",
     "build": "node scripts/build",
     "pack": "node scripts/pack",
-    "rebuild": "electron-rebuild -t prod"
+    "rebuild-addons": "electron-rebuild -t prod"
   },
   "dependencies": {
+    "@ices/node-addons-callbacks": "^0.0.2",
     "@ices/node-addons-hello": "^0.0.2",
     "electron-log": "^4.3.0",
     "electron-store": "^6.0.1",
@@ -101,18 +102,9 @@
       "prettier --write"
     ]
   },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
-  },
+  "browserslist": [
+    "last 1 chrome version"
+  ],
   "repository": {
     "url": "https://github.com/icesjs/viper"
   },

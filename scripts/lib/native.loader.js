@@ -27,10 +27,13 @@ function gainOptions(loaderContext) {
   const options = Object.assign({}, loaderUtils.getOptions(loaderContext))
   validate({ ...optionsScheme }, options, { baseDataPath: 'options' })
 
-  const { output = {}, makeNativeDependencyPackageJson = true } = options
+  const { output = {}, appBuildPath = 'build/', makeNativeDependencyPackageJson = true } = options
   const { path: outputPath = 'build/addons/', filename } = output
   if (!path.isAbsolute(outputPath)) {
     output.path = path.resolve(outputPath)
+  }
+  if (!path.isAbsolute(appBuildPath)) {
+    options.appBuildPath = path.resolve(appBuildPath)
   }
   let namePattern = filename
   if (loaderContext.mode !== 'development') {
@@ -62,15 +65,9 @@ function normalizeModulePath(loaderContext) {
 
 //
 function readAddonsOutputPackageJson(pkgPath) {
-  const projectPackage = getPackageJson()
-  const { name, version, main } = projectPackage
-  let mainPath = path.resolve(main)
-  try {
-    mainPath = require.resolve(mainPath)
-  } catch (e) {}
-  const relativeMainPath = relativePath(path.dirname(pkgPath), mainPath)
-  const pkg = fs.existsSync(pkgPath) ? require(pkgPath) : {}
-  if (pkg.name !== name || pkg.version !== version || pkg.main !== relativeMainPath) {
+  const { name, version } = getPackageJson()
+  const pkg = fs.existsSync(pkgPath) ? fs.readJSONSync(pkgPath) : {}
+  if (pkg.name !== name || pkg.version !== version) {
     return {
       name,
       version,
@@ -89,6 +86,7 @@ function readAddonsOutputPackageJson(pkgPath) {
 async function emitRawSourceFile(content, options) {
   const {
     flags,
+    appBuildPath,
     output: { filename: namePattern, path: outputPath },
   } = options
   const {
@@ -97,27 +95,33 @@ async function emitRawSourceFile(content, options) {
     // 以后可能会被webpack移除掉
   } = this._compiler
 
+  const isEnvDevelopment = this.mode === 'development'
+  const isRendererProcess = this.target === 'electron-renderer'
   const filename = loaderUtils.interpolateName(this, namePattern, {
-    content,
     context: this.rootContext,
+    content,
   })
   const absFilename = path.join(outputPath, filename)
+  const rootContext = isEnvDevelopment ? this.rootContext : path.resolve(appBuildPath)
   const relativeFromBuildOutputEmitFilePath = relativePath(compilerOutput.path, absFilename)
-  const relativeFromRootContextEmitFilePath = relativePath(this.rootContext, absFilename)
+  const relativeFromRootContextEmitFilePath = relativePath(rootContext, absFilename)
 
   // 发布文件到webpack文件管理
   this.emitFile(relativeFromBuildOutputEmitFilePath, content)
 
-  if (this.mode === 'development' && this.target === 'electron-renderer') {
+  if (isEnvDevelopment && isRendererProcess) {
     // 客户端开发环境，会使用内存文件系统，require的插件，还需要写到物理磁盘上
     await promisify(fs.outputFile)(absFilename, content)
   }
 
+  const modulePath = isRendererProcess
+    ? relativeFromRootContextEmitFilePath
+    : relativeFromBuildOutputEmitFilePath
+
   return {
-    flags,
     isFromNodeModules: false,
-    fromBuildOutputModulePath: relativeFromBuildOutputEmitFilePath,
-    fromRootContextModulePath: relativeFromRootContextEmitFilePath,
+    modulePath,
+    flags,
   }
 }
 
@@ -126,17 +130,23 @@ async function generateProductionCodeForAddons(source, options) {
   return getCodeSnippet.apply(this, [
     {
       ...(await emitRawSourceFile.apply(this, [source, options])),
-      modulePath: normalizeModulePath.call(this, this),
+      filePath: normalizeModulePath.call(this, this),
       isMainProcess: this.target === 'electron-main',
     },
   ])
 }
 
 //
-function getDevelopmentPathsForAddons(options, modulePackagePath) {
+async function getDevelopmentPathsForAddons(source, options, modulePackagePath) {
+  // 需要检查该路径是否在当前工程下
+  if (relativePath(process.cwd(), fs.realpathSync(modulePackagePath)).startsWith('..')) {
+    return await emitRawSourceFile.apply(this, [source, options])
+  }
+
   const { flags } = options
   const { name } = require(modulePackagePath)
   const normalizedResourcePath = path.normalize(this.resourcePath)
+  let modulePath
 
   // 以模块包的形式导入
   if (!flags) {
@@ -145,24 +155,19 @@ function getDevelopmentPathsForAddons(options, modulePackagePath) {
       resolvedModuleMain = require.resolve(name, { paths: [this.rootContext] })
     } catch (e) {}
     if (resolvedModuleMain === normalizedResourcePath) {
-      return {
-        fromBuildOutputModulePath: name,
-        fromRootContextModulePath: name,
-        isFromNodeModules: true,
-        flags,
-      }
+      modulePath = name
     }
   }
-
-  // 以模块包下文件路径形式导入
-  const pathname = normalizedResourcePath
-    .replace(path.join(modulePackagePath, '..'), '')
-    .replace(/^[/\\]/, '')
-  const requirePath = path.join(name, pathname).replace(/\\/g, '/')
+  if (!modulePath) {
+    // 以模块包下文件路径形式导入
+    const pathname = normalizedResourcePath
+      .replace(path.join(modulePackagePath, '..'), '')
+      .replace(/^[/\\]/, '')
+    modulePath = path.join(name, pathname).replace(/\\/g, '/')
+  }
   return {
-    fromBuildOutputModulePath: requirePath,
-    fromRootContextModulePath: requirePath,
     isFromNodeModules: true,
+    modulePath,
     flags,
   }
 }
@@ -172,11 +177,15 @@ async function generateRequireModuleCode(content, options, modulePackagePath) {
   if (!modulePackagePath || this.mode !== 'development') {
     return await generateProductionCodeForAddons.apply(this, [content, options])
   }
-  const paths = getDevelopmentPathsForAddons.apply(this, [options, modulePackagePath])
+  const paths = await getDevelopmentPathsForAddons.apply(this, [
+    content,
+    options,
+    modulePackagePath,
+  ])
   return getCodeSnippet.apply(this, [
     {
       ...paths,
-      modulePath: normalizeModulePath.call(this, this),
+      filePath: normalizeModulePath.call(this, this),
       isMainProcess: this.target === 'electron-main',
     },
   ])
@@ -196,22 +205,22 @@ async function setNativeDependency(source, options, modulePackagePath) {
       output: { path: outputPath },
     } = options
     const outputPackagePath = path.resolve(outputPath, 'package.json')
-    const outputPackage = readAddonsOutputPackageJson.apply(this, [outputPackagePath])
-
+    const addonsDependencies = {}
     if (projectDeps[name]) {
-      outputPackage.dependencies[name] = projectDeps[name]
+      addonsDependencies[name] = projectDeps[name]
     } else if (projectDevDeps[name]) {
-      outputPackage.dependencies[name] = projectDevDeps[name]
+      addonsDependencies[name] = projectDevDeps[name]
       this.emitWarning(
         new Warning(
-          `Waring: You should install the dependency named of ${name} to 'dependencies' rather than 'devDependencies'`
+          `Warning: You should install the dependency named of ${name} to 'dependencies' rather than 'devDependencies'`
         )
       )
     } else {
-      outputPackage.dependencies[name] = version
+      addonsDependencies[name] = version
     }
-
-    await promisify(fs.outputFile)(outputPackagePath, JSON.stringify(outputPackage))
+    const outputPackage = readAddonsOutputPackageJson.apply(this, [outputPackagePath])
+    Object.assign(outputPackage.dependencies, addonsDependencies)
+    fs.outputFileSync(outputPackagePath, JSON.stringify(outputPackage))
   } else {
     // 使用electron加载该插件，判断是否兼容
     if (!(await isCompatibleForInstalledElectron.apply(this, [source]))) {
@@ -224,7 +233,7 @@ async function setNativeDependency(source, options, modulePackagePath) {
     } else {
       this.emitWarning(
         new Warning(
-          'Waring: The native addons may need to be rebuild to fit the target environment'
+          'Warning: The native addons may need to be rebuild to fit the target environment'
         )
       )
     }
@@ -261,15 +270,8 @@ async function isCompatibleForInstalledElectron(content) {
   return compatible
 }
 
-// 用于将require('bindings')转发到当前loader来处理
-const fakedAddonsResolver = path.join(__dirname, 'native.loader.node')
-const nativeAddonsModuleResolverMap = {
-  // bindings是比较多使用的一个包，与webpack有兼容性问题，且不能在electron环境良好使用
-  bindings$: `${fakedAddonsResolver}?resolver=bindings`,
-}
-
 //
-async function readNativeAddonsSourceFromContext(context) {
+async function readNodeAddonsSourceFromContext(context) {
   const targetNameRegx = /(['"])target_name\1\s*:\s*(['"])(.*?)\2/g
   const readFile = getFileReader(this)
   const gyp = (await readFile(path.join(context, 'binding.gyp'))).toString()
@@ -331,7 +333,8 @@ async function makeModuleCodeWithBindings(addonsSources, options) {
     let paths
     // 计算路径信息
     if (isDevEnvironment) {
-      paths = getDevelopmentPathsForAddons.apply(addonsLoaderContext, [
+      paths = await getDevelopmentPathsForAddons.apply(addonsLoaderContext, [
+        source,
         options,
         addonsModulePackagePath,
       ])
@@ -342,54 +345,40 @@ async function makeModuleCodeWithBindings(addonsSources, options) {
     addonsList.push({
       ...paths,
       name,
-      modulePath: normalizeModulePath.call(addonsLoaderContext, addonsLoaderContext),
+      filePath: normalizeModulePath.call(addonsLoaderContext, addonsLoaderContext),
       isMainProcess: this.target === 'electron-main',
     })
   }
-  return getBindingsCodeSnippet.apply(this, [addonsList])
+  const runtimePath = path.join(__dirname, 'native.runtime.js')
+  return getBindingsCodeSnippet.apply(this, [
+    addonsList,
+    loaderUtils.stringifyRequest(this, runtimePath),
+  ])
 }
 
 //
-async function requireNativeAddonsByBindings(options) {
-  // 这里用到了hack属性 _module
-  // 以后可能会被webpack移除掉
-  const module = this._module
-  const { reasons } = Object.assign({}, module)
+async function requireNodeAddonsByBindings(options, modulePath) {
   const addonsSources = []
-  if (Array.isArray(reasons)) {
-    for (const { module } of reasons) {
-      const { context } = Object.assign({}, module)
-      if (!context || typeof context !== 'string') {
-        continue
-      }
-      const modulePackagePath = await resolveModulePackagePath.apply(this, [
-        this.rootContext,
-        context,
-      ])
-      if (!modulePackagePath) {
-        continue
-      }
-      const moduleRoot = path.dirname(modulePackagePath)
-      if (fs.existsSync(path.join(moduleRoot, 'binding.gyp'))) {
-        const sources = await readNativeAddonsSourceFromContext.call(this, moduleRoot)
-        if (sources) {
-          addonsSources.push(...sources)
-        }
-      }
+  const moduleRoot = path.resolve(modulePath)
+  if (fs.existsSync(path.join(moduleRoot, 'binding.gyp'))) {
+    const sources = await readNodeAddonsSourceFromContext.call(this, moduleRoot)
+    if (sources) {
+      addonsSources.push(...sources)
     }
   }
-
   return makeModuleCodeWithBindings.apply(this, [addonsSources, options])
 }
 
-//
-function requireNativeAddonsFromResolver(options, callback) {
+// 用于将require('bindings')转发到当前loader来处理
+const fakedAddonsResolver = path.join(__dirname, 'native.loader.node')
+
+function requireNodeAddonsFromResolver(options, callback) {
   if (path.normalize(this.resourcePath) === fakedAddonsResolver) {
-    const { resolver } = loaderUtils.parseQuery(this.resourceQuery)
+    const { resolver, module } = loaderUtils.parseQuery(this.resourceQuery)
     this.clearDependencies()
     if (resolver === 'bindings') {
-      return requireNativeAddonsByBindings
-        .apply(this, [options])
+      return requireNodeAddonsByBindings
+        .apply(this, [options, module])
         .then((code) => callback(null, code))
         .catch(callback)
     }
@@ -404,9 +393,9 @@ async function makeDirectRequireAddonsModuleCode(...args) {
 }
 
 //
-module.exports = function NativeAddonsLoader(source) {
+module.exports = function NodeAddonsLoader(source) {
   if (!/^electron-(?:main|renderer)$/.test(this.target)) {
-    this.callback(new Error('This loader can be used when the target environment is electron'))
+    this.callback(new Error('This loader can only be used when the target environment is electron'))
     return
   }
 
@@ -421,7 +410,7 @@ module.exports = function NativeAddonsLoader(source) {
   const args = [source, options]
   const callback = this.async()
 
-  if (requireNativeAddonsFromResolver.apply(this, [options, callback])) {
+  if (requireNodeAddonsFromResolver.apply(this, [options, callback])) {
     return
   }
 
@@ -433,5 +422,3 @@ module.exports = function NativeAddonsLoader(source) {
 }
 
 module.exports.raw = true
-
-module.exports.aliasMap = nativeAddonsModuleResolverMap

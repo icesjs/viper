@@ -37,25 +37,22 @@ function loadEnv(NODE_ENV, forced) {
   const dotenv = require('./dotenv')
   const envFromConfig = dotenv.parseEnv(NODE_ENV)
   const envFromProcess = process.env
-  const envs = { ...envFromProcess, ...envFromConfig, NODE_ENV }
-  for (const [name, value] of Object.entries(envs)) {
-    if (!value || value === 'undefined') {
+
+  Object.assign(envFromConfig, { FORCE_COLOR: 2 }, forced)
+  for (const [name, value] of Object.entries(envFromConfig)) {
+    const processEnvHasProp = envFromProcess.hasOwnProperty(name)
+    const processEnv = envFromProcess[name]
+    if (value && value !== 'undefined') {
+      // 仅设置环境变量中未声明的值
+      if (processEnvHasProp && processEnv && processEnv !== 'undefined') {
+        continue
+      }
+      envFromProcess[name] = value
+    } else if (processEnvHasProp && (!processEnv || processEnv === 'undefined')) {
       delete envFromProcess[name]
-      delete envs[name]
     }
   }
-  if (!(NODE_ENV = envs.NODE_ENV)) {
-    throw new Error('NODE_ENV is not set')
-  }
-  Object.assign(
-    envFromProcess,
-    envFromConfig,
-    {
-      NODE_ENV,
-      FORCE_COLOR: 2,
-    },
-    forced
-  )
+  Object.assign(envFromProcess, { NODE_ENV })
 }
 
 function presetEnv() {

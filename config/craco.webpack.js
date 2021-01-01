@@ -1,6 +1,7 @@
 //
 const path = require('path')
 const StyleLintPlugin = require('stylelint-webpack-plugin')
+const NodeAddonsWebpackPlugin = require('../scripts/lib/native.plugin')
 const { resolvePackage } = require('../scripts/lib/resolve')
 const webpack = resolvePackage('webpack')
 
@@ -12,7 +13,7 @@ const {
 } = require('./consts')
 const cwd = process.cwd()
 
-const { RENDERER_BUILD_TARGET } = process.env
+const { RENDERER_BUILD_TARGET, USE_NODE_ADDONS = 'false' } = process.env
 const RENDERER_PRELOAD = path.join(__dirname, 'preload.renderer.js')
 const target = !/^(web|electron-renderer)$/.test(RENDERER_BUILD_TARGET)
   ? 'electron-renderer'
@@ -34,6 +35,9 @@ const customizeWebpackConfig = {
   // 用于修改public静态资源目录，craco.plugin.js插件会处理这个属性
   publicAssets: path.resolve('public/web/'),
   plugins: [
+    // 支持node addon的构建与打包
+    // 注意，node addon仅在渲染模块以electron-renderer模式打包时可用
+    USE_NODE_ADDONS !== 'false' && new NodeAddonsWebpackPlugin(),
     new StyleLintPlugin({
       configBasedir: cwd,
       context: RENDERER_CONTEXT,
@@ -42,7 +46,7 @@ const customizeWebpackConfig = {
     new webpack.EnvironmentPlugin({
       IS_ELECTRON: target !== 'web',
     }),
-  ],
+  ].filter(Boolean),
 }
 
 //

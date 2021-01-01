@@ -8,7 +8,7 @@ const usedColor = {
   log: '',
   debug: '',
   info: 'green',
-  warn: { bg: 'bgYellowBright', ft: 'black', bl: true },
+  warn: { bg: 'bgYellowBright', ft: 'black', bl: false },
   error: 'red',
   success: { ft: 'green', bl: true },
   failed: { ft: 'red', bl: true },

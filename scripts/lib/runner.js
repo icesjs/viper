@@ -15,41 +15,47 @@ function runWebpack({ config, logger, env, watch, watchOptions, beforeWatchRun, 
 
   //
   let watching
-  const task = new Promise((resolve, reject) => {
-    let isFirstRun = true
-    const callback = (err, stats) => {
-      if (err) {
-        if (isFirstRun) {
-          logger.error(err)
-          return reject(err)
+  const task = new Promise((resolve, reject) =>
+    process.nextTick(() => {
+      let isFirstRun = true
+      const callback = (err, stats) => {
+        if (err) {
+          if (isFirstRun) {
+            logger.error(err)
+            return reject(err)
+          } else {
+            throw err
+          }
+        }
+        logger.log(stats['toString'](statsOptions))
+        if (!isFirstRun) {
+          return typeof afterWatchRun === 'function' && afterWatchRun()
+        }
+        isFirstRun = false
+        if (watch) {
+          resolve()
         } else {
-          throw err
+          if (stats.hasErrors()) {
+            reject('Failed to compile!')
+          } else {
+            resolve()
+          }
         }
       }
-      logger.log(stats['toString'](statsOptions))
-      if (!isFirstRun) {
-        return typeof afterWatchRun === 'function' && afterWatchRun()
-      }
-      isFirstRun = false
+      //
       if (watch) {
-        resolve()
-      } else if (stats.hasErrors()) {
-        reject('Failed to compile!')
+        if (typeof beforeWatchRun === 'function') {
+          compiler.hooks.watchRun.tapAsync('watch-run', async (compilation, done) => {
+            !isFirstRun && (await beforeWatchRun(compilation))
+            done()
+          })
+        }
+        watching = compiler.watch(watchOptions || {}, callback)
+      } else {
+        compiler.run(callback)
       }
-    }
-    //
-    if (watch) {
-      if (typeof beforeWatchRun === 'function') {
-        compiler.hooks.watchRun.tapAsync('watch-run', async (compilation, done) => {
-          !isFirstRun && (await beforeWatchRun(compilation))
-          done()
-        })
-      }
-      watching = compiler.watch(watchOptions || {}, callback)
-    } else {
-      compiler.run(callback)
-    }
-  })
+    })
+  )
   //
   task.stop = (callback = () => {}) => (watching ? watching.close(callback) : callback())
   return task
