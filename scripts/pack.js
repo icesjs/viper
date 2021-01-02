@@ -25,7 +25,12 @@ const {
   ADDONS_BUILD_PATH,
 } = require('../config/consts')
 //
-const { ELECTRON_MAIN_ENTRY_PATH, ENABLE_NODE_ADDONS = 'false', CI = 'false' } = process.env
+const {
+  ELECTRON_MAIN_ENTRY_PATH,
+  ELECTRON_HEADERS_MIRROR_URL,
+  ENABLE_NODE_ADDONS,
+  CI = 'false',
+} = process.env
 
 if (require.main === module) {
   // 从命令行进入
@@ -95,13 +100,16 @@ function getElectronVersion() {
 
 // 重新编译本地插件
 async function rebuildNativeModules({ arch, logger, rebuild }) {
-  // const electronVersion = getElectronVersion()
-  const args = ['--types', 'prod']
+  const electronVersion = getElectronVersion()
+  const args = ['--types', 'prod', '--version', electronVersion]
   if (arch) {
     args.push('--arch', arch)
   }
   if (CI !== 'false' || rebuild) {
     args.push('--force')
+  }
+  if (ELECTRON_HEADERS_MIRROR_URL) {
+    args.push('--dist-url', ELECTRON_HEADERS_MIRROR_URL)
   }
   await runScript({
     exitHandle: noop,
