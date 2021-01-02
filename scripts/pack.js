@@ -2,6 +2,7 @@
 require('./lib/setup')('production', {
   // 这些环境变量强制被使用
   ENABLE_PRODUCTION_DEBUG: 'false',
+  ENABLE_BUNDLE_ANALYZER: 'false',
   GENERATE_FULL_SOURCEMAP: 'false',
   GENERATE_SOURCEMAP: 'false',
   // DEBUG命名空间强制为构建相关命名
@@ -24,7 +25,7 @@ const {
   ADDONS_BUILD_PATH,
 } = require('../config/consts')
 //
-const { CI, ELECTRON_MAIN_ENTRY_PATH, USE_NODE_ADDONS = 'false' } = process.env
+const { ELECTRON_MAIN_ENTRY_PATH, ENABLE_NODE_ADDONS = 'false', CI = 'false' } = process.env
 
 if (require.main === module) {
   // 从命令行进入
@@ -41,7 +42,7 @@ async function run(commandArgs = {}) {
   // 清理构建输出目录
   emptyDirSync(APP_BUILD_PATH)
 
-  if (USE_NODE_ADDONS !== 'false') {
+  if (ENABLE_NODE_ADDONS !== 'false') {
     log.info('Rebuild native addons for current platform...')
     // 构建本地插件
     await rebuildNativeModules({
@@ -99,7 +100,7 @@ async function rebuildNativeModules({ arch, logger, rebuild }) {
   if (arch) {
     args.push('--arch', arch)
   }
-  if (CI || rebuild) {
+  if (CI !== 'false' || rebuild) {
     args.push('--force')
   }
   await runScript({

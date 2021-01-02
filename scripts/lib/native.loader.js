@@ -1,86 +1,21 @@
-const fs = require('fs-extra')
 const path = require('path')
 const { promisify } = require('util')
-const findUp = require('find-up')
-const { validate } = require('schema-utils')
+const fs = require('fs-extra')
 const loaderUtils = require('loader-utils')
-const { relativePath, getPackageJson } = require('./utils')
 const { log } = require('./logger')
+const { relativePath, getPackageJson } = require('./utils')
 
 const {
-  optionsScheme,
+  getOptions,
   getFileReader,
   getCodeSnippet,
   getBindingsCodeSnippet,
+  normalizeModulePath,
+  resolveModulePackagePath,
+  readAddonsOutputPackageJson,
+  LoaderError,
+  LoaderWarning,
 } = require('./native.utils')
-
-class Warning extends Error {
-  constructor(warning) {
-    super(warning)
-    this.name = 'Warning'
-    this.stack = undefined
-  }
-}
-
-//
-function gainOptions(loaderContext) {
-  const options = Object.assign({}, loaderUtils.getOptions(loaderContext))
-  validate({ ...optionsScheme }, options, { baseDataPath: 'options' })
-
-  const { output = {}, appBuildPath = 'build/', makeNativeDependencyPackageJson = true } = options
-  const { path: outputPath = 'build/addons/', filename } = output
-  if (!path.isAbsolute(outputPath)) {
-    output.path = path.resolve(outputPath)
-  }
-  if (!path.isAbsolute(appBuildPath)) {
-    options.appBuildPath = path.resolve(appBuildPath)
-  }
-  let namePattern = filename
-  if (loaderContext.mode !== 'development') {
-    namePattern = '[contenthash:16].[ext]'
-  } else if (!filename) {
-    namePattern = '[path][name].[ext]'
-  }
-  output.filename = namePattern
-  options.output = output
-  options.makeNativeDependencyPackageJson = makeNativeDependencyPackageJson
-  return options
-}
-
-//
-function resolveModulePackagePath(rootContext, context) {
-  const projectRoot = path.normalize(rootContext)
-  return findUp((dir) => (projectRoot === path.normalize(dir) ? findUp.stop : 'package.json'), {
-    cwd: context,
-  })
-}
-
-//
-function normalizeModulePath(loaderContext) {
-  return relativePath(loaderContext.rootContext, loaderContext.resourcePath, false).replace(
-    /^node_modules[/\\]/,
-    ''
-  )
-}
-
-//
-function readAddonsOutputPackageJson(pkgPath) {
-  const { name, version } = getPackageJson()
-  const pkg = fs.existsSync(pkgPath) ? fs.readJSONSync(pkgPath) : {}
-  if (pkg.name !== name || pkg.version !== version) {
-    return {
-      name,
-      version,
-      description: 'List of native addons dependency required by this project.',
-      dependencies: {},
-    }
-  }
-  const { dependencies } = pkg
-  if (!dependencies || typeof dependencies !== 'object') {
-    pkg.dependencies = {}
-  }
-  return pkg
-}
 
 // 发布文件资源至webpack
 async function emitRawSourceFile(content, options) {
@@ -193,6 +128,11 @@ async function generateRequireModuleCode(content, options, modulePackagePath) {
 
 //
 async function setNativeDependency(source, options, modulePackagePath) {
+  if (!(await isCompatibleForInstalledElectron.apply(this, [source]))) {
+    throw new Error(
+      `This local addon is not compatible for current platform, you need rebuild it first:\n${this.resourcePath}`
+    )
+  }
   if (!options.makeNativeDependencyPackageJson) {
     return
   }
@@ -211,8 +151,8 @@ async function setNativeDependency(source, options, modulePackagePath) {
     } else if (projectDevDeps[name]) {
       addonsDependencies[name] = projectDevDeps[name]
       this.emitWarning(
-        new Warning(
-          `Warning: You should install the dependency named of ${name} to 'dependencies' rather than 'devDependencies'`
+        new LoaderWarning(
+          `You should install the dependency named of ${name} to 'dependencies' rather than 'devDependencies'`
         )
       )
     } else {
@@ -221,26 +161,10 @@ async function setNativeDependency(source, options, modulePackagePath) {
     const outputPackage = readAddonsOutputPackageJson.apply(this, [outputPackagePath])
     Object.assign(outputPackage.dependencies, addonsDependencies)
     fs.outputFileSync(outputPackagePath, JSON.stringify(outputPackage))
-  } else {
-    // 使用electron加载该插件，判断是否兼容
-    if (!(await isCompatibleForInstalledElectron.apply(this, [source]))) {
-      const error = new Error(
-        `Error: This local addon is not compatible for current platform, you need rebuild it first:\n${this.resourcePath}`
-      )
-      error.name = 'Error'
-      error.stack = ''
-      throw error
-    } else {
-      this.emitWarning(
-        new Warning(
-          'Warning: The native addons may need to be rebuild to fit the target environment'
-        )
-      )
-    }
   }
 }
 
-// 非第三方包的本地插件兼容性检查
+// 插件兼容性检查
 const compatibleResultCache = {}
 async function isCompatibleForInstalledElectron(content) {
   const hash = loaderUtils.interpolateName(this, '[contenthash]', { content })
@@ -260,10 +184,13 @@ async function isCompatibleForInstalledElectron(content) {
           NATIVE_LOADER_ADDONS_COMPATIBLE_CHECK_PATH: this.resourcePath,
         },
         windowsHide: true,
-      }).once('exit', (code) => (code === 0 ? resolve() : reject()))
+      }).once('exit', (code) => (code === 0 ? resolve({ code }) : reject({ code })))
     })
     compatible = true
   } catch (e) {
+    if (e.code === 2) {
+      process.exit(2)
+    }
     compatible = false
   }
   compatibleResultCache[hash] = compatible
@@ -321,6 +248,7 @@ async function readNodeAddonsSourceFromContext(context) {
 async function makeModuleCodeWithBindings(addonsSources, options) {
   const addonsList = []
   const isDevEnvironment = this.mode === 'development'
+  const isMainProcess = this.target === 'electron-main'
   for (const { name, path: resourcePath, source, context } of addonsSources) {
     const addonsLoaderContext = Object.assign(Object.create(this), {
       resourcePath,
@@ -344,9 +272,9 @@ async function makeModuleCodeWithBindings(addonsSources, options) {
 
     addonsList.push({
       ...paths,
-      name,
       filePath: normalizeModulePath.call(addonsLoaderContext, addonsLoaderContext),
-      isMainProcess: this.target === 'electron-main',
+      isMainProcess,
+      name,
     })
   }
   const runtimePath = path.join(__dirname, 'native.runtime.js')
@@ -380,7 +308,7 @@ function requireNodeAddonsFromResolver(options, callback) {
       return requireNodeAddonsByBindings
         .apply(this, [options, module])
         .then((code) => callback(null, code))
-        .catch(callback)
+        .catch((e) => callback(new LoaderError(e || 'Unknown Error')))
     }
   }
 }
@@ -395,15 +323,17 @@ async function makeDirectRequireAddonsModuleCode(...args) {
 //
 module.exports = function NodeAddonsLoader(source) {
   if (!/^electron-(?:main|renderer)$/.test(this.target)) {
-    this.callback(new Error('This loader can only be used when the target environment is electron'))
+    this.callback(
+      new LoaderError('This loader can only be used when the target environment is electron')
+    )
     return
   }
 
   let options
   try {
-    options = gainOptions(this)
+    options = getOptions(this)
   } catch (e) {
-    this.callback(e)
+    this.callback(new LoaderError(e))
     return
   }
 
@@ -418,7 +348,7 @@ module.exports = function NodeAddonsLoader(source) {
     .apply(this, [this.rootContext, this.context])
     .then(makeDirectRequireAddonsModuleCode.bind(this, ...args))
     .then((code) => callback(null, code))
-    .catch((e) => callback(e || new Error('Unknown Error')))
+    .catch((e) => callback(new LoaderError(e || 'Unknown Error')))
 }
 
 module.exports.raw = true

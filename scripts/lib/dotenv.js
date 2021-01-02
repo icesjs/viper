@@ -4,7 +4,7 @@ const dotenv = require('dotenv')
 const cwd = process.cwd()
 
 function parseFile(filename) {
-  const file = filename ? path.resolve(cwd, filename) : path.join(__dirname, '.env')
+  const file = filename ? path.resolve(cwd, filename) : path.join(__dirname, '.env.default')
   if (fs.existsSync(file)) {
     return dotenv.parse(fs.readFileSync(file).toString('utf-8'))
   }

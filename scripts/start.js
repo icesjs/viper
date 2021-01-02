@@ -60,7 +60,7 @@ async function run() {
   main.then(() => log.info('Watching the main files for updates...'))
 
   // 等待主进程和渲染进程代码构建完成
-  await Promise.all([main, wait({ resources: [indexURL], delay: 2000 })])
+  await Promise.all([main, wait({ resources: [indexURL], delay: 3000 })])
 
   // Electron
   electron = runScript({

@@ -5,9 +5,11 @@ require('./lib/setup')('production')
 const path = require('path')
 const { promisify } = require('util')
 const fs = require('fs-extra')
+const wait = require('wait-on')
 const { log, createPrefixedLogger } = require('./lib/logger')
-const { relativePath, getPackageJson, printErrorAndExit } = require('./lib/utils')
+const { relativePath, getPackageJson, getAvailablePort, printErrorAndExit } = require('./lib/utils')
 const { runScript, runWebpack } = require('./lib/runner')
+
 const { RENDERER_BUILD_PATH, MAIN_BUILD_PATH, APP_BUILD_PATH } = require('../config/consts')
 
 // 运行构建
@@ -15,19 +17,25 @@ run().catch(printErrorAndExit)
 
 async function run() {
   const {
-    ENABLE_PRODUCTION_DEBUG,
     LOG_PREFIX_COLOR_MAIN,
     LOG_PREFIX_COLOR_RENDERER,
     LOG_PREFIX_COLOR_ELECTRON,
+    ENABLE_PRODUCTION_DEBUG = 'false',
+    ENABLE_BUNDLE_ANALYZER = 'false',
   } = process.env
   const absIndexPath = path.resolve(RENDERER_BUILD_PATH, 'index.html')
   const relIndexPath = relativePath(MAIN_BUILD_PATH, absIndexPath)
+  const hasAnalyzerServer = ENABLE_BUNDLE_ANALYZER !== 'false'
+  const ANALYZER_SERVER_PORT = hasAnalyzerServer
+    ? await Promise.all([getAvailablePort(5010), getAvailablePort(5000)])
+    : []
 
   // Renderer
   const renderer = runScript({
     logger: createPrefixedLogger('renderer', LOG_PREFIX_COLOR_RENDERER),
     script: require.resolve('@craco/craco/scripts/build', { paths: [process.cwd()] }),
     exitHandle: (code) => code !== 0 && process.exit(code),
+    env: { ANALYZER_SERVER_PORT: ANALYZER_SERVER_PORT[0] },
   }).start()
 
   // Main
@@ -36,11 +44,18 @@ async function run() {
     config: path.resolve('config/electron.webpack.js'),
     env: {
       APP_INDEX_HTML_PATH: relIndexPath,
+      ANALYZER_SERVER_PORT: ANALYZER_SERVER_PORT[1],
       WEBPACK_ELECTRON_ENTRY_PRELOAD: path.join(__dirname, './lib/preload.prod.js'),
     },
   })
 
-  await Promise.all([renderer, main, createPackageJson()])
+  await Promise.all([
+    main,
+    hasAnalyzerServer
+      ? wait({ resources: [`http-get://localhost:${ANALYZER_SERVER_PORT[0]}`], delay: 3000 })
+      : renderer,
+    createPackageJson(),
+  ])
 
   if (ENABLE_PRODUCTION_DEBUG !== 'false') {
     log.info('Launch the Electron.app for debug production')

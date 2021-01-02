@@ -1,13 +1,14 @@
 const path = require('path')
 const NodeAddonsWebpackPlugin = require('../scripts/lib/native.plugin')
+const BundleAnalyzerPlugin = require('../scripts/lib/analyzer.plugin')
 const { resolvePackage: resolve } = require('../scripts/lib/resolve')
 const { updateJsonFile } = require('../scripts/lib/utils')
 
 //
+const { CleanWebpackPlugin } = require('clean-webpack-plugin')
 const webpack = resolve('webpack')
 const TerserPlugin = resolve('terser-webpack-plugin')
 const CaseSensitivePathsPlugin = resolve('case-sensitive-paths-webpack-plugin')
-const { CleanWebpackPlugin } = require('clean-webpack-plugin')
 
 const {
   MAIN_ENTRY,
@@ -29,7 +30,8 @@ const {
   WEBPACK_ELECTRON_ENTRY_PRELOAD,
   GENERATE_FULL_SOURCEMAP = 'false',
   GENERATE_SOURCEMAP = 'false',
-  USE_NODE_ADDONS = 'false',
+  ENABLE_NODE_ADDONS = 'false',
+  ENABLE_BUNDLE_ANALYZER = 'false',
 } = process.env
 
 const isEnvDevelopment = NODE_ENV === 'development'
@@ -101,12 +103,14 @@ module.exports = {
     __filename: false,
   },
   plugins: [
+    ENABLE_NODE_ADDONS !== 'false' && new NodeAddonsWebpackPlugin(), // 支持node addon的构建与打包
     isEnvDevelopment && new CaseSensitivePathsPlugin(),
     isEnvProduction && new CleanWebpackPlugin(),
-    USE_NODE_ADDONS !== 'false' && new NodeAddonsWebpackPlugin(), // 支持node addon的构建与打包
+    isEnvProduction && ENABLE_BUNDLE_ANALYZER !== 'false' && new BundleAnalyzerPlugin(),
     //
     new webpack.EnvironmentPlugin({
       NODE_ENV: mode,
+      IS_ELECTRON: true,
       ELECTRON_APP_DEV_LOG_LEVEL: APP_DEV_LOG_LEVEL,
       ELECTRON_APP_PRO_LOG_LEVEL: APP_PRO_LOG_LEVEL,
       ELECTRON_AUTO_OPEN_DEV_TOOLS: AUTO_OPEN_DEV_TOOLS !== 'false',

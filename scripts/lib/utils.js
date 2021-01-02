@@ -87,4 +87,44 @@ module.exports = exports = {
       }
     }
   },
+
+  //
+  formatDate(format, date = new Date()) {
+    const now = {
+      ms: date.getMilliseconds(),
+      y: date.getFullYear(),
+      m: date.getMonth() + 1,
+      d: date.getDate(),
+      h: date.getHours(),
+      i: date.getMinutes(),
+      s: date.getSeconds(),
+    }
+    return `${format}`.replace(/ms|y{1,4}|m{1,2}|d{1,2}|h{1,2}|i{1,2}|s{1,2}/g, (m) =>
+      `${now[[...new Set(m.split(''))].join('')]}`.padStart(2, '0')
+    )
+  },
+
+  //
+  deepProxy(object, propPaths, handler = {}) {
+    if (typeof propPaths === 'string') {
+      propPaths = propPaths.split('.')
+    }
+    if (!Array.isArray(propPaths) || !propPaths.length) {
+      return object
+    }
+    return new Proxy(object, {
+      get(target, property) {
+        const value = target[property]
+        if (property !== propPaths[0]) {
+          return value
+        }
+        if (propPaths.length > 1) {
+          // 递归创建属性代理
+          return exports.deepProxy(value, propPaths.slice(1), handler)
+        }
+        // 最终代理的值
+        return new Proxy(value, handler)
+      },
+    })
+  },
 }

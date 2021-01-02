@@ -2,7 +2,9 @@
 const path = require('path')
 const StyleLintPlugin = require('stylelint-webpack-plugin')
 const NodeAddonsWebpackPlugin = require('../scripts/lib/native.plugin')
+const BundleAnalyzerPlugin = require('../scripts/lib/analyzer.plugin')
 const { resolvePackage } = require('../scripts/lib/resolve')
+
 const webpack = resolvePackage('webpack')
 
 const {
@@ -13,7 +15,13 @@ const {
 } = require('./consts')
 const cwd = process.cwd()
 
-const { RENDERER_BUILD_TARGET, USE_NODE_ADDONS = 'false' } = process.env
+const {
+  RENDERER_BUILD_TARGET,
+  ENABLE_NODE_ADDONS = 'false',
+  ENABLE_BUNDLE_ANALYZER = 'false',
+} = process.env
+
+const isEnvProduction = process.env.NODE_ENV === 'production'
 const RENDERER_PRELOAD = path.join(__dirname, 'preload.renderer.js')
 const target = !/^(web|electron-renderer)$/.test(RENDERER_BUILD_TARGET)
   ? 'electron-renderer'
@@ -37,7 +45,9 @@ const customizeWebpackConfig = {
   plugins: [
     // 支持node addon的构建与打包
     // 注意，node addon仅在渲染模块以electron-renderer模式打包时可用
-    USE_NODE_ADDONS !== 'false' && new NodeAddonsWebpackPlugin(),
+    ENABLE_NODE_ADDONS !== 'false' && new NodeAddonsWebpackPlugin(),
+    isEnvProduction && ENABLE_BUNDLE_ANALYZER !== 'false' && new BundleAnalyzerPlugin(),
+    //
     new StyleLintPlugin({
       configBasedir: cwd,
       context: RENDERER_CONTEXT,

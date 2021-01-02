@@ -56,21 +56,32 @@ function loadEnv(NODE_ENV, forced) {
 }
 
 function presetEnv() {
+  const { CI } = process.env
+  if (CI && CI !== 'false') {
+    Object.assign(process.env, {
+      NO_COLOR: 'true',
+      WRITE_LOGS_TO_FILE: 'false',
+    })
+  } else {
+    delete process.env.CI
+  }
   const {
     ENABLE_PRODUCTION_DEBUG = 'false',
     GENERATE_FULL_SOURCEMAP = 'false',
-    DEBUG,
+    NO_COLOR = 'false',
+    DEBUG = 'false',
   } = process.env
 
   if (ENABLE_PRODUCTION_DEBUG !== 'false' || GENERATE_FULL_SOURCEMAP !== 'false') {
     process.env.GENERATE_SOURCEMAP = 'true'
   }
+  if (NO_COLOR !== 'false') {
+    delete process.env.FORCE_COLOR
+  } else {
+    delete process.env.NO_COLOR
+  }
   if (DEBUG === 'false') {
     delete process.env.DEBUG
-  }
-  if (process.env.CI) {
-    process.env.NO_COLOR = 'true'
-    process.env.WRITE_LOGS_TO_FILE = 'false'
   }
 }
 

@@ -23,7 +23,7 @@ class NodeAddonsWebpackPlugin {
   /**
    * 获取loader的规则定义
    */
-  getAddonsLoaderRule() {
+  getAddonsLoaderRule(buildPath) {
     const {
       outputPath,
       appBuildPath,
@@ -37,6 +37,7 @@ class NodeAddonsWebpackPlugin {
       options: {
         makeNativeDependencyPackageJson: makeDependenciesJson,
         appBuildPath,
+        buildPath,
         output: {
           path: outputPath,
           filename: outputNamePattern,
@@ -57,7 +58,7 @@ class NodeAddonsWebpackPlugin {
    * 添加loader配置
    */
   setModuleLoader(compilerOptions) {
-    let { module } = compilerOptions
+    let { module, output } = compilerOptions
     let { rules } = module || {}
     if (!Array.isArray(rules)) {
       rules = []
@@ -65,7 +66,7 @@ class NodeAddonsWebpackPlugin {
     module.rules = rules
     compilerOptions.module = module
 
-    const loaderRule = this.getAddonsLoaderRule()
+    const loaderRule = this.getAddonsLoaderRule((output || {}).path)
     let { isAdded } = addBeforeLoader(compilerOptions, loaderByName('file-loader'), loaderRule)
     if (!isAdded) {
       isAdded = addBeforeLoader(compilerOptions, loaderByName('url-loader'), loaderRule).isAdded

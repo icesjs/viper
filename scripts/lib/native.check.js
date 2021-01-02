@@ -8,6 +8,11 @@ function checkAddonsCompatible() {
     } catch (e) {
       process.exit(1)
     }
+  } else {
+    require('./logger').log.error(
+      'Not found NATIVE_LOADER_ADDONS_COMPATIBLE_CHECK_PATH from process env to test'
+    )
+    setTimeout(() => process.exit(2), 1000)
   }
 }
 
