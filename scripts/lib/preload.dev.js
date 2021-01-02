@@ -8,7 +8,7 @@ const { app, Menu } = useModuleProxy ? proxyElectron() : require('electron')
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true'
 
 app.on('browser-window-created', (e, window) => {
-  if (process.env.ELECTRON_AUTO_OPEN_DEV_TOOLS !== 'false') {
+  if (process.env.ELECTRON_AUTO_OPEN_DEV_TOOLS) {
     autoOpenDevTools(window)
   }
   window.webContents.on('context-menu', (e, cord) => {

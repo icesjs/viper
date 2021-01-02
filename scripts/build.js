@@ -58,7 +58,6 @@ async function run() {
   ])
 
   if (ENABLE_PRODUCTION_DEBUG !== 'false') {
-    log.info('Launch the Electron.app for debug production')
     // Electron
     runScript({
       logger: createPrefixedLogger('electron', LOG_PREFIX_COLOR_ELECTRON),
@@ -67,6 +66,7 @@ async function run() {
       windowsHide: false,
       cwd: APP_BUILD_PATH,
     }).start()
+    log.info('Launched the Electron.app for debugging production')
   }
 }
 

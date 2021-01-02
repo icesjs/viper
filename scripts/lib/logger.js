@@ -1,4 +1,7 @@
+const EOL = require('os').EOL
+const path = require('path')
 const util = require('util')
+const fs = require('fs-extra')
 const stripColor = require('strip-ansi')
 const termSize = require('term-size')
 const sliceAnsi = require('slice-ansi')
@@ -9,8 +12,9 @@ const usedColor = {
   log: '',
   debug: '',
   info: 'green',
-  warn: { bg: 'bgYellowBright', ft: 'black', bl: false },
+  warn: { bg: 'bgYellowBright', ft: 'black' },
   error: 'red',
+  markedError: { bg: 'bgRed', ft: 'cyanBright' },
   success: { ft: 'green', bl: true },
   failed: { ft: 'red', bl: true },
   errRoot: 'red',
@@ -49,7 +53,7 @@ function createLogger(opts) {
     logger[level] = getLogLevelHandle({ id: logger.id, level, ...opts })
   }
   setPlainTextHandle(logger)
-  return file ? creteFileLogger(logger) : logger
+  return file ? creteFileLogger(logger, name) : logger
 }
 
 function defaultColorFormat(cont, level) {
@@ -67,6 +71,12 @@ function defaultColorFormat(cont, level) {
 
 //
 function stripDebugFormatPrefix(content, namespace) {
+  if (typeof content === 'object') {
+    return content
+  }
+  if (typeof content !== 'string') {
+    content = content + ''
+  }
   const index = content.indexOf(namespace)
   if (index !== -1) {
     content = content.substring(index + namespace.length + 1)
@@ -208,8 +218,11 @@ function colorifyNormalText(line) {
   if (/\b(?:success|complete)/i.test(line)) {
     return getColorSetter(usedColor.success)(line)
   }
-  if (/\bfailed?/i.test(line)) {
+  if (/\bfailed?/i.test(line) || /^\w+\serror\s/.test(line)) {
     return getColorSetter(usedColor.failed)(line)
+  }
+  if (/^\s+>\s+\d+\s+\|\s+/.test(line)) {
+    return getColorSetter(usedColor.markedError)(line)
   }
   return line
 }
@@ -239,6 +252,10 @@ function colorifyError(context, line) {
 
 //
 function setPlainTextHandle(logger) {
+  const namespace = '*'
+  const debug = require('debug')(namespace)
+  debug.useColors = false
+  //
   logger.text = new Proxy(logger, {
     get(target, prop) {
       const val = target[prop]
@@ -247,7 +264,13 @@ function setPlainTextHandle(logger) {
       }
       return new Proxy(val, {
         apply(tar, ctx, args) {
-          return stripColor(stringifyError(args[0]))
+          let text
+          const [msg, ...rest] = args
+          debug.log = (content, ...args) => {
+            text = util.format(stripDebugFormatPrefix(content, namespace), ...args)
+          }
+          debug(Buffer.isBuffer(msg) ? msg.toString() : msg, ...rest)
+          return stripColor(text).replace(/\r\n?/g, '\n')
         },
       })
     },
@@ -255,33 +278,33 @@ function setPlainTextHandle(logger) {
 }
 
 //
-function creteFileLogger(log) {
-  const EOL = require('os').EOL
-  const path = require('path')
-  const { outputFileSync, appendFileSync } = require('fs-extra')
-  const env = path.resolve('app.env.json')
+function creteFileLogger(logger, name) {
+  const { appendFileSync } = fs
   const out = path.resolve('app.out.log')
   const err = path.resolve('app.err.log')
-
-  const timeString = new Date().toLocaleTimeString()
-  const pid = process.pid
-  outputFileSync(env, JSON.stringify(process.env))
-  outputFileSync(out, `[${timeString}] #pid: ${pid}${EOL}`)
-  outputFileSync(err, `[${timeString}] #pid: ${pid}${EOL}`)
-
-  return new Proxy(log, {
+  return new Proxy(logger, {
     get(target, prop) {
       const val = target[prop]
       if (typeof val !== 'function') {
         return val
       }
+
       return new Proxy(val, {
         apply(tar, ctx, args) {
           Reflect.apply(tar, target, args)
-          const prefix = new Date().toLocaleTimeString()
-          const text = target.text[prop](args[0]).replace(/^(?:\s*\r?\n)+/g, '')
-          const content = `[${prefix}] ${text.replace(/\r?\n/g, EOL)}` + EOL
-          appendFileSync(prop === 'error' || args[0] instanceof Error ? err : out, content)
+          const date = `[${new Date().toLocaleTimeString()}] `
+          const text = target.text[prop](...args) + ''
+          const content = text
+            .replace(/\n$/, '')
+            .match(splitLineRegex)
+            .map((l) => wrapStringRow(date, l, 120))
+            .join('')
+            .replace(/\n$/, '')
+            .replace(/\n/g, EOL)
+
+          const file = prop === 'error' || args[0] instanceof Error ? err : out
+          // 这里追加日志内容到文件中
+          appendFileSync(file, `${EOL}${date}@${name}${EOL}${content + EOL}`)
         },
       })
     },
@@ -289,9 +312,9 @@ function creteFileLogger(log) {
 }
 
 //
-function wrapStringRow(prefix, str) {
+function wrapStringRow(prefix, str, maxColumns = terminalSize.columns) {
   const widestLineWidth = widestLine(prefix + str)
-  const maxCols = Math.max(terminalSize.columns - 1, 40)
+  const maxCols = Math.max(maxColumns - 1, 40)
   if (widestLineWidth <= maxCols) {
     str = prefix + str
   } else {

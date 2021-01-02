@@ -115,9 +115,8 @@ async function rebuildNativeModules({ arch, logger, rebuild }) {
 async function buildResources({ logger }) {
   await runScript({
     exitHandle: noop,
-    logger,
-    env: { WRITE_LOGS_TO_FILE: 'false' },
     script: path.join(__dirname, 'build.js'),
+    logger,
   })
 }
 

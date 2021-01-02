@@ -69,15 +69,17 @@ function runScript({
   exitHandle = null,
   beforeExit = null,
   stderrAsError = false,
+  env = {},
   ...options
 }) {
   if (!Array.isArray(runScript.runners)) {
     runScript.runners = []
   }
   const runners = runScript.runners
-  const runner = respawn(script, args, options)
+  // 子进程输出内容会pipe到父进程，不需要写入日志文件
+  env.WRITE_LOGS_TO_FILE = 'false'
+  const runner = respawn(script, args, { ...options, env })
   runners.push(runner)
-
   if (typeof exitHandle !== 'function') {
     const clear = (code) => {
       let task

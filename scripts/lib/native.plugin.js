@@ -1,5 +1,4 @@
 const path = require('path')
-const { URLSearchParams } = require('url')
 const { addBeforeLoader, loaderByName } = require('@craco/craco')
 const { APP_BUILD_PATH, ADDONS_BUILD_PATH } = require('../../config/consts')
 
@@ -123,16 +122,13 @@ class BindingsModuleResolvePlugin {
           return callback()
         }
         const { forward } = this
-        const params = new URLSearchParams()
         const modulePath = path.relative(process.cwd(), descriptionFileRoot)
-        params.set('resolver', 'bindings')
-        params.set('module', modulePath)
         // 修改模块请求，通过loader来处理addon的引入
         resolver.doResolve(
           target,
           Object.assign(request, {
             request: forward,
-            query: `?${params.toString()}`,
+            query: `?resolver=bindings&module=${modulePath}`,
           }),
           `Forwarded module request to ${forward}`,
           resolveContext,

@@ -27,7 +27,6 @@ yarn-error.log*
 
 /app.err.log
 /app.out.log
-/app.env.json
 
 .idea
 .vscode

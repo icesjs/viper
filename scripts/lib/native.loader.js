@@ -2,6 +2,7 @@ const path = require('path')
 const { promisify } = require('util')
 const fs = require('fs-extra')
 const loaderUtils = require('loader-utils')
+const bindings = require('bindings')
 const { log } = require('./logger')
 const { relativePath, getPackageJson } = require('./utils')
 
@@ -212,9 +213,7 @@ async function readNodeAddonsSourceFromContext(context) {
   }
 
   // 使用bindings在编译阶段先查找出对应的addons文件
-  const bindings = require('bindings')
   const sources = []
-
   for (const name of names) {
     try {
       if (name === 'bindings' && sources.length) {
@@ -322,9 +321,11 @@ async function makeDirectRequireAddonsModuleCode(...args) {
 
 //
 module.exports = function NodeAddonsLoader(source) {
-  if (!/^electron-(?:main|renderer)$/.test(this.target)) {
+  if (!/^electron-(?:main|renderer)$/i.test(this.target)) {
     this.callback(
-      new LoaderError('This loader can only be used when the target environment is electron')
+      new LoaderError(
+        `Node addons can only be used in electron platform, but current build target is ${this.target}`
+      )
     )
     return
   }

@@ -55,7 +55,12 @@ async function run() {
     watch: true,
     watchOptions: { aggregateTimeout: Math.max(+AUTO_RELAUNCH_DELAY || 0, 2000) },
     beforeWatchRun: () => log.info('Compiling the main files for changes... '),
-    afterWatchRun: AUTO_RELAUNCH_APP && (() => electron && electron.pid && electron.restart()),
+    afterWatchRun: () => {
+      sendRecompileRequest(indexURL)
+      if (AUTO_RELAUNCH_APP !== 'false' && electron && electron.pid) {
+        electron.restart()
+      }
+    },
   })
   main.then(() => log.info('Watching the main files for updates...'))
 
@@ -71,10 +76,7 @@ async function run() {
     windowsHide: false,
     beforeExit,
   })
-    .on('restart', () => {
-      sendRecompileRequest(indexURL)
-      log.info('Relaunched the Electron.app')
-    })
+    .on('restart', () => log.info('Relaunched the Electron.app'))
     .start()
 
   log.info('Launched the Electron.app')
