@@ -3,7 +3,7 @@
 const path = require('path')
 const url = require('url')
 
-const indexHTMLPath = process.env.ELECTRON_RENDERER_INDEX_HTML_PATH
+const indexHTMLPath = process.env.ELECTRON_APP_INDEX_HTML_PATH
 // 这里的 __dirname 为运行时的目录名，存在于app包中
 const absIndexHTMLPath = path.join(__dirname, indexHTMLPath)
 // 将绝对路径转换为file协议路径
@@ -12,4 +12,7 @@ const indexHTMLFileURL = url.format({
   pathname: absIndexHTMLPath,
 })
 // 设置为环境变量
-process.env.ELECTRON_RENDERER_INDEX_HTML_URL = indexHTMLFileURL
+process.env.ELECTRON_APP_INDEX_HTML_URL = indexHTMLFileURL
+
+// 禁用安全警告
+process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true'

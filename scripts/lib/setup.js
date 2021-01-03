@@ -1,3 +1,6 @@
+const fs = require('fs')
+const path = require('path')
+
 //
 function catchUncaughtException(log) {
   process.on('unhandledRejection', (reason) => log.error(reason))
@@ -14,8 +17,6 @@ function getReady() {
   // 捕获全局异常
   catchUncaughtException(log)
   // 清理相关文件与目录
-  const path = require('path')
-  const fs = require('fs-extra')
   const utils = require('./utils')
   const {
     MAIN_BUILD_PATH,

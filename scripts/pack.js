@@ -29,6 +29,7 @@ const {
   ELECTRON_MAIN_ENTRY_PATH,
   ELECTRON_HEADERS_MIRROR_URL,
   ENABLE_NODE_ADDONS,
+  ELECTRON_BUILDER_CONFIG = 'build.yml',
   CI = 'false',
 } = process.env
 
@@ -82,7 +83,7 @@ function getCommandArgs() {
   const {
     platform = process.platform,
     arch = process.arch,
-    config = 'build.yml',
+    config = ELECTRON_BUILDER_CONFIG,
     publish = 'never',
     rebuild,
     dir,

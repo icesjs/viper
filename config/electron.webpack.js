@@ -21,7 +21,6 @@ const context = process.cwd()
 
 const {
   NODE_ENV,
-  AUTO_OPEN_DEV_TOOLS,
   APP_INDEX_HTML_URL,
   APP_INDEX_HTML_PATH,
   APP_DEV_LOG_LEVEL,
@@ -63,7 +62,7 @@ module.exports = {
     publicPath: '/test/public',
   },
   resolve: {
-    extensions: ['.ts', '.js', '.mjs', '.json'],
+    extensions: ['.ts', '.mjs', '.js', '.json'],
     alias: {
       [MAIN_CONTEXT_ALIAS]: MAIN_CONTEXT,
     },
@@ -77,13 +76,26 @@ module.exports = {
   module: {
     strictExportPresence: true,
     rules: [
+      { parser: { requireEnsure: false } },
       {
-        test: /\.ts$/,
-        loader: 'ts-loader',
-        include: path.resolve(context, 'src'),
-        options: {
-          transpileOnly: true,
-        },
+        oneOf: [
+          {
+            test: /\.(?:ts|mjs|js)$/,
+            loader: 'ts-loader',
+            include: path.resolve(context, 'src'),
+            options: {
+              transpileOnly: true,
+            },
+          },
+          {
+            loader: require.resolve('file-loader'),
+            exclude: [/\.(js|mjs|ts)$/, /\.json$/],
+            options: {
+              name: 'media/[name].[hash:8].[ext]',
+              publicPath: '.',
+            },
+          },
+        ],
       },
     ].filter(Boolean),
   },
@@ -113,10 +125,9 @@ module.exports = {
       IS_ELECTRON: true,
       ELECTRON_APP_DEV_LOG_LEVEL: APP_DEV_LOG_LEVEL,
       ELECTRON_APP_PRO_LOG_LEVEL: APP_PRO_LOG_LEVEL,
-      ELECTRON_AUTO_OPEN_DEV_TOOLS: AUTO_OPEN_DEV_TOOLS !== 'false',
-      ELECTRON_RENDERER_NODE_INTEGRATION: RENDERER_BUILD_TARGET === 'electron-renderer',
-      ...(APP_INDEX_HTML_URL ? { ELECTRON_RENDERER_INDEX_HTML_URL: APP_INDEX_HTML_URL } : {}),
-      ...(APP_INDEX_HTML_PATH ? { ELECTRON_RENDERER_INDEX_HTML_PATH: APP_INDEX_HTML_PATH } : {}),
+      ELECTRON_APP_NODE_INTEGRATION: RENDERER_BUILD_TARGET === 'electron-renderer',
+      ...(APP_INDEX_HTML_URL ? { ELECTRON_APP_INDEX_HTML_URL: APP_INDEX_HTML_URL } : {}),
+      ...(APP_INDEX_HTML_PATH ? { ELECTRON_APP_INDEX_HTML_PATH: APP_INDEX_HTML_PATH } : {}),
     }),
   ].filter(Boolean),
   //
@@ -136,4 +147,5 @@ module.exports = {
           env: true,
         }),
   },
+  performance: false,
 }

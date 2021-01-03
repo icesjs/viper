@@ -1,25 +1,40 @@
 // 开发模式下才会加载此脚本
-
-const getContextMenuTemplate = require('./menu.dev')
-
-const useModuleProxy = process.env.USE_MODULE_PROXY_FOR_ELECTRON !== 'false'
-const { app, Menu } = useModuleProxy ? proxyElectron() : require('electron')
-
-process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true'
-
-app.on('browser-window-created', (e, window) => {
-  if (process.env.ELECTRON_AUTO_OPEN_DEV_TOOLS) {
-    autoOpenDevTools(window)
-  }
-  window.webContents.on('context-menu', (e, cord) => {
-    const menu = Menu.buildFromTemplate(getContextMenuTemplate(window, cord))
-    menu.popup({ window })
-  })
-})
+const fs = require('fs')
+const path = require('path')
+const yaml = require('js-yaml')
 
 //
-function autoOpenDevTools(window) {
-  window['once']('show', () => window.webContents.openDevTools())
+process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true'
+const {
+  USE_MODULE_PROXY_FOR_ELECTRON,
+  AUTO_OPEN_DEV_TOOLS,
+  ENABLE_DEV_CONTEXT_MENU,
+  ELECTRON_BUILDER_CONFIG = 'build.yml',
+} = process.env
+
+const getContextMenuTemplate = require('./menu.dev')
+const useModuleProxy = USE_MODULE_PROXY_FOR_ELECTRON !== 'false'
+const { app, Menu } = useModuleProxy ? proxyElectron() : require('electron')
+
+//
+app.on('browser-window-created', (e, win) => setupDevTools(win))
+
+//
+function setupDevTools(win) {
+  if (AUTO_OPEN_DEV_TOOLS !== 'false') {
+    autoOpenDevTools(win)
+  }
+  if (ENABLE_DEV_CONTEXT_MENU !== 'false') {
+    win.webContents.on('context-menu', (e, cord) => {
+      const menu = Menu.buildFromTemplate(getContextMenuTemplate(win, cord))
+      menu.popup({ window: win })
+    })
+  }
+}
+
+//
+function autoOpenDevTools(win) {
+  win.once('show', () => win.webContents.openDevTools())
 }
 
 //
@@ -59,7 +74,12 @@ function proxyElectronBrowserWindow(BrowserWindow) {
 
 //
 function proxyBrowserWindowInstance(BrowserWindow, opts) {
-  const options = Object.assign({}, opts)
+  const options = Object.assign(
+    {
+      icon: getAppWindowIcon(),
+    },
+    opts
+  )
   let getInstance
   const created = (ins) => getInstance && getInstance(ins)
   const afterCreated = (get) => (getInstance = get)
@@ -137,4 +157,31 @@ function proxyElectronApp(app) {
 //
 function proxyElectronMenu(Menu) {
   return Menu
+}
+
+// 获取应用的图标路径
+function getAppWindowIcon() {
+  // 生产打包模式下，应用会使用打包进可执行程序中的图标
+  // 此处获取图标仅在开发模式下执行
+  try {
+    const configPath = path.resolve(ELECTRON_BUILDER_CONFIG)
+    if (!fs.existsSync(configPath)) {
+      return
+    }
+    const config = yaml.safeLoad(fs.readFileSync(configPath, 'utf8'))
+    const platformConfig =
+      config[
+        {
+          win32: 'win',
+          darwin: 'mac',
+          linux: 'linux',
+        }[process.platform]
+      ]
+    if (platformConfig) {
+      const icon = path.resolve(platformConfig.icon)
+      if (fs.existsSync(icon)) {
+        return icon
+      }
+    }
+  } catch (e) {}
 }

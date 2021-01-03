@@ -21,11 +21,13 @@ const {
   ENABLE_BUNDLE_ANALYZER = 'false',
 } = process.env
 
+if (!/^(web|electron-renderer)$/.test(RENDERER_BUILD_TARGET)) {
+  throw new Error('Renderer build target must set to web or electron-renderer')
+}
+
 const isEnvProduction = process.env.NODE_ENV === 'production'
 const RENDERER_PRELOAD = path.join(__dirname, 'preload.renderer.js')
-const target = !/^(web|electron-renderer)$/.test(RENDERER_BUILD_TARGET)
-  ? 'electron-renderer'
-  : RegExp.$1
+const target = RENDERER_BUILD_TARGET
 
 //
 const customizeWebpackConfig = {
