@@ -4,7 +4,6 @@ const portfinder = require('portfinder')
 const merge = require('deepmerge')
 const JSON5 = require('json5')
 const spawn = require('cross-spawn')
-const { log } = require('./logger')
 
 module.exports = exports = {
   //
@@ -34,14 +33,14 @@ module.exports = exports = {
       if (throwError) {
         throw e
       } else {
-        log.error(e)
+        require('./logger').log.error(e)
       }
     }
   },
 
   //
   printErrorAndExit(err) {
-    log.error(err)
+    require('./logger').log.error(err)
     process.nextTick(() => process.exit(process.exitCode || 1))
   },
 
@@ -100,7 +99,7 @@ module.exports = exports = {
       s: date.getSeconds(),
     }
     return `${format}`.replace(/ms|y{1,4}|m{1,2}|d{1,2}|h{1,2}|i{1,2}|s{1,2}/g, (m) =>
-      `${now[[...new Set(m.split(''))].join('')]}`.padStart(2, '0')
+      `${now[[...new Set(m.split(''))].join('')]}`.padStart(m === 'ms' ? 4 : 2, '0')
     )
   },
 

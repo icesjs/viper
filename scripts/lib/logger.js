@@ -7,6 +7,7 @@ const termSize = require('term-size')
 const sliceAnsi = require('slice-ansi')
 const widestLine = require('widest-line')
 const chalk = require('chalk')
+const { formatDate } = require('./utils')
 
 const usedColor = {
   log: '',
@@ -28,7 +29,7 @@ const defaultScriptLogName = 'script'
 const root = process.cwd()
 const namespace = process.env.npm_package_name
 const fileLinkRegex = /[[({]?((?:[a-zA-Z]:|file:)?(?:[/\\][^:*?"<>|]+)+:\d+:\d+)[})\]]?/g
-const prefixRegex = /{\s*(y|m|d|h|i|s|ms|level|name)\s*}/g
+const prefixRegex = /{\s*(y{1,4}|m{1,2}|d{1,2}|h{1,2}|i{1,2}|s{1,2}|ms|level|name)\s*}/g
 const nodeModulesRegex = /^[^\s]|[/\\]node_modules[/\\]/
 const warnAndErrorRegex = /^\s*\w?(error|warning|warn):?\b/i
 const splitLineRegex = /.+\n?|\n|^/g
@@ -168,7 +169,10 @@ function formatLogPrefix(name, level, maxNameLen) {
     s: pad(date.getSeconds()),
     ms: pad(date.getMilliseconds(), 4),
   }
-  return (process.env.LOG_PREFIX_FORMAT || '[ {name} ]').replace(prefixRegex, (m, g1) => data[g1])
+  const format = process.env.LOG_PREFIX_FORMAT || '[ {name} ]'
+  const replacer = (m, g1) =>
+    data[/^(?:ms|name|level)$/.test(g1) ? g1 : [...new Set(g1.split(''))].join('')]
+  return format.replace(prefixRegex, replacer)
 }
 
 //
@@ -292,19 +296,20 @@ function creteFileLogger(logger, name) {
       return new Proxy(val, {
         apply(tar, ctx, args) {
           Reflect.apply(tar, target, args)
-          const date = `[${new Date().toLocaleTimeString()}] `
+          const now = new Date()
+          const prefix = `[ ${formatDate('h:i:s', now)} ] `
           const text = target.text[prop](...args) + ''
           const content = text
             .replace(/\n$/, '')
             .match(splitLineRegex)
-            .map((l) => wrapStringRow(date, l, 120))
+            .map((l) => wrapStringRow(prefix, l, 120))
             .join('')
             .replace(/\n$/, '')
             .replace(/\n/g, EOL)
 
           const file = prop === 'error' || args[0] instanceof Error ? err : out
           // 这里追加日志内容到文件中
-          appendFileSync(file, `${EOL}${date}@${name}${EOL}${content + EOL}`)
+          appendFileSync(file, `${EOL}[${formatDate('y-m-d', now)}] @${name}${EOL}${content + EOL}`)
         },
       })
     },
