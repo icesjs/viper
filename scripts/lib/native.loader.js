@@ -203,18 +203,19 @@ async function readNodeAddonsSourceFromContext(context) {
   const targetNameRegx = /(['"])target_name\1\s*:\s*(['"])(.*?)\2/g
   const readFile = getFileReader(this)
   const gyp = (await readFile(path.join(context, 'binding.gyp'))).toString()
-  const names = []
+  const targetNames = []
   let regxResult
   while ((regxResult = targetNameRegx.exec(gyp)) !== null) {
-    names.push(regxResult[3])
+    targetNames.push(regxResult[3])
   }
-  if (!names.length) {
-    names.push('bindings')
+  const findNames = [...targetNames]
+  if (!findNames.length) {
+    findNames.push('bindings')
   }
 
   // 使用bindings在编译阶段先查找出对应的addons文件
   const sources = []
-  for (const name of names) {
+  for (const name of findNames) {
     try {
       if (name === 'bindings' && sources.length) {
         break
@@ -239,6 +240,13 @@ async function readNodeAddonsSourceFromContext(context) {
   }
   if (sources.length) {
     return sources
+  }
+  if (targetNames.length) {
+    throw new Error(
+      `Can not find the node addon module from ${normalizeModulePath(
+        Object.assign(Object.create(this), { resourcePath: context })
+      )}, you should rebuild it first`
+    )
   }
 }
 
