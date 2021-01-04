@@ -23,13 +23,9 @@ app.on('browser-window-created', (e, win) => setupDevTools(win))
 //
 async function setupDevTools(win) {
   if (contextMenu) {
-    win.webContents.on('context-menu', (e, { x, y }) => contextMenu.popup({ x, y }))
+    win.webContents.on('context-menu', (e, { x, y }) => contextMenu.popup({ x, y, window: win }))
   }
-  try {
-    await installFromLocalStore(win, BROWSER_EXTENSIONS_DIR)
-  } catch (e) {
-    console.error(e)
-  }
+  await installFromLocalStore(win, BROWSER_EXTENSIONS_DIR)
   if (AUTO_OPEN_DEV_TOOLS !== 'false') {
     autoOpenDevTools(win)
   }

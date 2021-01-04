@@ -148,11 +148,10 @@ function createContextMenu() {
       if (prop === 'popup') {
         return new Proxy(val, {
           apply(popup, thisArg, args) {
-            // 这里使用代理获取上下文窗口，以及关闭菜单时，清除对窗口对象的引用
             const { callback } = Object.assign(context, args[0])
             args[0] = Object.assign({}, args[0], {
               callback() {
-                context.window = null
+                process.nextTick(() => (context.window = null))
                 callback && callback()
               },
             })
@@ -176,11 +175,6 @@ async function installExtensions(context, crx) {
   const win = getContextWindow(context)
   try {
     await installFromLocalFile(win, crx, true)
-    const view = win.webContents
-    if (view.isDevToolsOpened()) {
-      view.closeDevTools()
-      view.openDevTools()
-    }
     await dialog.showMessageBox(win, {
       title,
       type: 'info',

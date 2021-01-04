@@ -6,12 +6,38 @@ const unzip = require('unzip-crx-3')
 const { app } = require('electron')
 
 /**
- * 等待指定时间
- * @param time
+ * 加载扩展至会话
+ * @param win
+ * @param crxFolder
  * @returns {Promise<void>}
  */
-async function sleep(time) {
-  await new Promise((resolve) => setTimeout(resolve, time))
+async function loadExtensions(win, crxFolder) {
+  const { webContents } = win
+  if (!webContents.isDevToolsOpened()) {
+    await webContents.session.loadExtension(crxFolder)
+    if (!webContents.isLoading()) {
+      await new Promise(async (resolve) => {
+        webContents.once('dom-ready', resolve)
+        webContents.reloadIgnoringCache()
+      })
+    }
+    return
+  }
+  await new Promise((resolve, reject) => {
+    webContents.once('devtools-closed', async () => {
+      try {
+        await webContents.session.loadExtension(crxFolder)
+        webContents.once('dom-ready', () => {
+          webContents.openDevTools()
+          resolve()
+        })
+        webContents.reloadIgnoringCache()
+      } catch (e) {
+        reject(e)
+      }
+    })
+    webContents.closeDevTools()
+  })
 }
 
 /**
@@ -22,19 +48,8 @@ async function sleep(time) {
  * @returns {Promise<void>}
  */
 async function installExtensions(win, crx, force = false) {
-  const session = win.webContents.session
   const home = fs.realpathSync(app.getPath('userData'))
   const crxFolder = path.join(home, 'extensions', crx.id)
-  const loadedExtension = session.getAllExtensions().find(({ path }) => path === crxFolder)
-  let reopen = false
-  if (loadedExtension) {
-    if (win.webContents.isDevToolsOpened()) {
-      reopen = true
-      win.webContents.closeDevTools()
-      await sleep(100)
-    }
-    session.removeExtension(loadedExtension.id)
-  }
   let installed = !!(fs.existsSync(crxFolder) && fs.readdirSync(crxFolder).length)
   if (installed && force) {
     await fs.emptyDir(crxFolder)
@@ -43,13 +58,10 @@ async function installExtensions(win, crx, force = false) {
   if (!installed) {
     await fs.ensureDir(crxFolder)
     await unzip(crx.path, crxFolder)
+    fs.removeSync(path.join(crxFolder, '_metadata'))
     changePermissions(crxFolder, 755)
   }
-  await session.loadExtension(crxFolder)
-  if (reopen) {
-    await sleep(100)
-    win.webContents.openDevTools()
-  }
+  await loadExtensions(win, crxFolder)
 }
 
 /**
@@ -124,7 +136,11 @@ function getLocalExtensions(dir) {
  */
 async function installFromLocalStore(win, dir, force) {
   for (const crx of getLocalExtensions(dir)) {
-    await installFromLocalFile(win, crx, force)
+    try {
+      await installFromLocalFile(win, crx, force)
+    } catch (e) {
+      console.error(e)
+    }
   }
 }
 
