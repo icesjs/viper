@@ -19,7 +19,7 @@ module.exports = {
 
 const path = require('path')
 const { mergeWithCustomize } = require('webpack-merge')
-const { resolvePackage, resolveReactScriptsPath } = require('./resolve')
+const { resolvePackage, resolveReactScriptsPath } = require('../resolve')
 const cwd = process.cwd()
 
 //

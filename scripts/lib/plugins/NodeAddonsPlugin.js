@@ -1,6 +1,6 @@
 const path = require('path')
 const { addBeforeLoader, loaderByName } = require('@craco/craco')
-const { APP_BUILD_PATH, ADDONS_BUILD_PATH } = require('../../config/consts')
+const { APP_BUILD_PATH, ADDONS_BUILD_PATH } = require('../../../config/constants')
 
 /**
  * 对node addon进行webpack构建与打包支持
@@ -32,7 +32,7 @@ class NodeAddonsWebpackPlugin {
     } = this.options
     return {
       test: /\.node$/,
-      loader: path.join(__dirname, 'native.loader.js'),
+      loader: path.join(__dirname, 'addons/addonsLoader.js'),
       options: {
         makeNativeDependencyPackageJson: makeDependenciesJson,
         appBuildPath,
@@ -106,7 +106,7 @@ class BindingsModuleResolvePlugin {
   constructor(source, forward, target) {
     this.source = source || 'described-resolve'
     this.target = target || 'resolve'
-    this.forward = forward || path.join(__dirname, 'native.loader.node')
+    this.forward = forward || path.join(__dirname, 'addons/fakeAddons.node')
   }
 
   apply(resolver) {

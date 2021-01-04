@@ -1,7 +1,7 @@
 const path = require('path')
-const NodeAddonsWebpackPlugin = require('../scripts/lib/native.plugin')
-const BundleAnalyzerPlugin = require('../scripts/lib/analyzer.plugin')
-const RequireStaticResources = require('../scripts/lib/plugins/RequireStaticResources')
+const NodeAddonsWebpackPlugin = require('../scripts/lib/plugins/NodeAddonsPlugin')
+const BundleAnalyzerPlugin = require('../scripts/lib/plugins/BundleAnalyzerPlugin')
+const RequireStaticResources = require('../scripts/lib/plugins/RequireStaticResourcesPlugin')
 const { resolvePackage: resolve } = require('../scripts/lib/resolve')
 const { updateJsonFile } = require('../scripts/lib/utils')
 
@@ -17,7 +17,7 @@ const {
   MAIN_BUILD_FILE_NAME,
   MAIN_CONTEXT,
   MAIN_CONTEXT_ALIAS,
-} = require('./consts')
+} = require('./constants')
 const context = process.cwd()
 
 const {
@@ -40,7 +40,7 @@ const mode = isEnvDevelopment ? 'development' : 'production'
 const enableAddons = ENABLE_NODE_ADDONS !== 'false'
 const shouldUseSourceMap = GENERATE_SOURCEMAP !== 'false'
 
-const MAIN_PRELOAD = path.join(__dirname, 'preload.main.js')
+const MAIN_PRELOAD = path.join(__dirname, 'preload/main.js')
 
 // 同步更新sourceMap开关
 updateJsonFile(

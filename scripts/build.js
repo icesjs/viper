@@ -7,10 +7,16 @@ const { promisify } = require('util')
 const fs = require('fs-extra')
 const wait = require('wait-on')
 const { log, createPrefixedLogger } = require('./lib/logger')
-const { relativePath, getPackageJson, getAvailablePort, printErrorAndExit } = require('./lib/utils')
+const {
+  relativePath,
+  getPackageJson,
+  getAvailablePort,
+  getCommitHEAD,
+  printErrorAndExit,
+} = require('./lib/utils')
 const { runScript, runWebpack } = require('./lib/runner')
 
-const { RENDERER_BUILD_PATH, MAIN_BUILD_PATH, APP_BUILD_PATH } = require('../config/consts')
+const { RENDERER_BUILD_PATH, MAIN_BUILD_PATH, APP_BUILD_PATH } = require('../config/constants')
 
 // 运行构建
 run().catch(printErrorAndExit)
@@ -45,7 +51,7 @@ async function run() {
     env: {
       APP_INDEX_HTML_PATH: relIndexPath,
       ANALYZER_SERVER_PORT: ANALYZER_SERVER_PORT[1],
-      WEBPACK_ELECTRON_ENTRY_PRELOAD: path.join(__dirname, './lib/preload.prod.js'),
+      WEBPACK_ELECTRON_ENTRY_PRELOAD: path.join(__dirname, './lib/preload/prodSetup.js'),
     },
   })
 
@@ -78,9 +84,10 @@ async function createPackageJson() {
   await promisify(fs.outputFile)(
     path.resolve(APP_BUILD_PATH, 'package.json'),
     JSON.stringify({
-      main,
       name,
       version,
+      commit: await getCommitHEAD(),
+      main,
       private: true,
     })
   )

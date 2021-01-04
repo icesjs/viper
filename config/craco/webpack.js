@@ -1,10 +1,10 @@
 //
 const path = require('path')
 const StyleLintPlugin = require('stylelint-webpack-plugin')
-const NodeAddonsWebpackPlugin = require('../scripts/lib/native.plugin')
-const RequireStaticResources = require('../scripts/lib/plugins/RequireStaticResources')
-const BundleAnalyzerPlugin = require('../scripts/lib/analyzer.plugin')
-const { resolvePackage } = require('../scripts/lib/resolve')
+const NodeAddonsWebpackPlugin = require('../../scripts/lib/plugins/NodeAddonsPlugin')
+const RequireStaticResources = require('../../scripts/lib/plugins/RequireStaticResourcesPlugin')
+const BundleAnalyzerPlugin = require('../../scripts/lib/plugins/BundleAnalyzerPlugin')
+const { resolvePackage } = require('../../scripts/lib/resolve')
 
 const webpack = resolvePackage('webpack')
 
@@ -13,7 +13,7 @@ const {
   RENDERER_CONTEXT_ALIAS,
   RENDERER_ENTRY,
   RENDERER_BUILD_PATH,
-} = require('./consts')
+} = require('../constants')
 const cwd = process.cwd()
 
 const {
@@ -27,7 +27,7 @@ if (!/^(web|electron-renderer)$/.test(RENDERER_BUILD_TARGET)) {
 }
 
 const isEnvProduction = process.env.NODE_ENV === 'production'
-const RENDERER_PRELOAD = path.join(__dirname, 'preload.renderer.js')
+const RENDERER_PRELOAD = path.join(__dirname, '../preload/renderer.js')
 const target = RENDERER_BUILD_TARGET
 
 //

@@ -82,6 +82,7 @@
     "webpack-merge": "^5.7.3",
     "widest-line": "^3.1.0"
   },
+  "cracoConfig": "config/craco/index.js",
   "stylelint": {
     "extends": [
       "stylelint-config-recommended",

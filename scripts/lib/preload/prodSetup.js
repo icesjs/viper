@@ -3,9 +3,9 @@
 const path = require('path')
 const url = require('url')
 
-const indexHTMLPath = process.env.ELECTRON_APP_INDEX_HTML_PATH
+const relativeIndexHTMLPath = process.env.ELECTRON_APP_INDEX_HTML_PATH
 // 这里的 __dirname 为运行时的目录名，存在于app包中
-const absIndexHTMLPath = path.join(__dirname, indexHTMLPath)
+const absIndexHTMLPath = path.join(__dirname, relativeIndexHTMLPath)
 // 将绝对路径转换为file协议路径
 const indexHTMLFileURL = url.format({
   protocol: 'file',

@@ -22,7 +22,7 @@ function getReady() {
     MAIN_BUILD_PATH,
     MAIN_BUILD_FILE_NAME,
     ADDONS_BUILD_PATH,
-  } = require('../../config/consts')
+  } = require('../../config/constants')
   const index = path.resolve('index.js')
   const main = path.resolve(MAIN_BUILD_PATH, MAIN_BUILD_FILE_NAME)
   const entry = utils.relativePath(process.cwd(), main)

@@ -9,12 +9,12 @@ const {
   USE_MODULE_PROXY_FOR_ELECTRON,
   AUTO_OPEN_DEV_TOOLS,
   ENABLE_DEV_CONTEXT_MENU,
-  ELECTRON_BUILDER_CONFIG = 'build.yml',
+  ELECTRON_BUILDER_CONFIG = 'pack.yml',
   BROWSER_EXTENSIONS_DIR = 'extensions',
 } = process.env
 
-const { installFromLocalStore } = require('./extensions')
-const contextMenu = ENABLE_DEV_CONTEXT_MENU !== 'false' ? require('./menu.dev') : null
+const { installFromLocalStore } = require('./devExtensions')
+const contextMenu = ENABLE_DEV_CONTEXT_MENU !== 'false' ? require('./devToolsMenu') : null
 const { app } = USE_MODULE_PROXY_FOR_ELECTRON !== 'false' ? proxyElectron() : require('electron')
 
 //

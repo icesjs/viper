@@ -24,7 +24,9 @@ function resolvePackage(pack) {
 function resolveReactScriptsPath() {
   let ownPath
   try {
-    const cachedModule = require.cache[require.resolve('./craco.config.js', { paths: [cwd] })]
+    const pkg = require(path.resolve('package.json'))
+    const cracoConfigPath = pkg.cracoConfig || 'craco.config.js'
+    const cachedModule = require.cache[require.resolve(cracoConfigPath, { paths: [cwd] })]
     const cracoConfig = (cachedModule ? cachedModule.exports : null) || {}
     ownPath = path.join(
       require.resolve(`${cracoConfig['reactScriptsVersion'] || 'react-scripts'}/package.json`, {

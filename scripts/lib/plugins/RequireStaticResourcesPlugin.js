@@ -2,7 +2,7 @@ const path = require('path')
 const { resolvePackage } = require('../resolve')
 const webpack = resolvePackage('webpack')
 
-class RequireStaticResources {
+class RequireStaticResourcesPlugin {
   constructor(opts) {
     this.options = Object.assign(
       {
@@ -12,7 +12,9 @@ class RequireStaticResources {
       opts
     )
     let { checkGlobalVars } = this.options
-    const defaultIgnored = [__dirname, path.dirname(__dirname)]
+    const defaultIgnored = [
+      path.resolve(path.relative(process.cwd(), __filename).replace(/[\\/].*/g, '')),
+    ]
     if (typeof checkGlobalVars === 'boolean' || typeof checkGlobalVars !== 'object') {
       checkGlobalVars = {
         enabled: !!checkGlobalVars,
@@ -62,22 +64,26 @@ class RequireStaticResources {
 
   checkGlobalRuntimeValue(mode, name, value) {
     const { strict, ignored } = this.options.checkGlobalVars
+    const isIgnoredPath = ignored.some((path) => value.startsWith(path))
     if (mode !== 'development') {
       // 产品模式，严格检查
-      if (ignored.some((path) => path.startsWith(value))) {
+      if (isIgnoredPath) {
         // 忽略检查的路径，返回路径变量
         return name
       }
-    } else if (!strict || ignored.some((path) => path.startsWith(value))) {
+    } else if (!strict || isIgnoredPath) {
       // 开发模式
       // 非严格检查，或忽略的路径，返回真实路径值
       return JSON.stringify(value)
     }
     // 严格检查非忽略的路径资源，抛出编译错误
     throw new Error(
-      `Error: The ${name} variable is forbidden because of the path of resources will change after packaging\\nPlease use import or require to get the required resources`
+      `The ${name} variable is forbidden because of the path of resources will change after packaging\nPlease use import or require to get the required resources`
     )
+    // throw new Error(
+    //   `The ${name} variable is forbidden because of the path of resources will change after packaging\nPlease use import or require to get the required resources`
+    // )
   }
 }
 
-module.exports = RequireStaticResources
+module.exports = RequireStaticResourcesPlugin

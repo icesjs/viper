@@ -1,5 +1,5 @@
 const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer')
-const { formatDate } = require('./utils')
+const { formatDate } = require('../utils')
 
 class BundleAnalyzerWebpackPlugin {
   constructor(options) {

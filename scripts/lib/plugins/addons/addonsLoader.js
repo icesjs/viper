@@ -3,8 +3,8 @@ const { promisify } = require('util')
 const fs = require('fs-extra')
 const loaderUtils = require('loader-utils')
 const bindings = require('bindings')
-const { log } = require('./logger')
-const { relativePath, getPackageJson } = require('./utils')
+const { log } = require('../../logger')
+const { relativePath, getPackageJson } = require('../../utils')
 
 const {
   getOptions,
@@ -16,7 +16,7 @@ const {
   readAddonsOutputPackageJson,
   LoaderError,
   LoaderWarning,
-} = require('./native.utils')
+} = require('./loaderUtils')
 
 // 发布文件资源至webpack
 async function emitRawSourceFile(content, options) {
@@ -178,7 +178,7 @@ async function isCompatibleForInstalledElectron(content) {
     // 使用electron运行来检查
     await new Promise((resolve, reject) => {
       const spawn = require('cross-spawn')
-      spawn(require('electron'), ['native.check.js'], {
+      spawn(require('electron'), ['checkCompatibility.js'], {
         stdio: 'ignore',
         cwd: __dirname,
         env: {
@@ -284,7 +284,7 @@ async function makeModuleCodeWithBindings(addonsSources, options) {
       name,
     })
   }
-  const runtimePath = path.join(__dirname, 'native.runtime.js')
+  const runtimePath = path.join(__dirname, 'resolverRuntime.js')
   return getBindingsCodeSnippet.apply(this, [
     addonsList,
     loaderUtils.stringifyRequest(this, runtimePath),
@@ -305,10 +305,10 @@ async function requireNodeAddonsByBindings(options, modulePath) {
 }
 
 // 用于将require('bindings')转发到当前loader来处理
-const fakedAddonsResolver = path.join(__dirname, 'native.loader.node')
+const fakeAddonsResolver = path.join(__dirname, 'fakeAddons.node')
 
 function requireNodeAddonsFromResolver(options, callback) {
-  if (path.normalize(this.resourcePath) === fakedAddonsResolver) {
+  if (path.normalize(this.resourcePath) === fakeAddonsResolver) {
     const { resolver, module } = loaderUtils.parseQuery(this.resourceQuery)
     this.clearDependencies()
     if (resolver === 'bindings') {

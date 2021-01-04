@@ -50,7 +50,7 @@ async function run() {
     config: path.resolve('config/electron.webpack.js'),
     env: {
       APP_INDEX_HTML_URL: indexURL,
-      WEBPACK_ELECTRON_ENTRY_PRELOAD: path.join(__dirname, './lib/preload.dev.js'),
+      WEBPACK_ELECTRON_ENTRY_PRELOAD: path.join(__dirname, './lib/preload/devSetup.js'),
     },
     watch: true,
     watchOptions: { aggregateTimeout: Math.max(+AUTO_RELAUNCH_DELAY || 0, 2000) },

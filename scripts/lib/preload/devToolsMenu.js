@@ -1,7 +1,7 @@
 // 开发模式下，初始化开发辅助菜单
 
 const { app, dialog, shell, BrowserWindow, Menu } = require('electron')
-const { getLocalExtensions, installFromLocalFile } = require('./extensions')
+const { getLocalExtensions, installFromLocalFile } = require('./devExtensions')
 
 const isChina = /^cn$/i.test(app.getLocaleCountryCode())
 const open = (url, opts) => shell.openExternal(url, opts)

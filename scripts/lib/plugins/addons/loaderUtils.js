@@ -3,7 +3,7 @@ const fs = require('fs-extra')
 const schemaUtils = require('schema-utils')
 const loaderUtils = require('loader-utils')
 const findUp = require('find-up')
-const { relativePath, getPackageJson } = require('./utils')
+const { relativePath, getPackageJson } = require('../../utils')
 
 class LoaderWarning extends Error {
   constructor(warning) {

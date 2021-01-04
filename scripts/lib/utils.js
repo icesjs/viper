@@ -104,6 +104,22 @@ module.exports = exports = {
   },
 
   //
+  async getCommitHEAD() {
+    return await new Promise((resolve, reject) => {
+      const cp = spawn('git', ['rev-parse', 'HEAD'], {
+        stdio: 'pipe',
+        silent: true,
+        windowsHide: true,
+      })
+      let content = ''
+      cp.stdout.on('data', (buf) => {
+        content += buf.toString()
+      })
+      cp.once('exit', (code) => (code === 0 ? resolve(content.trim()) : reject(code)))
+    })
+  },
+
+  //
   deepProxy(object, propPaths, handler = {}) {
     if (typeof propPaths === 'string') {
       propPaths = propPaths.split('.')

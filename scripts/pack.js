@@ -23,13 +23,13 @@ const {
   MAIN_BUILD_PATH,
   RENDERER_BUILD_PATH,
   ADDONS_BUILD_PATH,
-} = require('../config/consts')
+} = require('../config/constants')
 //
 const {
   ELECTRON_MAIN_ENTRY_PATH,
   ELECTRON_HEADERS_MIRROR_URL,
   ENABLE_NODE_ADDONS,
-  ELECTRON_BUILDER_CONFIG = 'build.yml',
+  ELECTRON_BUILDER_CONFIG = 'pack.yml',
   CI = 'false',
 } = process.env
 

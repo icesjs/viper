@@ -16,6 +16,7 @@ function getAddonsByBindingName(name = 'bindings.node', addonsList) {
 function getAddonsModuleExports(addons, onlyPath) {
   const { modulePath, isFromNodeModules, isMainProcess, flags } = addons
   const usedFlags = typeof flags !== 'undefined'
+  // eslint-disable-next-line no-undef
   const requireFn = typeof __webpack_require__ === 'function' ? __non_webpack_require__ : require
   const module = { exports: {} }
 

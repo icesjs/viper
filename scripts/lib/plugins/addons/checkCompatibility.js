@@ -1,5 +1,5 @@
 // 检查插件模块是否与已安装的electron兼容
-function checkAddonsCompatible() {
+function checkAddonsCompatibility() {
   const module = process.env.NATIVE_LOADER_ADDONS_COMPATIBLE_CHECK_PATH
   if (module) {
     try {
@@ -9,7 +9,7 @@ function checkAddonsCompatible() {
       process.exit(1)
     }
   } else {
-    require('./logger').log.error(
+    require('../../logger').log.error(
       'Not found NATIVE_LOADER_ADDONS_COMPATIBLE_CHECK_PATH from process env to test'
     )
     setTimeout(() => process.exit(2), 1000)
@@ -17,4 +17,4 @@ function checkAddonsCompatible() {
 }
 
 // 执行检查
-checkAddonsCompatible()
+checkAddonsCompatibility()
