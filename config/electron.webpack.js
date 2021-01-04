@@ -1,6 +1,7 @@
 const path = require('path')
 const NodeAddonsWebpackPlugin = require('../scripts/lib/native.plugin')
 const BundleAnalyzerPlugin = require('../scripts/lib/analyzer.plugin')
+const RequireStaticResources = require('../scripts/lib/plugins/RequireStaticResources')
 const { resolvePackage: resolve } = require('../scripts/lib/resolve')
 const { updateJsonFile } = require('../scripts/lib/utils')
 
@@ -36,7 +37,7 @@ const {
 const isEnvDevelopment = NODE_ENV === 'development'
 const isEnvProduction = NODE_ENV === 'production'
 const mode = isEnvDevelopment ? 'development' : 'production'
-
+const enableAddons = ENABLE_NODE_ADDONS !== 'false'
 const shouldUseSourceMap = GENERATE_SOURCEMAP !== 'false'
 
 const MAIN_PRELOAD = path.join(__dirname, 'preload.main.js')
@@ -115,10 +116,12 @@ module.exports = {
     __filename: false,
   },
   plugins: [
-    ENABLE_NODE_ADDONS !== 'false' && new NodeAddonsWebpackPlugin(), // 支持node addon的构建与打包
     isEnvDevelopment && new CaseSensitivePathsPlugin(),
     isEnvProduction && new CleanWebpackPlugin(),
     isEnvProduction && ENABLE_BUNDLE_ANALYZER !== 'false' && new BundleAnalyzerPlugin(),
+    //
+    enableAddons && new NodeAddonsWebpackPlugin(), // 支持node addon的构建与打包
+    new RequireStaticResources(), // 支持对资源文件的导入使用
     //
     new webpack.EnvironmentPlugin({
       NODE_ENV: mode,

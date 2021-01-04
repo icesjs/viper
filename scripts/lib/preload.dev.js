@@ -10,31 +10,38 @@ const {
   AUTO_OPEN_DEV_TOOLS,
   ENABLE_DEV_CONTEXT_MENU,
   ELECTRON_BUILDER_CONFIG = 'build.yml',
+  BROWSER_EXTENSIONS_DIR = 'extensions',
 } = process.env
 
-const getContextMenuTemplate = require('./menu.dev')
-const useModuleProxy = USE_MODULE_PROXY_FOR_ELECTRON !== 'false'
-const { app, Menu } = useModuleProxy ? proxyElectron() : require('electron')
+const { installFromLocalStore } = require('./extensions')
+const contextMenu = ENABLE_DEV_CONTEXT_MENU !== 'false' ? require('./menu.dev') : null
+const { app } = USE_MODULE_PROXY_FOR_ELECTRON !== 'false' ? proxyElectron() : require('electron')
 
 //
 app.on('browser-window-created', (e, win) => setupDevTools(win))
 
 //
-function setupDevTools(win) {
+async function setupDevTools(win) {
+  if (contextMenu) {
+    win.webContents.on('context-menu', (e, { x, y }) => contextMenu.popup({ x, y }))
+  }
+  try {
+    await installFromLocalStore(win, BROWSER_EXTENSIONS_DIR)
+  } catch (e) {
+    console.error(e)
+  }
   if (AUTO_OPEN_DEV_TOOLS !== 'false') {
     autoOpenDevTools(win)
-  }
-  if (ENABLE_DEV_CONTEXT_MENU !== 'false') {
-    win.webContents.on('context-menu', (e, cord) => {
-      const menu = Menu.buildFromTemplate(getContextMenuTemplate(win, cord))
-      menu.popup({ window: win })
-    })
   }
 }
 
 //
 function autoOpenDevTools(win) {
-  win.once('show', () => win.webContents.openDevTools())
+  if (win.isVisible()) {
+    win.webContents.openDevTools()
+  } else {
+    win.once('show', () => win.webContents.openDevTools())
+  }
 }
 
 //

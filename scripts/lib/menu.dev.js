@@ -1,21 +1,37 @@
 // 开发模式下，初始化开发辅助菜单
-const devToolsInstaller = require('electron-devtools-installer')
-const { app, dialog, shell, BrowserWindow } = require('electron')
+
+const { app, dialog, shell, BrowserWindow, Menu } = require('electron')
+const { getLocalExtensions, installFromLocalFile } = require('./extensions')
+
 const isChina = /^cn$/i.test(app.getLocaleCountryCode())
 const open = (url, opts) => shell.openExternal(url, opts)
 
-module.exports = function getContextMenuTemplate(window, { x, y }) {
+/**
+ * 获取上下文菜单所属的窗口对象
+ * @param context
+ * @returns {any|Electron.BrowserWindow}
+ */
+function getContextWindow(context) {
+  return context.window || BrowserWindow.getFocusedWindow()
+}
+
+/**
+ * 获取菜单模板
+ * @param context
+ */
+function getTemplate(context) {
+  const extensions = getLocalExtensions(process.env.BROWSER_EXTENSIONS_DIR || 'extensions')
   return [
     {
       label: isChina ? '刷新页面' : 'Reload',
       accelerator: 'CmdOrCtrl+R',
-      click: () => window.webContents.reloadIgnoringCache(),
+      click: () => getContextWindow(context).webContents.reloadIgnoringCache(),
     },
     { type: 'separator' },
     {
       label: isChina ? '重启应用' : 'Relaunch',
       click: async () => {
-        const { response } = await dialog.showMessageBox(window, {
+        const { response } = await dialog.showMessageBox(getContextWindow(context), {
           title: isChina ? '重启应用' : 'Restart The Application',
           type: 'question',
           message: isChina
@@ -26,6 +42,7 @@ module.exports = function getContextMenuTemplate(window, { x, y }) {
           defaultId: 1,
         })
         if (response) {
+          // 退出码15不能更改，构建工具需要用到这个值
           app.exit(15)
         }
       },
@@ -33,7 +50,7 @@ module.exports = function getContextMenuTemplate(window, { x, y }) {
     {
       label: isChina ? '退出应用' : 'Quit',
       click: async () => {
-        const { response } = await dialog.showMessageBox(window, {
+        const { response } = await dialog.showMessageBox(getContextWindow(context), {
           title: isChina ? '退出应用' : 'Quit The Application',
           type: 'question',
           message: isChina
@@ -94,45 +111,86 @@ module.exports = function getContextMenuTemplate(window, { x, y }) {
         },
       ],
     },
-    {
-      label: isChina ? '更新扩展插件' : 'Update Extensions',
-      submenu: [
-        {
-          label: 'React Developer Tools',
-          click: () => updateExtensions(devToolsInstaller.REACT_DEVELOPER_TOOLS),
-        },
-        {
-          label: 'Redux Devtools',
-          click: () => updateExtensions(devToolsInstaller.REDUX_DEVTOOLS),
-        },
-      ],
+    extensions.length && {
+      label: isChina ? '重新安装扩展插件' : 'Reinstall Extensions',
+      submenu: extensions.map((crx) => ({
+        label: crx.name,
+        click: () => installExtensions(context, crx),
+      })),
     },
     { type: 'separator' },
     {
       label: isChina ? '开发人员工具' : 'Toggle Developer Tools',
       accelerator: process.platform === 'darwin' ? 'Alt+Command+I' : 'Ctrl+Shift+I',
-      click: () => window.webContents.toggleDevTools(),
+      click: () => getContextWindow(context).webContents.toggleDevTools(),
     },
     {
       label: isChina ? '检查元素' : 'Inspect element',
-      click: () => window.inspectElement(x, y),
+      click: () => getContextWindow(context).inspectElement(context.x, context.y),
     },
-  ]
+  ].filter(Boolean)
 }
 
-//
-async function updateExtensions(extension) {
-  const title = isChina ? '更新扩展插件' : 'Update Extensions'
+/**
+ * 创建上下文菜单
+ * @returns {Electron.Menu|*}
+ */
+function createContextMenu() {
+  const context = {
+    x: 0,
+    y: 0,
+    window: null,
+  }
+  //
+  return new Proxy(Menu.buildFromTemplate(getTemplate(context)), {
+    get(target, prop, receiver) {
+      const val = target[prop]
+      if (prop === 'popup') {
+        return new Proxy(val, {
+          apply(popup, thisArg, args) {
+            // 这里使用代理获取上下文窗口，以及关闭菜单时，清除对窗口对象的引用
+            const { callback } = Object.assign(context, args[0])
+            args[0] = Object.assign({}, args[0], {
+              callback() {
+                context.window = null
+                callback && callback()
+              },
+            })
+            return Reflect.apply(popup, thisArg === receiver ? target : thisArg, args)
+          },
+        })
+      }
+      return val
+    },
+  })
+}
+
+/**
+ * 重新安装扩展插件
+ * @param context
+ * @param crx
+ * @returns {Promise<void>}
+ */
+async function installExtensions(context, crx) {
+  const title = isChina ? '安装扩展插件' : 'Install Extensions'
+  const win = getContextWindow(context)
   try {
-    await devToolsInstaller.default(extension, true)
-    await dialog.showMessageBox(BrowserWindow.getFocusedWindow(), {
+    await installFromLocalFile(win, crx, true)
+    const view = win.webContents
+    if (view.isDevToolsOpened()) {
+      view.closeDevTools()
+      view.openDevTools()
+    }
+    await dialog.showMessageBox(win, {
       title,
       type: 'info',
-      message: isChina ? '更新成功' : 'Update successfully',
+      message: isChina ? '安装成功' : 'Installed successfully',
       buttons: [isChina ? '好的' : 'OK'],
     })
   } catch (e) {
-    await dialog.showErrorBox(`${title}${isChina ? '失败' : ' Failed'}`, `${e.message}`)
-    await open(`https://chrome.google.com/webstore/detail/${extension.id}`)
+    dialog.showErrorBox(`${title}${isChina ? '失败' : ' Failed'}`, `${e.message}`)
   }
 }
+
+//
+module.exports = createContextMenu()

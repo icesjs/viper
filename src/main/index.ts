@@ -41,9 +41,12 @@ async function handleException(err) {
   // 记录异常日志
   productionLogger.error(err)
   // 需要做国际化，产品模式，不能显示具体错误消息给用户
-  const errMessage = process.env.NODE_ENV !== 'development' ? '' : err.message
-  await dialog.showErrorBox('提示', `发生了一个错误！${errMessage}`)
-  process.nextTick(() => process.exit(1))
+  const isEnvProduction = process.env.NODE_ENV === 'production' || app.isPackaged
+  const errMessage = isEnvProduction ? '' : err.message
+  await dialog.showErrorBox('发生了一个错误！', errMessage)
+  if (isEnvProduction) {
+    process.nextTick(() => process.exit(1))
+  }
 }
 
 /**
@@ -52,21 +55,23 @@ async function handleException(err) {
 async function createWindow() {
   //
   if (mainWindow !== null) {
-    mainWindow.show()
+    return
   }
 
   // 主窗口对象
   mainWindow = new BrowserWindow({
-    show: true,
+    show: false,
     width: 1024, // 宽高需要可定义
     height: 728,
-    // backgroundColor: 'transparent', // 初始背景色需要根据系统主题颜色自动设置
+    backgroundColor: 'transparent', // 初始背景色需要根据系统主题颜色自动设置
     webPreferences: {
       nodeIntegration,
       enableRemoteModule: nodeIntegration,
       contextIsolation: !nodeIntegration,
     },
   })
+
+  mainWindow.once('ready-to-show', () => mainWindow?.show())
 
   mainWindow.on('closed', () => {
     mainWindow = null

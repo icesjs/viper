@@ -2,6 +2,7 @@
 const path = require('path')
 const StyleLintPlugin = require('stylelint-webpack-plugin')
 const NodeAddonsWebpackPlugin = require('../scripts/lib/native.plugin')
+const RequireStaticResources = require('../scripts/lib/plugins/RequireStaticResources')
 const BundleAnalyzerPlugin = require('../scripts/lib/analyzer.plugin')
 const { resolvePackage } = require('../scripts/lib/resolve')
 
@@ -49,6 +50,8 @@ const customizeWebpackConfig = {
     // 注意，node addon仅在渲染模块以electron-renderer模式打包时可用
     ENABLE_NODE_ADDONS !== 'false' && new NodeAddonsWebpackPlugin(),
     isEnvProduction && ENABLE_BUNDLE_ANALYZER !== 'false' && new BundleAnalyzerPlugin(),
+    // 静态资源导入支持
+    target === 'electron-renderer' && new RequireStaticResources(),
     //
     new StyleLintPlugin({
       configBasedir: cwd,

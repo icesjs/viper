@@ -13,7 +13,6 @@ module.exports = {
   //
   overrideWebpackConfig({ webpackConfig }) {
     customizeOptimization(webpackConfig)
-    customizeNodeVariable(webpackConfig)
     return webpackConfig
   },
 }
@@ -21,7 +20,6 @@ module.exports = {
 const path = require('path')
 const { mergeWithCustomize } = require('webpack-merge')
 const { resolvePackage, resolveReactScriptsPath } = require('./resolve')
-const webpack = resolvePackage('webpack')
 const cwd = process.cwd()
 
 //
@@ -58,33 +56,6 @@ function customizeOptimization(webpackConfig) {
     optimization.minimize = false
     webpackConfig.optimization = optimization
   }
-}
-
-//
-function customizeNodeVariable(webpackConfig) {
-  const { RENDERER_BUILD_TARGET, NODE_ENV } = process.env
-  if (RENDERER_BUILD_TARGET !== 'electron-renderer') {
-    return
-  }
-  const { node = {}, plugins = [] } = webpackConfig
-  const DefinePlugin = webpack.DefinePlugin
-  // 这里通过根据定义运行时编译值，来替换路径变量
-  if (NODE_ENV === 'development') {
-    // 但这里要注意的是，直接通过路径变量来操作资源，是会有问题的
-    // 打包后的资源，经过了处理，已经与源代码路径不同
-    // 所有资源必须使用import模块形式来使用
-    // 这里定义该变量，为方便开发模式下调试
-    plugins.push(
-      new DefinePlugin({
-        __dirname: DefinePlugin.runtimeValue(({ module }) => JSON.stringify(module.context)),
-        __filename: DefinePlugin.runtimeValue(({ module }) => JSON.stringify(module.resource)),
-      })
-    )
-  }
-  node.__dirname = false
-  node.__filename = false
-  webpackConfig.node = node
-  webpackConfig.plugins = plugins
 }
 
 //
