@@ -1,12 +1,12 @@
 //
 const path = require('path')
 const StyleLintPlugin = require('stylelint-webpack-plugin')
-const NodeAddonsWebpackPlugin = require('../../scripts/lib/plugins/NodeAddonsPlugin')
-const RequireStaticResources = require('../../scripts/lib/plugins/RequireStaticResourcesPlugin')
+const NodeAddonsPlugin = require('../../scripts/lib/plugins/NodeAddonsPlugin')
+const CheckGlobalPathsPlugin = require('../../scripts/lib/plugins/CheckGlobalPathsPlugin')
 const BundleAnalyzerPlugin = require('../../scripts/lib/plugins/BundleAnalyzerPlugin')
-const { resolvePackage } = require('../../scripts/lib/resolve')
+const { resolveModule } = require('../../scripts/lib/resolve')
 
-const webpack = resolvePackage('webpack')
+const webpack = resolveModule('webpack')
 
 const {
   RENDERER_CONTEXT,
@@ -48,10 +48,10 @@ const customizeWebpackConfig = {
   plugins: [
     // 支持node addon的构建与打包
     // 注意，node addon仅在渲染模块以electron-renderer模式打包时可用
-    ENABLE_NODE_ADDONS !== 'false' && new NodeAddonsWebpackPlugin(),
+    ENABLE_NODE_ADDONS !== 'false' && new NodeAddonsPlugin(),
     isEnvProduction && ENABLE_BUNDLE_ANALYZER !== 'false' && new BundleAnalyzerPlugin(),
-    // 静态资源导入支持
-    target === 'electron-renderer' && new RequireStaticResources(),
+    // 检查__dirname和__filename变量的使用，并抛出编译错误
+    new CheckGlobalPathsPlugin(),
     //
     new StyleLintPlugin({
       configBasedir: cwd,

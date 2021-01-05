@@ -4,6 +4,7 @@ const fs = require('fs-extra')
 const loaderUtils = require('loader-utils')
 const bindings = require('bindings')
 const { log } = require('../../logger')
+const { resolvePackage } = require('../../resolve')
 const { relativePath, getPackageJson } = require('../../utils')
 
 const {
@@ -12,7 +13,6 @@ const {
   getCodeSnippet,
   getBindingsCodeSnippet,
   normalizeModulePath,
-  resolveModulePackagePath,
   readAddonsOutputPackageJson,
   LoaderError,
   LoaderWarning,
@@ -43,7 +43,10 @@ async function emitRawSourceFile(content, options) {
   const relativeFromRootContextEmitFilePath = relativePath(rootContext, absFilename)
 
   // 发布文件到webpack文件管理
-  this.emitFile(relativeFromBuildOutputEmitFilePath, content)
+  this.emitFile(relativeFromBuildOutputEmitFilePath, content, null, {
+    immutable: true,
+    sourceFilename: relativePath(this.rootContext, this.resourcePath, false),
+  })
 
   if (isEnvDevelopment && isRendererProcess) {
     // 客户端开发环境，会使用内存文件系统，require的插件，还需要写到物理磁盘上
@@ -199,7 +202,7 @@ async function isCompatibleForInstalledElectron(content) {
 }
 
 //
-async function readNodeAddonsSourceFromContext(context) {
+async function readAddonsSourceFromContext(context) {
   const targetNameRegx = /(['"])target_name\1\s*:\s*(['"])(.*?)\2/g
   const readFile = getFileReader(this)
   const gyp = (await readFile(path.join(context, 'binding.gyp'))).toString()
@@ -284,7 +287,7 @@ async function makeModuleCodeWithBindings(addonsSources, options) {
       name,
     })
   }
-  const runtimePath = path.join(__dirname, 'resolverRuntime.js')
+  const runtimePath = path.join(__dirname, 'bindingsRuntime.js')
   return getBindingsCodeSnippet.apply(this, [
     addonsList,
     loaderUtils.stringifyRequest(this, runtimePath),
@@ -292,11 +295,11 @@ async function makeModuleCodeWithBindings(addonsSources, options) {
 }
 
 //
-async function requireNodeAddonsByBindings(options, modulePath) {
+async function requireAddonsByBindings(options, modulePath) {
   const addonsSources = []
   const moduleRoot = path.resolve(modulePath)
   if (fs.existsSync(path.join(moduleRoot, 'binding.gyp'))) {
-    const sources = await readNodeAddonsSourceFromContext.call(this, moduleRoot)
+    const sources = await readAddonsSourceFromContext.call(this, moduleRoot)
     if (sources) {
       addonsSources.push(...sources)
     }
@@ -307,12 +310,12 @@ async function requireNodeAddonsByBindings(options, modulePath) {
 // 用于将require('bindings')转发到当前loader来处理
 const fakeAddonsResolver = path.join(__dirname, 'fakeAddons.node')
 
-function requireNodeAddonsFromResolver(options, callback) {
+function requireAddonsFromResolver(options, callback) {
   if (path.normalize(this.resourcePath) === fakeAddonsResolver) {
     const { resolver, module } = loaderUtils.parseQuery(this.resourceQuery)
     this.clearDependencies()
     if (resolver === 'bindings') {
-      return requireNodeAddonsByBindings
+      return requireAddonsByBindings
         .apply(this, [options, module])
         .then((code) => callback(null, code))
         .catch((e) => callback(new LoaderError(e || 'Unknown Error')))
@@ -321,7 +324,7 @@ function requireNodeAddonsFromResolver(options, callback) {
 }
 
 //
-async function makeDirectRequireAddonsModuleCode(...args) {
+async function requireAddonsFromModule(...args) {
   await setNativeDependency.apply(this, args)
   this.addDependency(this.resourcePath)
   return await generateRequireModuleCode.apply(this, args)
@@ -349,13 +352,12 @@ module.exports = function NodeAddonsLoader(source) {
   const args = [source, options]
   const callback = this.async()
 
-  if (requireNodeAddonsFromResolver.apply(this, [options, callback])) {
+  if (requireAddonsFromResolver.apply(this, [options, callback])) {
     return
   }
 
-  resolveModulePackagePath
-    .apply(this, [this.rootContext, this.context])
-    .then(makeDirectRequireAddonsModuleCode.bind(this, ...args))
+  resolvePackage(this.context, this.rootContext, true)
+    .then(requireAddonsFromModule.bind(this, ...args))
     .then((code) => callback(null, code))
     .catch((e) => callback(new LoaderError(e || 'Unknown Error')))
 }

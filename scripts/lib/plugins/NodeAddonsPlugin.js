@@ -32,6 +32,7 @@ class NodeAddonsWebpackPlugin {
     } = this.options
     return {
       test: /\.node$/,
+      // 内部处理node插件的loader
       loader: path.join(__dirname, 'addons/addonsLoader.js'),
       options: {
         makeNativeDependencyPackageJson: makeDependenciesJson,
@@ -65,15 +66,29 @@ class NodeAddonsWebpackPlugin {
     module.rules = rules
     compilerOptions.module = module
 
-    const loaderRule = this.getAddonsLoaderRule((output || {}).path)
-    let { isAdded } = addBeforeLoader(compilerOptions, loaderByName('file-loader'), loaderRule)
-    if (!isAdded) {
-      isAdded = addBeforeLoader(compilerOptions, loaderByName('url-loader'), loaderRule).isAdded
-    }
-    if (!isAdded) {
-      rules.push(loaderRule)
+    const rule = this.getAddonsLoaderRule((output || {}).path)
+    if (!addBeforeLoader(compilerOptions, this.getLoaderMatcher('file-loader'), rule).isAdded) {
+      if (!addBeforeLoader(compilerOptions, this.getLoaderMatcher('url-loader'), rule).isAdded) {
+        rules.push(rule)
+      }
     }
     return compilerOptions
+  }
+
+  /**
+   * 根据loader名称获取规则匹配函数
+   * @param loaderName 要匹配的loader名称
+   */
+  getLoaderMatcher(loaderName) {
+    const pathMatcher = loaderByName(loaderName)
+    return (rule) => {
+      if (typeof rule === 'string') {
+        return rule === loaderName || pathMatcher(rule)
+      }
+      if (typeof rule.loader === 'string') {
+        return rule.loader === loaderName || pathMatcher(rule)
+      }
+    }
   }
 
   /**
@@ -103,16 +118,11 @@ class NodeAddonsWebpackPlugin {
  * webpack模块解析插件，用于将使用bindings导入的node插件转换为webpack导入
  */
 class BindingsModuleResolvePlugin {
-  constructor(source, forward, target) {
-    this.source = source || 'described-resolve'
-    this.target = target || 'resolve'
-    this.forward = forward || path.join(__dirname, 'addons/fakeAddons.node')
-  }
-
   apply(resolver) {
-    const target = resolver.ensureHook(this.target)
+    const target = resolver.ensureHook('resolve')
+    const forward = path.join(__dirname, 'addons/fakeAddons.node')
     resolver
-      .getHook(this.source)
+      .getHook('described-resolve')
       .tapAsync('BindingsModuleResolvePlugin', (request, resolveContext, callback) => {
         if (!request.module || request.request !== 'bindings') {
           return callback()
@@ -121,7 +131,6 @@ class BindingsModuleResolvePlugin {
         if (!descriptionFileRoot) {
           return callback()
         }
-        const { forward } = this
         const modulePath = path.relative(process.cwd(), descriptionFileRoot)
         // 修改模块请求，通过loader来处理addon的引入
         resolver.doResolve(

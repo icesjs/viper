@@ -122,7 +122,10 @@ function getExtensionsBasicInfo(store, crx) {
 function getLocalExtensions(dir) {
   const store = path.resolve(dir)
   if (fs.existsSync(store)) {
-    return fs.readdirSync(store).map((crx) => getExtensionsBasicInfo(store, crx))
+    return fs
+      .readdirSync(store)
+      .filter((file) => file.endsWith('.crx'))
+      .map((crx) => getExtensionsBasicInfo(store, crx))
   }
   return []
 }

@@ -2,7 +2,6 @@ const path = require('path')
 const fs = require('fs-extra')
 const schemaUtils = require('schema-utils')
 const loaderUtils = require('loader-utils')
-const findUp = require('find-up')
 const { relativePath, getPackageJson } = require('../../utils')
 
 class LoaderWarning extends Error {
@@ -151,14 +150,6 @@ module.exports = exports = {
     options.output = output
     options.makeNativeDependencyPackageJson = makeNativeDependencyPackageJson
     return options
-  },
-
-  //
-  resolveModulePackagePath(rootContext, context) {
-    const projectRoot = path.normalize(rootContext)
-    return findUp((dir) => (projectRoot === path.normalize(dir) ? findUp.stop : 'package.json'), {
-      cwd: context,
-    })
   },
 
   //

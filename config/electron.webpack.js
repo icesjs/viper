@@ -1,8 +1,8 @@
 const path = require('path')
-const NodeAddonsWebpackPlugin = require('../scripts/lib/plugins/NodeAddonsPlugin')
+const NodeAddonsPlugin = require('../scripts/lib/plugins/NodeAddonsPlugin')
 const BundleAnalyzerPlugin = require('../scripts/lib/plugins/BundleAnalyzerPlugin')
-const RequireStaticResources = require('../scripts/lib/plugins/RequireStaticResourcesPlugin')
-const { resolvePackage: resolve } = require('../scripts/lib/resolve')
+const CheckGlobalPathsPlugin = require('../scripts/lib/plugins/CheckGlobalPathsPlugin')
+const { resolveModule: resolve } = require('../scripts/lib/resolve')
 const { updateJsonFile } = require('../scripts/lib/utils')
 
 //
@@ -89,11 +89,15 @@ module.exports = {
             },
           },
           {
-            loader: require.resolve('file-loader'),
-            exclude: [/\.(js|mjs|ts)$/, /\.json$/],
+            loader: 'file-loader',
+            exclude: /\.(?:json|m?js|ts|node)$/,
             options: {
               name: 'media/[name].[hash:8].[ext]',
               publicPath: '.',
+              postTransformPublicPath(path) {
+                // 转换资源的相对路径为绝对路径
+                return `__non_webpack_require__('path').join(__dirname, ${path})`
+              },
             },
           },
         ],
@@ -120,8 +124,12 @@ module.exports = {
     isEnvProduction && new CleanWebpackPlugin(),
     isEnvProduction && ENABLE_BUNDLE_ANALYZER !== 'false' && new BundleAnalyzerPlugin(),
     //
-    enableAddons && new NodeAddonsWebpackPlugin(), // 支持node addon的构建与打包
-    new RequireStaticResources(), // 支持对资源文件的导入使用
+    enableAddons && new NodeAddonsPlugin(), // 支持node addon的构建与打包
+    // 检查__dirname和__filename变量的使用，抛出编译错误
+    new CheckGlobalPathsPlugin({
+      // 使用file-loader对路径进行了绝对化处理，其中使用了__dirname，不需要进行检查
+      ignoredLoaders: 'file-loader',
+    }),
     //
     new webpack.EnvironmentPlugin({
       NODE_ENV: mode,

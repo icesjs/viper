@@ -19,7 +19,7 @@ module.exports = {
 
 const path = require('path')
 const { mergeWithCustomize } = require('webpack-merge')
-const { resolvePackage, resolveReactScriptsPath } = require('../resolve')
+const { resolveModule, resolveReactScripts } = require('../resolve')
 const cwd = process.cwd()
 
 //
@@ -108,7 +108,7 @@ function overrideOutputPath(context, customizeConfig) {
 
 //
 function overrideCRAPaths({ paths }, prop, val) {
-  const ownPath = paths['ownPath'] || resolveReactScriptsPath()
+  const ownPath = paths['ownPath'] || resolveReactScripts()
   const modulePath = require.resolve(path.join(ownPath, 'config', 'paths.js'), {
     paths: [cwd],
   })
@@ -121,7 +121,7 @@ function overrideCRAPaths({ paths }, prop, val) {
 
 //
 function overrideManifestPluginForEntry(chunkName, originalConfig) {
-  const ManifestPlugin = resolvePackage('webpack-manifest-plugin')
+  const ManifestPlugin = resolveModule('webpack-manifest-plugin')
   for (const plug of originalConfig.plugins) {
     if (plug instanceof ManifestPlugin) {
       const { opts } = plug
@@ -140,7 +140,7 @@ function overrideManifestPluginForEntry(chunkName, originalConfig) {
 }
 
 function overrideHtmlWebpackPluginForPublicAssets(template, originalConfig) {
-  const HtmlWebpackPlugin = resolvePackage('html-webpack-plugin')
+  const HtmlWebpackPlugin = resolveModule('html-webpack-plugin')
   for (const plug of originalConfig.plugins) {
     if (plug instanceof HtmlWebpackPlugin) {
       plug.options.template = template

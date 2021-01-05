@@ -1,8 +1,8 @@
 const chalk = require('chalk')
 const { log } = require('./logger')
-const { resolvePackage } = require('./resolve')
+const { resolveModule } = require('./resolve')
 const respawn = require('./respawn')
-const webpack = resolvePackage('webpack')
+const webpack = resolveModule('webpack')
 
 function runWebpack({ config, logger, env, watch, watchOptions, beforeWatchRun, afterWatchRun }) {
   Object.assign(process.env, env)

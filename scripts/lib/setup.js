@@ -17,21 +17,27 @@ function getReady() {
   // 捕获全局异常
   catchUncaughtException(log)
   // 清理相关文件与目录
-  const utils = require('./utils')
+  const { relativePath, emptyDirSync, getPackageJson } = require('./utils')
   const {
     MAIN_BUILD_PATH,
     MAIN_BUILD_FILE_NAME,
     ADDONS_BUILD_PATH,
   } = require('../../config/constants')
-  const index = path.resolve('index.js')
+  const declaredMain = getPackageJson().main
   const main = path.resolve(MAIN_BUILD_PATH, MAIN_BUILD_FILE_NAME)
-  const entry = utils.relativePath(process.cwd(), main)
-  // 根据配置文件中的定义参数，更新应用的执行入口信息
-  fs.writeFileSync(index, `require('${entry}')\n`)
+  const entry = relativePath(process.cwd(), main)
+
+  if (declaredMain || path.resolve(declaredMain) !== main) {
+    // 根据配置文件中的定义参数，更新应用的执行入口信息
+    const hints =
+      '/**\n * The contents of this file will be generated automatically.\n * Please do not write code in this file.\n */\n'
+    fs.writeFileSync(path.resolve('index.js'), `${hints}require('${entry}')\n`)
+  }
+
   // 保存至环境变量中，发布时有用到
   process.env.ELECTRON_MAIN_ENTRY_PATH = path.resolve(entry)
   // 清空addons构建输出目录
-  utils.emptyDirSync(ADDONS_BUILD_PATH)
+  emptyDirSync(ADDONS_BUILD_PATH)
 }
 
 function loadEnv(NODE_ENV, forced) {
