@@ -107,7 +107,6 @@ module.exports = exports = {
   async getCommitHEAD() {
     return await new Promise((resolve, reject) => {
       const cp = spawn('git', ['rev-parse', 'HEAD'], {
-        stdio: 'pipe',
         silent: true,
         windowsHide: true,
       })

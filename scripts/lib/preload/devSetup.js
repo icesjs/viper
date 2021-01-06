@@ -1,5 +1,6 @@
 // 开发模式下才会加载此脚本
 const fs = require('fs')
+const url = require('url')
 const path = require('path')
 const yaml = require('js-yaml')
 
@@ -26,6 +27,13 @@ async function setupDevTools(win) {
     win.webContents.on('context-menu', (e, { x, y }) => contextMenu.popup({ x, y, window: win }))
   }
   await installFromLocalStore(win, BROWSER_EXTENSIONS_DIR)
+  win.webContents.on('console-message', (event, level, message, line, source) => {
+    const { pathname, protocol } = url.parse(source || '')
+    if (level === 3 && (pathname === '/' || protocol === 'chrome-extension:')) {
+      // 清空插件输出的错误消息
+      event['sender'].executeJavaScript('console.clear()', false).catch(() => {})
+    }
+  })
   if (AUTO_OPEN_DEV_TOOLS !== 'false') {
     autoOpenDevTools(win)
   }

@@ -34,7 +34,7 @@ async function run() {
   let electron
 
   //
-  const beforeExit = (callback) => main && main.stop(callback)
+  const beforeExit = (callback) => (main ? main.stop(callback) : callback())
 
   // Renderer
   runScript({

@@ -83,12 +83,16 @@ async function createPackageJson() {
   const main = relativePath(APP_BUILD_PATH, mainFile, false)
   await promisify(fs.outputFile)(
     path.resolve(APP_BUILD_PATH, 'package.json'),
-    JSON.stringify({
-      name,
-      version,
-      commit: await getCommitHEAD(),
-      main,
-      private: true,
-    })
+    JSON.stringify(
+      {
+        name,
+        version,
+        commit: await getCommitHEAD(),
+        main,
+        private: true,
+      },
+      null,
+      2
+    )
   )
 }

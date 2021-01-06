@@ -3,6 +3,8 @@ const fs = require('fs-extra')
 const schemaUtils = require('schema-utils')
 const loaderUtils = require('loader-utils')
 const { relativePath, getPackageJson } = require('../../utils')
+const optionsSchema = require('./loaderOptionsSchema.json')
+const loaderName = 'node-addons-loader'
 
 class LoaderWarning extends Error {
   constructor(warning) {
@@ -20,46 +22,6 @@ class LoaderError extends Error {
     this.stack = undefined
     this.message = `Error: ${this.message}`
   }
-}
-
-const loaderName = 'native-addons-loader'
-
-const optionsSchema = {
-  title: `${loaderName} options`,
-  type: 'object',
-  properties: {
-    output: {
-      type: 'object',
-      properties: {
-        filename: {
-          type: 'string',
-          description: 'The output filename that the native addons file will be use',
-        },
-        path: {
-          type: 'string',
-          description: 'The output path that the native addons info will be generated in',
-        },
-      },
-      additionalProperties: false,
-    },
-    buildPath: {
-      description: 'Compiler build output path',
-      type: 'string',
-    },
-    appBuildPath: {
-      description: 'App build dir, for packaged',
-      type: 'string',
-    },
-    flags: {
-      description: 'An integer that allows to specify dlopen behavior. See the [process.dlopen]',
-      type: 'integer',
-    },
-    makeNativeDependencyPackageJson: {
-      description: 'Used to generate dependency lists',
-      type: 'boolean',
-    },
-  },
-  additionalProperties: false,
 }
 
 //

@@ -173,6 +173,9 @@ function createContextMenu() {
 async function installExtensions(context, crx) {
   const title = isChina ? '安装扩展插件' : 'Install Extensions'
   const win = getContextWindow(context)
+  if (!win.isFocused()) {
+    win.focus()
+  }
   try {
     await installFromLocalFile(win, crx, true)
     await dialog.showMessageBox(win, {

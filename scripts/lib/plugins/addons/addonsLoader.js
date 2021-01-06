@@ -23,13 +23,15 @@ async function emitRawSourceFile(content, options) {
   const {
     flags,
     appBuildPath,
+    buildPath,
     output: { filename: namePattern, path: outputPath },
   } = options
-  const {
-    options: { output: compilerOutput },
+  let compilerOutput = buildPath
+  if (!compilerOutput) {
     // 这里用到了hack属性 _compiler
     // 以后可能会被webpack移除掉
-  } = this._compiler
+    compilerOutput = this._compiler.options.output.path
+  }
 
   const isEnvDevelopment = this.mode === 'development'
   const isRendererProcess = this.target === 'electron-renderer'
@@ -39,7 +41,7 @@ async function emitRawSourceFile(content, options) {
   })
   const absFilename = path.join(outputPath, filename)
   const rootContext = isEnvDevelopment ? this.rootContext : path.resolve(appBuildPath)
-  const relativeFromBuildOutputEmitFilePath = relativePath(compilerOutput.path, absFilename)
+  const relativeFromBuildOutputEmitFilePath = relativePath(compilerOutput, absFilename)
   const relativeFromRootContextEmitFilePath = relativePath(rootContext, absFilename)
 
   // 发布文件到webpack文件管理
@@ -164,7 +166,7 @@ async function setNativeDependency(source, options, modulePackagePath) {
     }
     const outputPackage = readAddonsOutputPackageJson.apply(this, [outputPackagePath])
     Object.assign(outputPackage.dependencies, addonsDependencies)
-    fs.outputFileSync(outputPackagePath, JSON.stringify(outputPackage))
+    fs.outputFileSync(outputPackagePath, JSON.stringify(outputPackage, null, 2))
   }
 }
 
