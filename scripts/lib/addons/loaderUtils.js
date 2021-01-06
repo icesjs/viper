@@ -2,8 +2,8 @@ const path = require('path')
 const fs = require('fs-extra')
 const schemaUtils = require('schema-utils')
 const loaderUtils = require('loader-utils')
-const { relativePath, getPackageJson } = require('../../utils')
-const optionsSchema = require('./loaderOptionsSchema.json')
+const { relativePath, getPackageJson } = require('../utils')
+const optionsSchema = require('./schema.json')
 const loaderName = 'node-addons-loader'
 
 class LoaderWarning extends Error {

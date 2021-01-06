@@ -3,9 +3,9 @@ const { promisify } = require('util')
 const fs = require('fs-extra')
 const loaderUtils = require('loader-utils')
 const bindings = require('bindings')
-const { log } = require('../../logger')
-const { resolvePackage } = require('../../resolve')
-const { relativePath, getPackageJson } = require('../../utils')
+const { log } = require('../logger')
+const { resolvePackage } = require('../resolve')
+const { relativePath, getPackageJson } = require('../utils')
 
 const {
   getOptions,

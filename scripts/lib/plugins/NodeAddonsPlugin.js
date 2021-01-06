@@ -1,6 +1,6 @@
 const path = require('path')
-const { addBeforeLoader, loaderByName } = require('@craco/craco')
 const { APP_BUILD_PATH, ADDONS_BUILD_PATH } = require('../../../config/constants')
+const { addBeforeLoader } = require('./pluginUtils')
 
 /**
  * 对node addon进行webpack构建与打包支持
@@ -33,7 +33,7 @@ class NodeAddonsWebpackPlugin {
     return {
       test: /\.node$/,
       // 内部处理node插件的loader
-      loader: path.join(__dirname, 'addons/addonsLoader.js'),
+      loader: path.join(__dirname, '../addons/loader.js'),
       options: {
         makeNativeDependencyPackageJson: makeDependenciesJson,
         appBuildPath,
@@ -48,69 +48,34 @@ class NodeAddonsWebpackPlugin {
   }
 
   apply(compiler) {
-    let compilerOptions = compiler.options || {}
-    compilerOptions = this.setResolve(compilerOptions)
-    compilerOptions = this.setModuleLoader(compilerOptions)
-    compiler.options = compilerOptions
+    const { options = {} } = compiler
+    compiler.options = options
+    this.setResolve(options)
+    this.setModuleLoader(options)
   }
 
   /**
    * 添加loader配置
    */
   setModuleLoader(compilerOptions) {
-    let { module, output } = compilerOptions
-    let { rules } = module || {}
-    if (!Array.isArray(rules)) {
-      rules = []
-    }
-    module.rules = rules
-    compilerOptions.module = module
-
-    const rule = this.getAddonsLoaderRule((output || {}).path)
-    if (!addBeforeLoader(compilerOptions, this.getLoaderMatcher('file-loader'), rule).isAdded) {
-      if (!addBeforeLoader(compilerOptions, this.getLoaderMatcher('url-loader'), rule).isAdded) {
-        rules.push(rule)
-      }
-    }
-    return compilerOptions
-  }
-
-  /**
-   * 根据loader名称获取规则匹配函数
-   * @param loaderName 要匹配的loader名称
-   */
-  getLoaderMatcher(loaderName) {
-    const pathMatcher = loaderByName(loaderName)
-    return (rule) => {
-      if (typeof rule === 'string') {
-        return rule === loaderName || pathMatcher(rule)
-      }
-      if (typeof rule.loader === 'string') {
-        return rule.loader === loaderName || pathMatcher(rule)
-      }
-    }
+    const { output = {} } = compilerOptions
+    const rule = this.getAddonsLoaderRule(output.path)
+    addBeforeLoader(compilerOptions, rule, ['file-loader', 'url-loader'])
   }
 
   /**
    * 添加resolve配置
    */
   setResolve(compilerOptions) {
-    let resolve = compilerOptions.resolve || {}
-    let { extensions, plugins } = resolve
-    if (!Array.isArray(extensions)) {
-      extensions = []
-    }
-    if (!extensions.includes('.node')) {
-      extensions.push('.node')
-    }
-    if (!Array.isArray(plugins)) {
-      plugins = []
-    }
-    plugins.push(new BindingsModuleResolvePlugin())
+    const { resolve = {} } = compilerOptions
+    const { extensions = [], plugins = [] } = resolve
     resolve.extensions = extensions
     resolve.plugins = plugins
     compilerOptions.resolve = resolve
-    return compilerOptions
+    if (!extensions.includes('.node')) {
+      extensions.push('.node')
+    }
+    plugins.push(new BindingsModuleResolvePlugin())
   }
 }
 
@@ -120,7 +85,7 @@ class NodeAddonsWebpackPlugin {
 class BindingsModuleResolvePlugin {
   apply(resolver) {
     const target = resolver.ensureHook('resolve')
-    const forward = path.join(__dirname, 'addons/fakeAddons.node')
+    const forward = path.join(__dirname, '../addons/fakeAddons.node')
     resolver
       .getHook('described-resolve')
       .tapAsync('BindingsModuleResolvePlugin', (request, resolveContext, callback) => {

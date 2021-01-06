@@ -3,6 +3,7 @@ const path = require('path')
 const StyleLintPlugin = require('stylelint-webpack-plugin')
 const NodeAddonsPlugin = require('../../scripts/lib/plugins/NodeAddonsPlugin')
 const CheckGlobalPathsPlugin = require('../../scripts/lib/plugins/CheckGlobalPathsPlugin')
+const LocaleModulePlugin = require('../../scripts/lib/plugins/LocaleModulePlugin')
 const BundleAnalyzerPlugin = require('../../scripts/lib/plugins/BundleAnalyzerPlugin')
 const { resolveModule } = require('../../scripts/lib/resolve')
 
@@ -52,6 +53,8 @@ const customizeWebpackConfig = {
     isEnvProduction && ENABLE_BUNDLE_ANALYZER !== 'false' && new BundleAnalyzerPlugin(),
     // 检查__dirname和__filename变量的使用，并抛出编译错误
     new CheckGlobalPathsPlugin(),
+    // 加载yml本地化定义模块
+    new LocaleModulePlugin(),
     //
     new StyleLintPlugin({
       configBasedir: cwd,
