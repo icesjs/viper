@@ -99,7 +99,7 @@ class Viper {
         nodeIntegration,
         enableRemoteModule: nodeIntegration,
         contextIsolation: !nodeIntegration,
-        devTools: !isEnvProduction,
+        devTools: !app.isPackaged,
         webSecurity: isEnvProduction,
         allowRunningInsecureContent: true,
         scrollBounce: true,
