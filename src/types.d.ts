@@ -8,12 +8,20 @@ declare module '*.yml' {
   export interface SetLocaleFunction {
     (locale: string): void
   }
-  export type UseLocaleResult = [TranslateFunction, SetLocaleFunction]
+  export interface GetLocaleFunction {
+    (): string
+  }
+  export interface PluginFunction<T> {
+    (message: string | number, args: T[], locale: string): string | number
+  }
+  export type CurrentLocale = string
+  export type UseLocaleResult = [TranslateFunction, SetLocaleFunction, CurrentLocale]
   export function useLocale(
-    plugins?: Function | Function[] | null,
+    plugins?: PluginFunction | PluginFunction[] | null,
     fallback?: string
   ): UseLocaleResult
   export const setLocale: SetLocaleFunction
+  export const getLocale: GetLocaleFunction
   export default useLocale
 }
 declare module '*.yaml' {

@@ -1,5 +1,5 @@
 // 默认的区域语言设置
-export const defaultLocale = process.env.REACT_APP_DEFAULT_LOCALE || 'zh-CN'
+export const defaultLocale = process.env.REACT_APP_DEFAULT_LOCALE || 'zh'
 
 // 当前已订阅区域语言变化的处理程序
 const consumers = []

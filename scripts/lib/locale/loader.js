@@ -19,10 +19,13 @@ module.exports = function (source) {
   const hooksModule = path.join(__dirname, 'hooks.js')
   // 导出模块定义
   return `
-    import { useLocale, setLocale } from ${loaderUtils.stringifyRequest(this, hooksModule)}
+    import { useLocale, setLocale, getLocale } from ${loaderUtils.stringifyRequest(
+      this,
+      hooksModule
+    )}
     const definitions = ${JSON.stringify(definitions)}
     const useLocaleMessage = (plugins, fallback) => useLocale(plugins, fallback, definitions)
-    export { useLocaleMessage as useLocale, setLocale }
+    export { useLocaleMessage as useLocale, setLocale, getLocale }
     export default useLocaleMessage
   `
 }

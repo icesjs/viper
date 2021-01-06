@@ -20,7 +20,7 @@ export function Counter() {
   return (
     <div>
       <div>
-        <button onClick={() => setLocale('zh-CN')}>中文</button>
+        <button onClick={() => setLocale('zh')}>中文</button>
         <button onClick={() => setLocale('en')}>English</button>
       </div>
       <div className={styles.row}>

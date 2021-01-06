@@ -12,14 +12,21 @@ import { defaultLocale, getCurrentLocale, setCurrentLocale, subscribe } from './
  * @return string
  */
 function getLocaleMessage({ locale, fallback, plugins, definitions }, key, ...args) {
-  const getMessage = (dataList) => {
-    for (const data of dataList) {
+  const getMessage = (dataList, preference) => {
+    for (const { locale, data } of dataList) {
       // 数据集要是一个对象，才进行取值
       if (data && typeof data === 'object') {
         const message = data[key]
         if (typeof message !== 'undefined') {
+          if (locale !== preference) {
+            if (process.env.NODE_ENV === 'development') {
+              console.warn(
+                `Missing message with key of "${key}" for locale [${preference}], using default message of locale [${locale}] as fallback.`
+              )
+            }
+          }
           // 应用插件，插件必须返回处理后的字符串，并作为后一个插件的输入
-          return plugins.reduce((message, plugin) => plugin(message, [...args]), message)
+          return plugins.reduce((message, plugin) => plugin(message, [...args], locale), message)
         }
       }
     }
@@ -32,7 +39,8 @@ function getLocaleMessage({ locale, fallback, plugins, definitions }, key, ...ar
     fallback,
     fallback.replace(/[-_].+/, ''),
   ])
-  const message = getMessage([...locales].map((loc) => definitions[loc]))
+  const dataList = [...locales].map((locale) => ({ locale, data: definitions[locale] }))
+  const message = getMessage(dataList, locale)
   if (message === '' || typeof message === 'undefined') {
     throw new Error(`Unknown localized message for key: ${key}`)
   }
@@ -59,8 +67,8 @@ function useLocale(plugins = null, fallback = defaultLocale, definitions = {}) {
     getLocaleMessage.bind(null, { locale, fallback, definitions, plugins: usedPlugins }),
     [locale, fallback, definitions, ...usedPlugins]
   )
-  return [translate, setCurrentLocale]
+  return [translate, setCurrentLocale, locale]
 }
 
 // 导出hooks
-export { useLocale, setCurrentLocale as setLocale }
+export { useLocale, setCurrentLocale as setLocale, getCurrentLocale as getLocale }
