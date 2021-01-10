@@ -13,7 +13,6 @@ module.exports = {
   //
   overrideWebpackConfig({ webpackConfig }) {
     customizeOptimization(webpackConfig)
-    appendModuleScopes(webpackConfig)
     return webpackConfig
   },
 }
@@ -57,25 +56,6 @@ function customizeOptimization(webpackConfig) {
     optimization.minimize = false
     webpackConfig.optimization = optimization
   }
-}
-
-function appendModuleScopes(webpackConfig) {
-  try {
-    // TODO: 这样做不怎么好，后面需要把这部分代码提取成公共的包
-    const scopes = [
-      path.join(__dirname, '../locale/hooks.js'),
-      path.join(__dirname, '../locale/context.js'),
-    ]
-    const ModuleScopePlugin = resolveModule('react-dev-utils/ModuleScopePlugin')
-    for (const plug of webpackConfig.resolve.plugins || []) {
-      if (plug instanceof ModuleScopePlugin) {
-        for (const s of scopes) {
-          plug['allowedFiles'].add(s)
-        }
-        return
-      }
-    }
-  } catch (e) {}
 }
 
 //

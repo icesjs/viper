@@ -17,6 +17,7 @@ const usedColor = {
   error: 'red',
   markedError: { bg: 'bgRed', ft: 'cyanBright' },
   success: { ft: 'green', bl: true },
+  warning: { ft: 'yellow', bl: true },
   failed: { ft: 'red', bl: true },
   errRoot: 'red',
   errFirstRoot: { bg: 'bgCyanBright', ft: 'black' },
@@ -222,8 +223,14 @@ function colorifyNormalText(line) {
   if (/\b(?:success|complete)/i.test(line)) {
     return getColorSetter(usedColor.success)(line)
   }
-  if (/\bfailed?/i.test(line) || /^\w+\serror\s/.test(line)) {
+  if (/^\s*Compiled.+?\bwarning/i.test(line)) {
+    return getColorSetter(usedColor.warning)(line)
+  }
+  if (/\bfailed?/i.test(line) || /^\w+\serror\s/i.test(line)) {
     return getColorSetter(usedColor.failed)(line)
+  }
+  if (/^\s+Line\s\d+:\d+:\s+/.test(line)) {
+    return getColorSetter(usedColor.warning)(line)
   }
   if (/^\s+>\s+\d+\s+\|\s+/.test(line)) {
     return getColorSetter(usedColor.markedError)(line)

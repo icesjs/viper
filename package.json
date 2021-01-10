@@ -16,8 +16,8 @@
     "rebuild-addons": "electron-rebuild -t prod"
   },
   "dependencies": {
-    "@ices/node-addons-callbacks": "^0.0.2",
-    "@ices/node-addons-hello": "^0.0.2",
+    "@ices/locale-webpack-plugin": "^1.1.1",
+    "@ices/react-locale": "^1.2.0",
     "electron-log": "^4.3.0",
     "electron-store": "^6.0.1",
     "electron-updater": "^4.3.5",
@@ -112,5 +112,6 @@
   "repository": {
     "url": "https://github.com/icesjs/viper"
   },
-  "homepage": "."
+  "homepage": ".",
+  "license": "MIT"
 }
