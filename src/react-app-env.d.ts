@@ -1,2 +1,2 @@
+/// <reference types="@ices/react-locale" />
 /// <reference types="react-scripts" />
-/// <reference types="@ices/locale-webpack-plugin" />

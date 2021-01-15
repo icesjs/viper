@@ -1129,7 +1129,7 @@
     exec-sh "^0.3.2"
     minimist "^1.2.0"
 
-"@craco/craco@^6.0.0":
+"@craco/craco@6.0.0":
   version "6.0.0"
   resolved "https://registry.npm.taobao.org/@craco/craco/download/@craco/craco-6.0.0.tgz#f4e66e82f5bc77671dc0a5e839c3269e2414fe0f"
   integrity sha1-9OZugvW8d2cdwKXoOcMmniQU/g8=
@@ -1233,19 +1233,19 @@
   dependencies:
     "@hapi/hoek" "^9.0.0"
 
-"@ices/locale-webpack-plugin@^1.1.1":
-  version "1.1.1"
-  resolved "https://registry.npm.taobao.org/@ices/locale-webpack-plugin/download/@ices/locale-webpack-plugin-1.1.1.tgz#40853a488e4dbe6f61539c8023bf7f64b3a481c3"
-  integrity sha1-QIU6SI5Nvm9hU5yAI79/ZLOkgcM=
+"@ices/locale-webpack-plugin@^1.2.2":
+  version "1.2.2"
+  resolved "https://registry.npm.taobao.org/@ices/locale-webpack-plugin/download/@ices/locale-webpack-plugin-1.2.2.tgz#c4b78e50effa48ebef076177077ad28440819739"
+  integrity sha1-xLeOUO/6SOvvB2F3B3rShECBlzk=
   dependencies:
     js-yaml "^4.0.0"
     loader-utils "^2.0.0"
     tslib "^2.1.0"
 
-"@ices/react-locale@^1.2.0":
-  version "1.2.0"
-  resolved "https://registry.npm.taobao.org/@ices/react-locale/download/@ices/react-locale-1.2.0.tgz#317eadd0611ffc31bdcb9aebad55ff57dbec2a93"
-  integrity sha1-MX6t0GEf/DG9y5rrrVX/V9vsKpM=
+"@ices/react-locale@^1.3.1":
+  version "1.3.1"
+  resolved "https://registry.npm.taobao.org/@ices/react-locale/download/@ices/react-locale-1.3.1.tgz#36ce32c8fc3059885c8d1e41bc2835b3d1aeb135"
+  integrity sha1-Ns4yyPwwWYhcjR5BvCg1s9GusTU=
   dependencies:
     tslib "^2.1.0"
 
@@ -4940,15 +4940,6 @@ electron-builder@^22.9.1:
     sanitize-filename "^1.6.3"
     update-notifier "^4.1.1"
     yargs "^16.0.3"
-
-electron-devtools-installer@^3.1.1:
-  version "3.1.1"
-  resolved "https://registry.npm.taobao.org/electron-devtools-installer/download/electron-devtools-installer-3.1.1.tgz#7b56c8c86475c5e4e10de6917d150c53c9ceb55e"
-  integrity sha1-e1bIyGR1xeThDeaRfRUMU8nOtV4=
-  dependencies:
-    rimraf "^3.0.2"
-    semver "^7.2.1"
-    unzip-crx-3 "^0.2.0"
 
 electron-log@^4.3.0:
   version "4.3.1"

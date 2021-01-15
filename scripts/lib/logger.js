@@ -21,6 +21,7 @@ const usedColor = {
   failed: { ft: 'red', bl: true },
   errRoot: 'red',
   errFirstRoot: { bg: 'bgCyanBright', ft: 'black' },
+  filePaths: { ft: 'cyanBright' },
   errNodeModules: 'red',
   secondary: 'gray',
 }
@@ -29,10 +30,11 @@ const enableColor = process.env.NO_COLOR !== 'true'
 const defaultScriptLogName = 'script'
 const root = process.cwd()
 const namespace = process.env.npm_package_name
-const fileLinkRegex = /[[({]?((?:[a-zA-Z]:|file:)?(?:[/\\][^:*?"<>|]+)+:\d+:\d+)[})\]]?/g
+const fileLinkRegex = /[[({]?((?:[a-zA-Z]:|file:)?(?:[/\\][^:*?"<>|/\\,]+)+:\d+:\d+)[})\]]?/g
+const filePathsRegex = /^\s*(?:\.{1,2}|[^:*?"<>|/\\,]+)(?:[/\\][^:*?"<>|/\\,]+)+\s*(?:[\[(][^\[()\]]+[)\]])?\s*$/
 const prefixRegex = /{\s*(y{1,4}|m{1,2}|d{1,2}|h{1,2}|i{1,2}|s{1,2}|ms|level|name)\s*}/g
 const nodeModulesRegex = /^[^\s]|[/\\]node_modules[/\\]/
-const warnAndErrorRegex = /^\s*\w?(error|warning|warn):?\b/i
+const warnAndErrorRegex = /^\s*(?:\w+)?(error|warning|warn):?\b/i
 const splitLineRegex = /.+\n?|\n|^/g
 
 // 终端列宽信息
@@ -101,7 +103,7 @@ function isErrorStackContent(content) {
   let hasStackAt
   for (const line of content.match(splitLineRegex)) {
     if (!hasError) {
-      hasError = /^\s*\w?error:\s/i.test(line)
+      hasError = /^\s*(?:\w+)?error:\s/i.test(line)
     }
     if (!hasStackAt) {
       hasStackAt = /^\s+at\s/.test(line)
@@ -234,6 +236,9 @@ function colorifyNormalText(line) {
   }
   if (/^\s+>\s+\d+\s+\|\s+/.test(line)) {
     return getColorSetter(usedColor.markedError)(line)
+  }
+  if (filePathsRegex.test(line)) {
+    return getColorSetter(usedColor.filePaths)(line)
   }
   return line
 }

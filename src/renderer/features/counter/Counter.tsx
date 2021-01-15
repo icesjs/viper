@@ -8,21 +8,16 @@ import {
   selectCount,
 } from './counterSlice'
 import styles from './Counter.module.scss'
-
-import useLocale from './lang.yml'
+import useTrans from './lang.yml'
 
 export function Counter() {
   const count = useSelector(selectCount)
   const dispatch = useDispatch()
   const [incrementAmount, setIncrementAmount] = useState('2')
-  const [translate, setLocale] = useLocale()
+  const [trans] = useTrans()
 
   return (
     <div>
-      <div>
-        <button onClick={() => setLocale('zh')}>中文</button>
-        <button onClick={() => setLocale('en')}>English</button>
-      </div>
       <div className={styles.row}>
         <button
           className={styles.button}
@@ -48,12 +43,12 @@ export function Counter() {
         <button
           className={styles.button}
           onClick={() => dispatch(incrementByAmount(Number(incrementAmount) || 0))}>
-          {translate('add')}
+          {trans('add')}
         </button>
         <button
           className={styles.asyncButton}
           onClick={() => dispatch(incrementAsync(Number(incrementAmount) || 0))}>
-          {translate('addAsync')}
+          {trans('addAsync')}
         </button>
       </div>
     </div>
