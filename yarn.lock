@@ -1233,10 +1233,10 @@
   dependencies:
     "@hapi/hoek" "^9.0.0"
 
-"@ices/locale-webpack-plugin@^1.2.2":
-  version "1.2.2"
-  resolved "https://registry.npm.taobao.org/@ices/locale-webpack-plugin/download/@ices/locale-webpack-plugin-1.2.2.tgz#c4b78e50effa48ebef076177077ad28440819739"
-  integrity sha1-xLeOUO/6SOvvB2F3B3rShECBlzk=
+"@ices/locale-webpack-plugin@^1.2.3":
+  version "1.2.3"
+  resolved "https://registry.npm.taobao.org/@ices/locale-webpack-plugin/download/@ices/locale-webpack-plugin-1.2.3.tgz#84f8295f4950c86250118d87051761d3ed43e44f"
+  integrity sha1-hPgpX0lQyGJQEY2HBRdh0+1D5E8=
   dependencies:
     js-yaml "^4.0.0"
     loader-utils "^2.0.0"
