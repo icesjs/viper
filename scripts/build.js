@@ -87,7 +87,10 @@ async function createPackageJson() {
       {
         name,
         version,
-        commit: await getCommitHEAD(),
+        commit: await getCommitHEAD().catch((err) => {
+          log.error(err)
+          return ''
+        }),
         main,
         private: true,
       },

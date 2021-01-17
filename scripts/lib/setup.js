@@ -36,8 +36,10 @@ function getReady() {
 
   // 保存至环境变量中，发布时有用到
   process.env.ELECTRON_MAIN_ENTRY_PATH = path.resolve(entry)
-  // 清空addons构建输出目录
-  emptyDirSync(ADDONS_BUILD_PATH)
+  if (process.env.ENABLE_NODE_ADDONS !== 'false') {
+    // 清空addons构建输出目录
+    emptyDirSync(ADDONS_BUILD_PATH)
+  }
 }
 
 function loadEnv(NODE_ENV, forced) {

@@ -31,7 +31,7 @@ const defaultScriptLogName = 'script'
 const root = process.cwd()
 const namespace = process.env.npm_package_name
 const fileLinkRegex = /[[({]?((?:[a-zA-Z]:|file:)?(?:[/\\][^:*?"<>|/\\,]+)+:\d+:\d+)[})\]]?/g
-const filePathsRegex = /^\s*(?:\.{1,2}|[^:*?"<>|/\\,]+)(?:[/\\][^:*?"<>|/\\,]+)+\s*(?:[\[(][^\[()\]]+[)\]])?\s*$/
+const filePathsRegex = /^\s*(?:\.{0,2}[/\\])?[a-zA-Z]+:?(?:[/\\](?:[^:*?"<>|/\\,\s]+\s?)+)+\s*(?:[[(][^[()\]]+[)\]])?\s*$/
 const prefixRegex = /{\s*(y{1,4}|m{1,2}|d{1,2}|h{1,2}|i{1,2}|s{1,2}|ms|level|name)\s*}/g
 const nodeModulesRegex = /^[^\s]|[/\\]node_modules[/\\]/
 const warnAndErrorRegex = /^\s*(?:\w+)?(error|warning|warn):?\b/i
@@ -373,7 +373,7 @@ function formatPrefixedLogs({ content, name, level, nameColor }) {
 
 //
 function createPrefixedLogger(name, nameColor, contentColorFormat = defaultColorFormat) {
-  createPrefixedLogger.registerNames((name = name.trim()))
+  createPrefixedLogger.registerNames((name = typeof name === 'string' ? name.trim() : 'logger'))
   return createLogger({
     name,
     file: process.env.WRITE_LOGS_TO_FILE !== 'false',

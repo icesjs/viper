@@ -1,6 +1,7 @@
 const fs = require('fs')
 const path = require('path')
 const findUp = require('find-up')
+const chalk = require('chalk')
 const cwd = fs.realpathSync(process.cwd())
 
 let reactScripts
@@ -23,7 +24,7 @@ function resolveModule(name) {
     const packPath = require.resolve(name, { paths })
     return require(packPath)
   } catch (e) {
-    console.error(`You must install ${name} manually`)
+    chalk.red(`You must install ${name} manually`)
     throw e
   }
 }

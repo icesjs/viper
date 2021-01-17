@@ -84,7 +84,7 @@ function getCommandArgs() {
     platform = process.platform,
     arch = process.arch,
     config = ELECTRON_BUILDER_CONFIG,
-    publish = 'never',
+    publish = null,
     rebuild,
     dir,
   } = minimist(rawArgv, {
@@ -156,11 +156,12 @@ async function packApplication({ platform, arch, dir, logger, publish, config })
 
 async function synchronizeBuilderConfig(filepath, { dir, publish }) {
   const cwd = process.cwd()
+  const enableAddons = ENABLE_NODE_ADDONS !== 'false'
   const mainFile = ELECTRON_MAIN_ENTRY_PATH
   const buildDir = relativePath(cwd, APP_BUILD_PATH, false)
   const mainDir = relativePath(APP_BUILD_PATH, MAIN_BUILD_PATH, false)
   const rendererDir = relativePath(APP_BUILD_PATH, RENDERER_BUILD_PATH, false)
-  const addonsDir = relativePath(APP_BUILD_PATH, ADDONS_BUILD_PATH, false)
+  const addonsDir = enableAddons ? relativePath(APP_BUILD_PATH, ADDONS_BUILD_PATH, false) : ''
   const relativeBuildMainFile = relativePath(APP_BUILD_PATH, mainFile, false)
 
   // 同步打包配置
@@ -176,12 +177,16 @@ async function synchronizeBuilderConfig(filepath, { dir, publish }) {
     },
     // 文件路径都是相对构建目录
     files: [
-      '!*.{js,css}.map',
-      'package.json',
-      relativeBuildMainFile,
-      `${mainDir}/**/*`,
-      `${rendererDir}/**/*`,
-      `${addonsDir}/**/*`,
+      ...new Set(
+        [
+          '!*.{js,css}.map',
+          'package.json',
+          relativeBuildMainFile,
+          `${mainDir}/**/*`,
+          `${rendererDir}/**/*`,
+          addonsDir && `${addonsDir}/**/*`,
+        ].filter(Boolean)
+      ),
     ],
     extraMetadata: {
       main: relativeBuildMainFile,

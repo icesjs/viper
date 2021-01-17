@@ -19,6 +19,8 @@ async function run() {
     PORT,
     AUTO_RELAUNCH_DELAY,
     AUTO_RELAUNCH_APP,
+    AUTO_LAUNCH_APP,
+    RENDERER_BUILD_TARGET,
     LOG_PREFIX_COLOR_MAIN,
     LOG_PREFIX_COLOR_RENDERER,
     LOG_PREFIX_COLOR_ELECTRON,
@@ -29,6 +31,7 @@ async function run() {
     hostname: HOST || 'localhost',
     port,
   })
+  const isEnvElectron = RENDERER_BUILD_TARGET === 'electron-renderer'
 
   let main
   let electron
@@ -40,7 +43,7 @@ async function run() {
   runScript({
     logger: createPrefixedLogger('renderer', LOG_PREFIX_COLOR_RENDERER),
     script: require.resolve('@craco/craco/scripts/start', { paths: [process.cwd()] }),
-    env: { PORT: `${port}`, BROWSER: 'none' },
+    env: { PORT: `${port}`, ...(isEnvElectron ? { BROWSER: 'none' } : {}) },
     beforeExit,
   }).start()
 
@@ -68,6 +71,9 @@ async function run() {
   await Promise.all([main, wait({ resources: [indexURL], delay: 3000 })])
 
   // Electron
+  if (AUTO_LAUNCH_APP === 'false') {
+    return
+  }
   electron = runScript({
     logger: createPrefixedLogger('electron', LOG_PREFIX_COLOR_ELECTRON),
     env: { APP_INDEX_HTML_URL: indexURL },

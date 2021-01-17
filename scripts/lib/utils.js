@@ -8,11 +8,11 @@ const spawn = require('cross-spawn')
 module.exports = exports = {
   //
   relativePath(from, to, addDotPrefix = true) {
-    let relativePath = path.relative(from, to).replace(/\\/g, '/')
-    if (addDotPrefix && !/^..?\//.test(relativePath)) {
+    let relativePath = !to ? '' : path.relative(from, to).replace(/\\/g, '/')
+    if (addDotPrefix && relativePath && !/^..?\//.test(relativePath)) {
       relativePath = `./${relativePath}`
     }
-    return relativePath
+    return relativePath || '.'
   },
 
   //
@@ -51,7 +51,7 @@ module.exports = exports = {
 
   //
   emptyDirSync(dir) {
-    if (!exports.isProtectedDirectory(dir)) {
+    if (dir && typeof dir === 'string' && !exports.isProtectedDirectory(dir)) {
       fs.emptyDirSync(path.resolve(dir))
     }
   },
