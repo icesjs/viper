@@ -44,7 +44,13 @@ function getReady() {
 
 function loadEnv(NODE_ENV, forced) {
   const dotenv = require('./dotenv')
-  const envFromConfig = dotenv.parseEnv(NODE_ENV)
+  const envFromConfig = Object.assign(
+    {
+      DEBUG: `${require(path.resolve('package.json')).name}:*`,
+    },
+    dotenv.parseEnv(NODE_ENV)
+  )
+
   const envFromProcess = process.env
 
   Object.assign(envFromConfig, { FORCE_COLOR: 2 }, forced)

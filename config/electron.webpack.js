@@ -60,7 +60,6 @@ module.exports = {
   output: {
     path: MAIN_BUILD_PATH,
     filename: MAIN_BUILD_FILE_NAME,
-    publicPath: '/test/public',
   },
   resolve: {
     extensions: ['.ts', '.mjs', '.js', '.json'],
