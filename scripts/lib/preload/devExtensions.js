@@ -73,7 +73,7 @@ async function installExtensions(win, crx, force = false) {
  */
 async function installFromLocalFile(win, crx, force) {
   const content = await promisify(fs.readFile)(crx.path)
-  const hash = crypto.createHash('sha1')
+  const hash = crypto.createHash('md4')
   hash.update(content)
   const extensions = { ...crx, id: hash.digest('hex').substr(0, 32) }
   await installExtensions(win, extensions, force)

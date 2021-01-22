@@ -228,7 +228,7 @@ function colorifyNormalText(line) {
   if (/^\s*Compiled.+?\bwarning/i.test(line)) {
     return getColorSetter(usedColor.warning)(line)
   }
-  if (/\bfailed?/i.test(line) || /^\w+\serror\s/i.test(line)) {
+  if (/\bfailed?/i.test(line) || /^\w+\s?(error|exception):?\s/i.test(line)) {
     return getColorSetter(usedColor.failed)(line)
   }
   if (/^\s+Line\s\d+:\d+:\s+/.test(line)) {

@@ -68,6 +68,9 @@ module.exports = exports = {
   //
   isProtectedDirectory(pathLike) {
     const absPath = path.resolve(pathLike)
+    if (absPath === process.cwd()) {
+      return true
+    }
     const protectedDir = [
       'config',
       'assets',
@@ -79,6 +82,8 @@ module.exports = exports = {
       'test',
       'tests',
       '__tests__',
+      '.idea',
+      '.vscode',
     ]
     for (const dir of protectedDir) {
       if (path.resolve(dir) === absPath) {

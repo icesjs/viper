@@ -72,6 +72,7 @@ async function run() {
 
   // Electron
   if (AUTO_LAUNCH_APP === 'false') {
+    log.warn('Auto launch electron app is disabled')
     return
   }
   electron = runScript({
