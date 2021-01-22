@@ -54,7 +54,9 @@ const customizeWebpackConfig = {
     // 检查__dirname和__filename变量的使用，并抛出编译错误
     new CheckGlobalPathsPlugin(),
     // 加载yml本地化定义模块
-    new LocalePlugin(),
+    new LocalePlugin({
+      extract: true,
+    }),
     //
     new StyleLintPlugin({
       configBasedir: cwd,

@@ -48,9 +48,9 @@
     semver "^5.4.1"
     source-map "^0.5.0"
 
-"@babel/core@>=7.9.0", "@babel/core@^7.1.0", "@babel/core@^7.12.3", "@babel/core@^7.7.5", "@babel/core@^7.8.4", "@babel/core@^7.9.0":
+"@babel/core@>=7.9.0", "@babel/core@^7.0.0", "@babel/core@^7.1.0", "@babel/core@^7.12.3", "@babel/core@^7.7.5", "@babel/core@^7.8.4", "@babel/core@^7.9.0":
   version "7.12.10"
-  resolved "https://registry.npm.taobao.org/@babel/core/download/@babel/core-7.12.10.tgz?cache=0&sync_timestamp=1607568958901&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2F%40babel%2Fcore%2Fdownload%2F%40babel%2Fcore-7.12.10.tgz#b79a2e1b9f70ed3d84bbfb6d8c4ef825f606bccd"
+  resolved "https://registry.npm.taobao.org/@babel/core/download/@babel/core-7.12.10.tgz?cache=0&sync_timestamp=1607569002613&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2F%40babel%2Fcore%2Fdownload%2F%40babel%2Fcore-7.12.10.tgz#b79a2e1b9f70ed3d84bbfb6d8c4ef825f606bccd"
   integrity sha1-t5ouG59w7T2Eu/ttjE74JfYGvM0=
   dependencies:
     "@babel/code-frame" "^7.10.4"
@@ -946,9 +946,9 @@
     core-js-compat "^3.6.2"
     semver "^5.5.0"
 
-"@babel/preset-env@^7.8.4", "@babel/preset-env@^7.9.5":
+"@babel/preset-env@^7.0.0", "@babel/preset-env@^7.8.4", "@babel/preset-env@^7.9.5":
   version "7.12.11"
-  resolved "https://registry.npm.taobao.org/@babel/preset-env/download/@babel/preset-env-7.12.11.tgz#55d5f7981487365c93dbbc84507b1c7215e857f9"
+  resolved "https://registry.npm.taobao.org/@babel/preset-env/download/@babel/preset-env-7.12.11.tgz?cache=0&sync_timestamp=1608076805354&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2F%40babel%2Fpreset-env%2Fdownload%2F%40babel%2Fpreset-env-7.12.11.tgz#55d5f7981487365c93dbbc84507b1c7215e857f9"
   integrity sha1-VdX3mBSHNlyT27yEUHscchXoV/k=
   dependencies:
     "@babel/compat-data" "^7.12.7"
@@ -1233,19 +1233,21 @@
   dependencies:
     "@hapi/hoek" "^9.0.0"
 
-"@ices/locale-webpack-plugin@^1.2.3":
-  version "1.2.3"
-  resolved "https://registry.npm.taobao.org/@ices/locale-webpack-plugin/download/@ices/locale-webpack-plugin-1.2.3.tgz#84f8295f4950c86250118d87051761d3ed43e44f"
-  integrity sha1-hPgpX0lQyGJQEY2HBRdh0+1D5E8=
+"@ices/locale-webpack-plugin@^1.3.0":
+  version "1.3.0"
+  resolved "https://registry.npm.taobao.org/@ices/locale-webpack-plugin/download/@ices/locale-webpack-plugin-1.3.0.tgz#cd325cffa3d13b46984cf408a9f5cafb622012c6"
+  integrity sha1-zTJc/6PRO0aYTPQIqfXK+2IgEsY=
   dependencies:
+    "@babel/core" "^7.0.0"
+    "@babel/preset-env" "^7.0.0"
     js-yaml "^4.0.0"
     loader-utils "^2.0.0"
-    tslib "^2.1.0"
+    tslib "^2.0.0"
 
-"@ices/react-locale@^1.3.1":
-  version "1.3.1"
-  resolved "https://registry.npm.taobao.org/@ices/react-locale/download/@ices/react-locale-1.3.1.tgz#36ce32c8fc3059885c8d1e41bc2835b3d1aeb135"
-  integrity sha1-Ns4yyPwwWYhcjR5BvCg1s9GusTU=
+"@ices/react-locale@^1.4.0":
+  version "1.4.0"
+  resolved "https://registry.npm.taobao.org/@ices/react-locale/download/@ices/react-locale-1.4.0.tgz?cache=0&sync_timestamp=1611319790019&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2F%40ices%2Freact-locale%2Fdownload%2F%40ices%2Freact-locale-1.4.0.tgz#83abb8f86a636e3bc88de0cb724a10e8f335d661"
+  integrity sha1-g6u4+GpjbjvIjeDLckoQ6PM11mE=
   dependencies:
     tslib "^2.1.0"
 
@@ -13067,7 +13069,7 @@ tslib@^1.8.1, tslib@^1.9.0:
   resolved "https://registry.npm.taobao.org/tslib/download/tslib-1.14.1.tgz?cache=0&sync_timestamp=1609887785854&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Ftslib%2Fdownload%2Ftslib-1.14.1.tgz#cf2d38bdc34a134bcaf1091c41f6619e2f672d00"
   integrity sha1-zy04vcNKE0vK8QkcQfZhni9nLQA=
 
-tslib@^2.0.3, tslib@^2.1.0:
+tslib@^2.0.0, tslib@^2.0.3, tslib@^2.1.0:
   version "2.1.0"
   resolved "https://registry.npm.taobao.org/tslib/download/tslib-2.1.0.tgz?cache=0&sync_timestamp=1609887785854&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Ftslib%2Fdownload%2Ftslib-2.1.0.tgz#da60860f1c2ecaa5703ab7d39bc05b6bf988b97a"
   integrity sha1-2mCGDxwuyqVwOrfTm8Bba/mIuXo=
