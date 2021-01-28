@@ -1233,10 +1233,10 @@
   dependencies:
     "@hapi/hoek" "^9.0.0"
 
-"@ices/locale-webpack-plugin@^1.3.0":
-  version "1.3.0"
-  resolved "https://registry.npm.taobao.org/@ices/locale-webpack-plugin/download/@ices/locale-webpack-plugin-1.3.0.tgz#cd325cffa3d13b46984cf408a9f5cafb622012c6"
-  integrity sha1-zTJc/6PRO0aYTPQIqfXK+2IgEsY=
+"@ices/locale-webpack-plugin@^1.3.4":
+  version "1.3.4"
+  resolved "https://registry.npm.taobao.org/@ices/locale-webpack-plugin/download/@ices/locale-webpack-plugin-1.3.4.tgz#66f92a149a41481b5f888e72c1288d153c6269b9"
+  integrity sha1-ZvkqFJpBSBtfiI5ywSiNFTxiabk=
   dependencies:
     "@babel/core" "^7.0.0"
     "@babel/preset-env" "^7.0.0"
@@ -1244,12 +1244,20 @@
     loader-utils "^2.0.0"
     tslib "^2.0.0"
 
-"@ices/react-locale@^1.4.0":
-  version "1.4.0"
-  resolved "https://registry.npm.taobao.org/@ices/react-locale/download/@ices/react-locale-1.4.0.tgz?cache=0&sync_timestamp=1611319790019&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2F%40ices%2Freact-locale%2Fdownload%2F%40ices%2Freact-locale-1.4.0.tgz#83abb8f86a636e3bc88de0cb724a10e8f335d661"
-  integrity sha1-g6u4+GpjbjvIjeDLckoQ6PM11mE=
+"@ices/react-locale@^1.4.1":
+  version "1.4.1"
+  resolved "https://registry.npm.taobao.org/@ices/react-locale/download/@ices/react-locale-1.4.1.tgz?cache=0&sync_timestamp=1611841094792&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2F%40ices%2Freact-locale%2Fdownload%2F%40ices%2Freact-locale-1.4.1.tgz#fd2a6fa63e2345dcaeb086a9edc4657b96daf8d9"
+  integrity sha1-/Spvpj4jRdyusIap7cRle5ba+Nk=
   dependencies:
     tslib "^2.1.0"
+
+"@ices/ts-plugin-locale@^1.1.1":
+  version "1.1.1"
+  resolved "https://registry.npm.taobao.org/@ices/ts-plugin-locale/download/@ices/ts-plugin-locale-1.1.1.tgz?cache=0&sync_timestamp=1611837775987&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2F%40ices%2Fts-plugin-locale%2Fdownload%2F%40ices%2Fts-plugin-locale-1.1.1.tgz#3d2d910b15afebd72d0c8a5e3825836c7a782202"
+  integrity sha1-PS2RCxWv69ctDIpeOCWDbHp4IgI=
+  dependencies:
+    js-yaml "^4.0.0"
+    tslib "^2.0.0"
 
 "@istanbuljs/load-nyc-config@^1.0.0":
   version "1.1.0"

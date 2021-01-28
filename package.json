@@ -14,7 +14,7 @@
     "rebuild-addons": "electron-rebuild -t prod"
   },
   "dependencies": {
-    "@ices/react-locale": "^1.4.0",
+    "@ices/react-locale": "^1.4.1",
     "electron-log": "^4.3.0",
     "electron-store": "^6.0.1",
     "electron-updater": "^4.3.5",
@@ -26,7 +26,8 @@
   },
   "devDependencies": {
     "@craco/craco": "6.0.0",
-    "@ices/locale-webpack-plugin": "^1.3.0",
+    "@ices/locale-webpack-plugin": "^1.3.4",
+    "@ices/ts-plugin-locale": "^1.1.1",
     "@reduxjs/toolkit": "^1.5.0",
     "@testing-library/jest-dom": "^5.11.6",
     "@testing-library/react": "^11.2.2",

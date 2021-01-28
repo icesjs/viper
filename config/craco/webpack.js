@@ -55,7 +55,7 @@ const customizeWebpackConfig = {
     new CheckGlobalPathsPlugin(),
     // 加载yml本地化定义模块
     new LocalePlugin({
-      extract: true,
+      extract: target === 'web',
     }),
     //
     new StyleLintPlugin({

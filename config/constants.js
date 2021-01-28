@@ -21,5 +21,5 @@ module.exports = {
   MAIN_ENTRY: resolve('src/main/index.ts'),
   MAIN_BUILD_FILE_NAME: 'index.js',
   // misc
-  CSS_MODULE_LOCAL_IDENT_NAME: '[local]___[hash:base64:5]',
+  CSS_MODULE_LOCAL_IDENT_NAME: '[local]_[hash:base64:5]',
 }
