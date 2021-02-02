@@ -1233,13 +1233,14 @@
   dependencies:
     "@hapi/hoek" "^9.0.0"
 
-"@ices/locale-webpack-plugin@^1.3.4":
-  version "1.3.4"
-  resolved "https://registry.npm.taobao.org/@ices/locale-webpack-plugin/download/@ices/locale-webpack-plugin-1.3.4.tgz#66f92a149a41481b5f888e72c1288d153c6269b9"
-  integrity sha1-ZvkqFJpBSBtfiI5ywSiNFTxiabk=
+"@ices/locale-webpack-plugin@^1.3.7":
+  version "1.3.7"
+  resolved "https://registry.npm.taobao.org/@ices/locale-webpack-plugin/download/@ices/locale-webpack-plugin-1.3.7.tgz?cache=0&sync_timestamp=1612255347000&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2F%40ices%2Flocale-webpack-plugin%2Fdownload%2F%40ices%2Flocale-webpack-plugin-1.3.7.tgz#9a2aed086f3d87b2521dfa901cf76a333e32af43"
+  integrity sha1-mirtCG89h7JSHfqQHPdqMz4yr0M=
   dependencies:
     "@babel/core" "^7.0.0"
     "@babel/preset-env" "^7.0.0"
+    "@ices/use-loader" "^1.1.0"
     js-yaml "^4.0.0"
     loader-utils "^2.0.0"
     tslib "^2.0.0"
@@ -1251,13 +1252,18 @@
   dependencies:
     tslib "^2.1.0"
 
-"@ices/ts-plugin-locale@^1.1.1":
-  version "1.1.1"
-  resolved "https://registry.npm.taobao.org/@ices/ts-plugin-locale/download/@ices/ts-plugin-locale-1.1.1.tgz?cache=0&sync_timestamp=1611837775987&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2F%40ices%2Fts-plugin-locale%2Fdownload%2F%40ices%2Fts-plugin-locale-1.1.1.tgz#3d2d910b15afebd72d0c8a5e3825836c7a782202"
-  integrity sha1-PS2RCxWv69ctDIpeOCWDbHp4IgI=
+"@ices/ts-plugin-locale@^1.2.0":
+  version "1.2.0"
+  resolved "https://registry.npm.taobao.org/@ices/ts-plugin-locale/download/@ices/ts-plugin-locale-1.2.0.tgz#ccaa03e2818dc85501c7d6ae6df9d7dffa0bb6a5"
+  integrity sha1-zKoD4oGNyFUBx9aubfnX3/oLtqU=
   dependencies:
     js-yaml "^4.0.0"
     tslib "^2.0.0"
+
+"@ices/use-loader@^1.1.0":
+  version "1.1.0"
+  resolved "https://registry.npm.taobao.org/@ices/use-loader/download/@ices/use-loader-1.1.0.tgz#f49b031df46caea3e221d05fc9b8e2d865d6167d"
+  integrity sha1-9JsDHfRsrqPiIdBfybji2GXWFn0=
 
 "@istanbuljs/load-nyc-config@^1.0.0":
   version "1.1.0"

@@ -26,8 +26,9 @@
   },
   "devDependencies": {
     "@craco/craco": "6.0.0",
-    "@ices/locale-webpack-plugin": "^1.3.4",
-    "@ices/ts-plugin-locale": "^1.1.1",
+    "@ices/locale-webpack-plugin": "^1.3.7",
+    "@ices/ts-plugin-locale": "^1.2.0",
+    "@ices/use-loader": "^1.1.0",
     "@reduxjs/toolkit": "^1.5.0",
     "@testing-library/jest-dom": "^5.11.6",
     "@testing-library/react": "^11.2.2",

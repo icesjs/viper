@@ -1,6 +1,6 @@
 const path = require('path')
+const { addBefore: addBeforeLoader } = require('@ices/use-loader')
 const { APP_BUILD_PATH, ADDONS_BUILD_PATH } = require('../../../config/constants')
-const { addBeforeLoader } = require('./pluginUtils')
 
 /**
  * 对node addon进行webpack构建与打包支持
@@ -59,8 +59,11 @@ class NodeAddonsWebpackPlugin {
    */
   setModuleLoader(compilerOptions) {
     const { output = {} } = compilerOptions
-    const rule = this.getAddonsLoaderRule(output.path)
-    addBeforeLoader(compilerOptions, rule, ['file-loader', 'url-loader'])
+    addBeforeLoader(
+      compilerOptions,
+      ({ name, isUseItem }) => !isUseItem && name === 'file-loader',
+      this.getAddonsLoaderRule(output.path)
+    )
   }
 
   /**

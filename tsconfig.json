@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES2018",
     "lib": ["dom", "dom.iterable", "esnext"],
-    "plugins": [{ "name": "@ices/ts-plugin-locale", "alias": { "@/*": ["src/renderer/*"] } }],
+    "plugins": [{ "name": "@ices/ts-plugin-locale", "alias": { "@": "src/renderer" } }],
     "allowJs": false,
     "skipLibCheck": true,
     "esModuleInterop": true,
