@@ -2128,10 +2128,10 @@
   dependencies:
     tslib "^2.1.0"
 
-"@ices/theme-webpack-plugin@^1.2.0":
-  version "1.2.0"
-  resolved "https://registry.npm.taobao.org/@ices/theme-webpack-plugin/download/@ices/theme-webpack-plugin-1.2.0.tgz?cache=0&sync_timestamp=1613979979071&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2F%40ices%2Ftheme-webpack-plugin%2Fdownload%2F%40ices%2Ftheme-webpack-plugin-1.2.0.tgz#f0e09950853077413cd11b7e7742487aa93ecebe"
-  integrity sha1-8OCZUIUwd0E80Rt+d0JIeqk+zr4=
+"@ices/theme-webpack-plugin@^1.2.1":
+  version "1.2.1"
+  resolved "https://registry.npm.taobao.org/@ices/theme-webpack-plugin/download/@ices/theme-webpack-plugin-1.2.1.tgz#2f2ef4202298b74f2a67b5825640dd60cdf30f02"
+  integrity sha1-Ly70ICKYt08qZ7WCVkDdYM3zDwI=
   dependencies:
     "@babel/core" "^7.12.16"
     "@babel/preset-env" "^7.12.16"

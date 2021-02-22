@@ -28,7 +28,7 @@
   "devDependencies": {
     "@craco/craco": "6.0.0",
     "@ices/locale-webpack-plugin": "^1.4.1",
-    "@ices/theme-webpack-plugin": "^1.2.0",
+    "@ices/theme-webpack-plugin": "^1.2.1",
     "@ices/ts-plugin-locale": "^1.2.0",
     "@ices/use-loader": "^1.4.0",
     "@reduxjs/toolkit": "^1.5.0",
