@@ -1,7 +1,8 @@
 //
 const path = require('path')
 const StyleLintPlugin = require('stylelint-webpack-plugin')
-const LocalePlugin = require('@ices/locale-webpack-plugin')
+const LocaleWebpackPlugin = require('@ices/locale-webpack-plugin')
+const ThemeWebpackPlugin = require('@ices/theme-webpack-plugin')
 const NodeAddonsPlugin = require('../../scripts/lib/plugins/NodeAddonsPlugin')
 const CheckGlobalPathsPlugin = require('../../scripts/lib/plugins/CheckGlobalPathsPlugin')
 const BundleAnalyzerPlugin = require('../../scripts/lib/plugins/BundleAnalyzerPlugin')
@@ -53,9 +54,13 @@ const customizeWebpackConfig = {
     isEnvProduction && ENABLE_BUNDLE_ANALYZER !== 'false' && new BundleAnalyzerPlugin(),
     // 检查__dirname和__filename变量的使用，并抛出编译错误
     new CheckGlobalPathsPlugin(),
-    // 加载yml本地化定义模块
-    new LocalePlugin({
+    // 本地化模块插件
+    new LocaleWebpackPlugin({
       extract: target === 'web',
+    }),
+    // 主题化插件
+    new ThemeWebpackPlugin({
+      themes: 'src/renderer/themes/*.scss',
     }),
     //
     new StyleLintPlugin({
