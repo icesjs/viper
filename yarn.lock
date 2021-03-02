@@ -2128,16 +2128,17 @@
   dependencies:
     tslib "^2.1.0"
 
-"@ices/theme-webpack-plugin@^1.2.1":
-  version "1.2.1"
-  resolved "https://registry.npm.taobao.org/@ices/theme-webpack-plugin/download/@ices/theme-webpack-plugin-1.2.1.tgz#2f2ef4202298b74f2a67b5825640dd60cdf30f02"
-  integrity sha1-Ly70ICKYt08qZ7WCVkDdYM3zDwI=
+"@ices/theme-webpack-plugin@^1.3.4":
+  version "1.3.4"
+  resolved "https://registry.npm.taobao.org/@ices/theme-webpack-plugin/download/@ices/theme-webpack-plugin-1.3.4.tgz?cache=0&sync_timestamp=1614662186771&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2F%40ices%2Ftheme-webpack-plugin%2Fdownload%2F%40ices%2Ftheme-webpack-plugin-1.3.4.tgz#382137da8b96f39ca1ba3a904cf640e42e389bdd"
+  integrity sha1-OCE32ouW85yhujqQTPZA5C44m90=
   dependencies:
     "@babel/core" "^7.12.16"
     "@babel/preset-env" "^7.12.16"
     "@babel/types" "^7.12.13"
     "@ices/use-loader" "^1.4.0"
     "@types/jsdom" "^16.2.6"
+    cssnano "^4.1.10"
     file-loader "^6.2.0"
     globby "^11.0.2"
     is-color "^1.0.2"
@@ -2147,16 +2148,16 @@
     postcss-import "^14.0.0"
     postcss-less "^4.0.0"
     postcss-safe-parser "^5.0.2"
-    postcss-sass "^0.4.4"
     postcss-scss "^3.0.4"
     postcss-value-parser "^4.1.0"
     schema-utils "^3.0.0"
+    sugarss "^3.0.3"
     tslib "^2.0.0"
 
-"@ices/theme@^1.1.2":
-  version "1.1.2"
-  resolved "https://registry.npm.taobao.org/@ices/theme/download/@ices/theme-1.1.2.tgz?cache=0&sync_timestamp=1613105176314&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2F%40ices%2Ftheme%2Fdownload%2F%40ices%2Ftheme-1.1.2.tgz#dec4a8cdda87bb4d66eec69932abf77435cdb12e"
-  integrity sha1-3sSozdqHu01m7saZMqv3dDXNsS4=
+"@ices/theme@^1.2.4":
+  version "1.2.4"
+  resolved "https://registry.npm.taobao.org/@ices/theme/download/@ices/theme-1.2.4.tgz?cache=0&sync_timestamp=1614422213636&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2F%40ices%2Ftheme%2Fdownload%2F%40ices%2Ftheme-1.2.4.tgz#089862545044d465cc8369f9af3b43cf5c5b6c6d"
+  integrity sha1-CJhiVFBE1GXMg2n5rztDz1xbbG0=
 
 "@ices/ts-plugin-locale@^1.2.0":
   version "1.2.0"
@@ -13650,6 +13651,13 @@ sugarss@^2.0.0:
   integrity sha1-3dduASSyl9QL88yjHIsi7LQ7xh0=
   dependencies:
     postcss "^7.0.2"
+
+sugarss@^3.0.3:
+  version "3.0.3"
+  resolved "https://registry.npm.taobao.org/sugarss/download/sugarss-3.0.3.tgz#bb2489961b98fbd15e4e35d6b9f4f2ee5547a6cb"
+  integrity sha1-uySJlhuY+9FeTjXWufTy7lVHpss=
+  dependencies:
+    postcss "^8.1.6"
 
 sumchecker@^3.0.1:
   version "3.0.1"
