@@ -8912,10 +8912,10 @@ istextorbinary@^5.12.0:
     editions "^6.1.0"
     textextensions "^5.11.0"
 
-itron@^1.0.1:
-  version "1.0.1"
-  resolved "https://registry.npm.taobao.org/itron/download/itron-1.0.1.tgz#755d6bc439e8a09454f7df1040a99b26678706da"
-  integrity sha1-dV1rxDnooJRU998QQKmbJmeHBto=
+itron@^1.0.2:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/itron/-/itron-1.0.2.tgz#497b5edc6cc815933ec909555c373de699f7815d"
+  integrity sha512-40EvgkUDYwaEqyQQhQTBZblelvAMTwoe+6S6e0LkgN/61TuLFszZS/hlpSBL06ERpGQS18XCbgcEiDcsFJcqOQ==
   dependencies:
     "@babel/core" "^7.13.8"
     "@babel/plugin-transform-runtime" "^7.13.9"
