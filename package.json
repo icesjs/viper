@@ -7,7 +7,6 @@
   "engines": {
     "node": "^10.23.0 || >=12.0.0"
   },
-  "homepage": ".",
   "scripts": {
     "start": "itron start",
     "build": "itron build",
@@ -40,7 +39,7 @@
     "eslint-config-prettier": "^7.1.0",
     "eslint-plugin-prettier": "^3.3.0",
     "husky": "^4.3.6",
-    "itron": "^1.0.0-alpha",
+    "itron": "^1.0.1",
     "lint-staged": "^10.5.3",
     "prettier": "^2.2.1",
     "react-scripts": "4.0.3",
