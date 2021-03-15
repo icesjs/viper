@@ -1,3 +1,5 @@
+@import '../../themes/dark';
+
 .row {
   display: flex;
   align-items: center;
@@ -18,16 +20,15 @@
 
 .button {
   appearance: none;
-  background: none;
   font-size: 32px;
   padding-left: 12px;
   padding-right: 12px;
   outline: none;
-  border: 2px solid transparent;
-  color: rgb(112, 76, 182);
+  border: 2px solid $button-border-color;
+  color: $button-color;
   padding-bottom: 4px;
   cursor: pointer;
-  background-color: rgba(112, 76, 182, 0.1);
+  background-color: $button-background-color;
   border-radius: 2px;
   transition: all 0.15s;
 }
@@ -42,11 +43,11 @@
 
 .button:hover,
 .button:focus {
-  border: 2px solid rgba(112, 76, 182, 0.4);
+  border: 2px solid $button-hover-border-color;
 }
 
 .button:active {
-  background-color: rgba(112, 76, 182, 0.2);
+  background-color: $button-active-border-color;
 }
 
 .asyncButton {
@@ -57,7 +58,7 @@
 
 .asyncButton:after {
   content: '';
-  background-color: rgba(112, 76, 182, 0.15);
+  background-color: $button-async-active-background-color;
   display: block;
   position: absolute;
   width: 100%;
@@ -69,7 +70,7 @@
 }
 
 .asyncButton:active:after {
-  width: 0%;
+  width: 0;
   opacity: 1;
   transition: 0s;
 }

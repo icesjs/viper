@@ -8,6 +8,7 @@ module.exports = {
   mainEntry: 'src/main/index.ts',
   themePlugin: {
     themes: ['src/renderer/themes/*.scss'],
+    defaultTheme: 'dark',
   },
   localePlugin: {
     extract: false,

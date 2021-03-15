@@ -1,0 +1,8 @@
+#include @/locales/zh
+#include @/locales/en
+
+zh:
+  chooseTheme: 选择主题
+
+en:
+  chooseTheme: Choose Theme

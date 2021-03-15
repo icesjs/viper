@@ -1,15 +1,26 @@
+@import '../../themes/dark';
+
 .button {
-  background-color: rgba(112, 76, 182, 0.1);
+  background-color: $button-background-color;
   font-size: 32px;
   margin-top: 8px;
   padding-left: 12px;
   padding-right: 12px;
   outline: none;
   appearance: none;
-  border: 2px solid transparent;
-  color: rgb(112, 76, 182);
+  border: 2px solid $button-border-color;
+  color: $button-color;
   padding-bottom: 4px;
   cursor: pointer;
   border-radius: 2px;
   transition: all 0.15s;
+}
+
+.button:hover,
+.button:focus {
+  border: 2px solid $button-hover-border-color;
+}
+
+.button:active {
+  background-color: $button-active-border-color;
 }

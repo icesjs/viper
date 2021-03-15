@@ -2632,10 +2632,10 @@
   dependencies:
     tslib "^2.1.0"
 
-"@ices/theme-webpack-plugin@^1.3.6":
-  version "1.3.6"
-  resolved "https://registry.yarnpkg.com/@ices/theme-webpack-plugin/-/theme-webpack-plugin-1.3.6.tgz#18743e6fd6855a93f6c2d0719fec050261981075"
-  integrity sha512-Ejb4YFNNF7um2wsN3fSjTDFFaNgnz7LOPrme6niftnCxTqPltwep2e+fz3/ftc5SOuZYFLoy002QtyYAPaNb1A==
+"@ices/theme-webpack-plugin@^1.4.1":
+  version "1.4.1"
+  resolved "https://registry.npm.taobao.org/@ices/theme-webpack-plugin/download/@ices/theme-webpack-plugin-1.4.1.tgz?cache=0&sync_timestamp=1615780090928&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2F%40ices%2Ftheme-webpack-plugin%2Fdownload%2F%40ices%2Ftheme-webpack-plugin-1.4.1.tgz#9d6e7cd0fe31f887fe0f70887e14c7b33a2834da"
+  integrity sha1-nW580P4x+If+D3CIfhTHszooNNo=
   dependencies:
     "@babel/core" "^7.12.16"
     "@babel/preset-env" "^7.12.16"
@@ -8912,10 +8912,10 @@ istextorbinary@^5.12.0:
     editions "^6.1.0"
     textextensions "^5.11.0"
 
-itron@^1.0.2:
-  version "1.0.2"
-  resolved "https://registry.yarnpkg.com/itron/-/itron-1.0.2.tgz#497b5edc6cc815933ec909555c373de699f7815d"
-  integrity sha512-40EvgkUDYwaEqyQQhQTBZblelvAMTwoe+6S6e0LkgN/61TuLFszZS/hlpSBL06ERpGQS18XCbgcEiDcsFJcqOQ==
+itron@^1.0.4:
+  version "1.0.4"
+  resolved "https://registry.npm.taobao.org/itron/download/itron-1.0.4.tgz?cache=0&sync_timestamp=1615780357785&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fitron%2Fdownload%2Fitron-1.0.4.tgz#ee0c98b89a0a7ebb7321d9163a99a54639c7f5df"
+  integrity sha1-7gyYuJoKfrtzIdkWOpmlRjnH9d8=
   dependencies:
     "@babel/core" "^7.13.8"
     "@babel/plugin-transform-runtime" "^7.13.9"
@@ -8923,7 +8923,7 @@ itron@^1.0.2:
     "@babel/runtime" "^7.13.9"
     "@craco/craco" "^6.1.1"
     "@ices/locale-webpack-plugin" "^1.4.1"
-    "@ices/theme-webpack-plugin" "^1.3.6"
+    "@ices/theme-webpack-plugin" "^1.4.1"
     "@ices/use-loader" "^1.4.0"
     babel-jest "25.5.1"
     babel-plugin-react-css-modules "^5.2.6"
