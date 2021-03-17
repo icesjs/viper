@@ -2613,10 +2613,10 @@
   dependencies:
     "@hapi/hoek" "^9.0.0"
 
-"@ices/locale-webpack-plugin@^1.4.1":
-  version "1.4.1"
-  resolved "https://registry.npm.taobao.org/@ices/locale-webpack-plugin/download/@ices/locale-webpack-plugin-1.4.1.tgz#8667667bfd293714e83d6d1e197a730bce5ffda6"
-  integrity sha1-hmdme/0pNxToPW0eGXpzC85f/aY=
+"@ices/locale-webpack-plugin@^1.4.2":
+  version "1.4.2"
+  resolved "https://registry.npm.taobao.org/@ices/locale-webpack-plugin/download/@ices/locale-webpack-plugin-1.4.2.tgz#31fa2e12cb5fac98ad2425b72c4e271ef61afbff"
+  integrity sha1-MfouEstfrJitJCW3LE4nHvYa+/8=
   dependencies:
     "@babel/core" "^7.0.0"
     "@babel/preset-env" "^7.0.0"
@@ -2625,12 +2625,12 @@
     loader-utils "^2.0.0"
     tslib "^2.0.0"
 
-"@ices/react-locale@^1.4.1":
-  version "1.4.1"
-  resolved "https://registry.npm.taobao.org/@ices/react-locale/download/@ices/react-locale-1.4.1.tgz?cache=0&sync_timestamp=1611841094792&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2F%40ices%2Freact-locale%2Fdownload%2F%40ices%2Freact-locale-1.4.1.tgz#fd2a6fa63e2345dcaeb086a9edc4657b96daf8d9"
-  integrity sha1-/Spvpj4jRdyusIap7cRle5ba+Nk=
+"@ices/react-locale@^1.4.2":
+  version "1.4.2"
+  resolved "https://registry.npm.taobao.org/@ices/react-locale/download/@ices/react-locale-1.4.2.tgz#6aaed02fb8999d2891aa54562241cdfbdcc3785e"
+  integrity sha1-aq7QL7iZnSiRqlRWIkHN+9zDeF4=
   dependencies:
-    tslib "^2.1.0"
+    tslib "^2.0.0"
 
 "@ices/theme-webpack-plugin@^1.4.1":
   version "1.4.1"
@@ -8912,17 +8912,17 @@ istextorbinary@^5.12.0:
     editions "^6.1.0"
     textextensions "^5.11.0"
 
-itron@^1.0.4:
-  version "1.0.4"
-  resolved "https://registry.npm.taobao.org/itron/download/itron-1.0.4.tgz?cache=0&sync_timestamp=1615780357785&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fitron%2Fdownload%2Fitron-1.0.4.tgz#ee0c98b89a0a7ebb7321d9163a99a54639c7f5df"
-  integrity sha1-7gyYuJoKfrtzIdkWOpmlRjnH9d8=
+itron@^1.0.5:
+  version "1.0.5"
+  resolved "https://registry.npm.taobao.org/itron/download/itron-1.0.5.tgz?cache=0&sync_timestamp=1615969363619&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fitron%2Fdownload%2Fitron-1.0.5.tgz#75bbc3236af45dd90c8e3ddf0f8b270d462d98b1"
+  integrity sha1-dbvDI2r0XdkMjj3fD4snDUYtmLE=
   dependencies:
     "@babel/core" "^7.13.8"
     "@babel/plugin-transform-runtime" "^7.13.9"
     "@babel/preset-env" "^7.13.9"
     "@babel/runtime" "^7.13.9"
     "@craco/craco" "^6.1.1"
-    "@ices/locale-webpack-plugin" "^1.4.1"
+    "@ices/locale-webpack-plugin" "^1.4.2"
     "@ices/theme-webpack-plugin" "^1.4.1"
     "@ices/use-loader" "^1.4.0"
     babel-jest "25.5.1"
@@ -14408,7 +14408,7 @@ tslib@^1.8.1, tslib@^1.9.0:
   resolved "https://registry.npm.taobao.org/tslib/download/tslib-1.14.1.tgz?cache=0&sync_timestamp=1609887785854&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Ftslib%2Fdownload%2Ftslib-1.14.1.tgz#cf2d38bdc34a134bcaf1091c41f6619e2f672d00"
   integrity sha1-zy04vcNKE0vK8QkcQfZhni9nLQA=
 
-tslib@^2.0.0, tslib@^2.0.3, tslib@^2.1.0:
+tslib@^2.0.0, tslib@^2.0.3:
   version "2.1.0"
   resolved "https://registry.npm.taobao.org/tslib/download/tslib-2.1.0.tgz?cache=0&sync_timestamp=1609887785854&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Ftslib%2Fdownload%2Ftslib-2.1.0.tgz#da60860f1c2ecaa5703ab7d39bc05b6bf988b97a"
   integrity sha1-2mCGDxwuyqVwOrfTm8Bba/mIuXo=
